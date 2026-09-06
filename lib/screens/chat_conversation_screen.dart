@@ -28,9 +28,15 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
   bool _sending = false;
   Timer? _pollTimer;
 
+  String _headerEmail = '';
+  String _headerTitle = '';
+
   @override
   void initState() {
     super.initState();
+    _loadHeaderIfNeeded().then((_) {
+      if (mounted) setState(() {});
+    });
     _load();
     _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _load(silent: true));
   }
@@ -41,6 +47,27 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
     _scrollCtrl.dispose();
     _msgCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadHeaderIfNeeded() async {
+    if (widget.otherPartyEmail.isNotEmpty) {
+      _headerEmail = widget.otherPartyEmail;
+      _headerTitle = widget.listingTitle;
+      return;
+    }
+    try {
+      final conversations = await ApiService.getConversations();
+      final match = conversations.firstWhere(
+        (c) => c['id'] == widget.conversationId,
+        orElse: () => null,
+      );
+      if (match != null) {
+        _headerEmail = match['otherPartyEmail'] ?? '';
+        _headerTitle = match['listingTitle'] ?? '';
+      }
+    } catch (_) {
+      // Leave header blank if it fails — not critical
+    }
   }
 
   Future<void> _load({bool silent = false}) async {
@@ -101,8 +128,9 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.otherPartyEmail, style: const TextStyle(fontSize: 15)),
-            Text(widget.listingTitle, style: const TextStyle(fontSize: 11, color: AppColors.hint)),
+            Text(_headerEmail.isNotEmpty ? _headerEmail : 'Chat', style: const TextStyle(fontSize: 15)),
+            if (_headerTitle.isNotEmpty)
+              Text(_headerTitle, style: const TextStyle(fontSize: 11, color: AppColors.hint)),
           ],
         ),
       ),
