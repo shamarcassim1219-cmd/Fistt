@@ -178,4 +178,4 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
       ),
     );
   }
-}ල්ල්
+}
