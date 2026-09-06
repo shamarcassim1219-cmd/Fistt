@@ -1,7 +1,7 @@
-import 'admin_chat_screen.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../main.dart';
+import 'admin_chat_screen.dart';
 
 class SaleDetailScreen extends StatefulWidget {
   final Map<String, dynamic> order;
@@ -42,6 +42,12 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
 
   String _formatDuration(Duration d) {
     if (d.inSeconds <= 0) return 'Releasing soon';
+    final days = d.inDays;
+    final hours = d.inHours % 24;
+    final minutes = d.inMinutes % 60;
+    if (days > 0) {
+      return '${days}d ${hours}h ${minutes}m until payout';
+    }
     final h = d.inHours;
     final m = d.inMinutes % 60;
     final s = d.inSeconds % 60;
@@ -92,6 +98,19 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
                 if (o['createdAt'] != null)
                   _row('Sold On', DateTime.parse(o['createdAt']).toLocal().toString().substring(0, 16)),
               ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => AdminChatScreen(orderId: o['id'])));
+              },
+              icon: const Icon(Icons.support_agent_outlined),
+              label: const Text('Chat with Admin'),
             ),
           ),
 
@@ -159,4 +178,4 @@ class _SaleDetailScreenState extends State<SaleDetailScreen> {
       ),
     );
   }
-}
+}ල්ල්
