@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import 'home_screen.dart';
@@ -38,6 +39,14 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
         await ApiService.verifyRegistration(widget.email, code, referralCode: widget.referralCode);
       } else {
         await ApiService.verifyLogin(widget.email, code);
+      }
+
+      // Save FCM token now that we have a valid auth token
+      try {
+        final fcmToken = await FirebaseMessaging.instance.getToken();
+        if (fcmToken != null) await ApiService.saveFcmToken(fcmToken);
+      } catch (_) {
+        // Non-critical — push notifications just won't work if this fails
       }
 
       final prefs = await SharedPreferences.getInstance();
