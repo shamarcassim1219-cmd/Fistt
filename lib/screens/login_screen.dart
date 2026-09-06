@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
@@ -15,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  final _referralCtrl = TextEditingController();
   bool _isRegister = false;
   bool _loading = false;
   bool _obscurePassword = true;
@@ -40,6 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (_) => OtpVerifyScreen(
             email: _emailCtrl.text.trim(),
             purpose: _isRegister ? 'register' : 'login',
+            referralCode: _isRegister ? _referralCtrl.text.trim() : null,
           ),
         ),
       );
@@ -118,6 +121,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
                 ),
+
+                if (_isRegister) ...[
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _referralCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _fieldDecoration(hint: 'Referral Code (optional)', icon: Icons.card_giftcard_outlined),
+                  ),
+                ],
 
                 if (!_isRegister)
                   Align(
