@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/api_service.dart';
-import 'home_screen.dart';
+import 'otp_verify_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -34,12 +34,14 @@ class _LoginScreenState extends State<LoginScreen> {
         await ApiService.login(_emailCtrl.text.trim(), _passCtrl.text.trim());
       }
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('is_logged_in', true);
-
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => OtpVerifyScreen(
+            email: _emailCtrl.text.trim(),
+            purpose: _isRegister ? 'register' : 'login',
+          ),
+        ),
       );
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
@@ -121,7 +123,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () => _comingSoon('Password reset'),
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()));
+                      },
                       style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 36)),
                       child: const Text('Forgot Password?', style: TextStyle(color: Colors.white70, fontSize: 13)),
                     ),
