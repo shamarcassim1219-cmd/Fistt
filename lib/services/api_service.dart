@@ -35,7 +35,11 @@ class ApiService {
     if (res.statusCode >= 200 && res.statusCode < 300) {
       return body;
     } else {
-      throw Exception(body['error'] ?? 'Request failed (${res.statusCode})');
+      final errorMsg = body['error'] ?? 'Request failed (${res.statusCode})';
+      if (errorMsg.toString().startsWith('ACCOUNT_BANNED:')) {
+        throw Exception('BANNED:${errorMsg.toString().replaceFirst('ACCOUNT_BANNED:', '')}');
+      }
+      throw Exception(errorMsg);
     }
   }
 
@@ -112,8 +116,13 @@ class ApiService {
     if (streamedRes.statusCode != 200) {
       try {
         final err = jsonDecode(resBody);
-        throw Exception(err['error'] ?? 'Upload failed (${streamedRes.statusCode})');
-      } catch (_) {
+        final errorMsg = err['error'] ?? 'Upload failed (${streamedRes.statusCode})';
+        if (errorMsg.toString().startsWith('ACCOUNT_BANNED:')) {
+          throw Exception('BANNED:${errorMsg.toString().replaceFirst('ACCOUNT_BANNED:', '')}');
+        }
+        throw Exception(errorMsg);
+      } catch (e) {
+        if (e is Exception) rethrow;
         throw Exception('Upload failed (${streamedRes.statusCode})');
       }
     }
