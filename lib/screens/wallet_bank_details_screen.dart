@@ -15,8 +15,10 @@ class _WalletBankDetailsScreenState extends State<WalletBankDetailsScreen> {
   final _accountNumberCtrl = TextEditingController();
   final _branchCtrl = TextEditingController();
   bool _loading = true;
-  bool _saving = false;
+  bool _sendingCode = false;
   String? _error;
+  String? _currentBankName;
+  String? _currentAccountNumber;
 
   @override
   void initState() {
@@ -31,29 +33,116 @@ class _WalletBankDetailsScreenState extends State<WalletBankDetailsScreen> {
       _accountNameCtrl.text = profile['bankAccountName'] ?? '';
       _accountNumberCtrl.text = profile['bankAccountNumber'] ?? '';
       _branchCtrl.text = profile['bankBranch'] ?? '';
+      _currentBankName = profile['bankName'];
+      _currentAccountNumber = profile['bankAccountNumber'];
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
     }
     setState(() => _loading = false);
   }
 
-  Future<void> _save() async {
-    setState(() => _saving = true);
+  Future<void> _requestChange() async {
+    if (_bankNameCtrl.text.trim().isEmpty ||
+        _accountNameCtrl.text.trim().isEmpty ||
+        _accountNumberCtrl.text.trim().isEmpty ||
+        _branchCtrl.text.trim().isEmpty) {
+      setState(() => _error = 'Please fill in all bank detail fields');
+      return;
+    }
+
+    setState(() {
+      _sendingCode = true;
+      _error = null;
+    });
+
     try {
-      await ApiService.updateBankDetails(
+      await ApiService.requestBankDetailsChange(
         _bankNameCtrl.text.trim(),
         _accountNameCtrl.text.trim(),
         _accountNumberCtrl.text.trim(),
         _branchCtrl.text.trim(),
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bank details saved')));
-      Navigator.pop(context);
+      _showOtpDialog();
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
-      if (mounted) setState(() => _saving = false);
+      if (mounted) setState(() => _sendingCode = false);
     }
+  }
+
+  void _showOtpDialog() {
+    final codeCtrl = TextEditingController();
+    bool confirming = false;
+    String? dialogError;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text('Enter Verification Code', style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'We sent a 6-digit code to your email. Enter it below to confirm the bank details change.',
+                style: TextStyle(color: AppColors.hint, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: codeCtrl,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                style: const TextStyle(color: Colors.white, fontSize: 20, letterSpacing: 4),
+                textAlign: TextAlign.center,
+                decoration: const InputDecoration(counterText: '', hintText: '000000'),
+              ),
+              if (dialogError != null) ...[
+                const SizedBox(height: 8),
+                Text(dialogError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: confirming ? null : () async {
+                final code = codeCtrl.text.trim();
+                if (code.length != 6) {
+                  setDialogState(() => dialogError = 'Enter the 6-digit code');
+                  return;
+                }
+                setDialogState(() {
+                  confirming = true;
+                  dialogError = null;
+                });
+                try {
+                  await ApiService.confirmBankDetailsChange(code);
+                  if (!ctx.mounted) return;
+                  Navigator.pop(ctx);
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Bank details updated successfully')),
+                  );
+                  Navigator.pop(context);
+                } catch (e) {
+                  setDialogState(() {
+                    confirming = false;
+                    dialogError = e.toString().replaceFirst('Exception: ', '');
+                  });
+                }
+              },
+              child: confirming
+                  ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  : const Text('Confirm'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -76,11 +165,13 @@ class _WalletBankDetailsScreenState extends State<WalletBankDetailsScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline, size: 18, color: AppColors.primary),
+                        const Icon(Icons.mark_email_read_outlined, size: 18, color: AppColors.primary),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text('This account is used for withdrawal requests from your wallet.',
-                              style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.85))),
+                          child: Text(
+                            'Changing your bank details requires email verification for security.',
+                            style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.85)),
+                          ),
                         ),
                       ],
                     ),
@@ -101,10 +192,10 @@ class _WalletBankDetailsScreenState extends State<WalletBankDetailsScreen> {
                   SizedBox(
                     height: 54,
                     child: ElevatedButton(
-                      onPressed: _saving ? null : _save,
-                      child: _saving
+                      onPressed: _sendingCode ? null : _requestChange,
+                      child: _sendingCode
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                          : const Text('Save Bank Details', style: TextStyle(fontWeight: FontWeight.bold)),
+                          : const Text('Send Verification Code', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
