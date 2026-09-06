@@ -43,25 +43,35 @@ class _AddListingScreenState extends State<AddListingScreen> {
   Future<void> _checkVerification() async {
     try {
       final profile = await ApiService.getProfile();
+      if (!mounted) return;
       setState(() {
         _verifiedStatus = profile['verifiedStatus'] ?? 'not_verified';
         _loadingVerification = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _loadingVerification = false);
     }
   }
 
   Future<void> _pickScreenshots() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickMultiImage(imageQuality: 80);
-    if (picked.isEmpty) return;
-    setState(() {
-      _screenshots.addAll(picked.map((x) => File(x.path)));
-      if (_screenshots.length > 6) {
-        _screenshots.removeRange(6, _screenshots.length);
-      }
-    });
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickMultiImage(imageQuality: 80);
+      if (picked.isEmpty) return;
+      if (!mounted) return;
+      setState(() {
+        _screenshots.addAll(picked.map((x) => File(x.path)));
+        if (_screenshots.length > 6) {
+          _screenshots.removeRange(6, _screenshots.length);
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick images: $e')),
+      );
+    }
   }
 
   Future<List<String>> _uploadScreenshots() async {
@@ -71,6 +81,24 @@ class _AddListingScreenState extends State<AddListingScreen> {
       urls.add(url);
     }
     return urls;
+  }
+
+  Future<void> _resetForm() async {
+    _titleCtrl.clear();
+    _descCtrl.clear();
+    _uidCtrl.clear();
+    _priceCtrl.clear();
+    _vaultEmailCtrl.clear();
+    _vaultPasswordCtrl.clear();
+    _vaultRecoveryCtrl.clear();
+    if (mounted) {
+      setState(() {
+        _screenshots.clear();
+        _allowBidding = false;
+        _selectedGame = 'PUBG';
+        _error = null;
+      });
+    }
   }
 
   Future<void> _submit() async {
@@ -106,11 +134,15 @@ class _AddListingScreenState extends State<AddListingScreen> {
       );
 
       if (!mounted) return;
+
+      await _resetForm();
+
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Listing posted successfully')),
       );
-      Navigator.of(context).pop();
     } catch (e) {
+      if (!mounted) return;
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -185,220 +217,4 @@ class _AddListingScreenState extends State<AddListingScreen> {
               TextFormField(
                 controller: _titleCtrl,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Title', hintText: 'e.g. Conqueror Rank Account'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _descCtrl,
-                maxLines: 4,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Description', hintText: 'Rank, skins, level, region...'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _uidCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'In-Game UID'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _priceCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Price (LKR)', prefixText: 'LKR '),
-                onChanged: (_) => setState(() {}),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Required';
-                  if (double.tryParse(v.trim()) == null) return 'Enter a valid number';
-                  return null;
-                },
-              ),
-              if (_priceCtrl.text.isNotEmpty && double.tryParse(_priceCtrl.text.trim()) != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: _CommissionPreview(price: double.parse(_priceCtrl.text.trim())),
-                ),
-
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.fieldFill,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _allowBidding,
-                  onChanged: (v) => setState(() => _allowBidding = v),
-                  title: const Text('Allow Bidding', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                  subtitle: const Text(
-                    'Buyers can bid above your price. Once the first bid comes in, bidding runs for 12 hours.',
-                    style: TextStyle(color: AppColors.hint, fontSize: 11),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-              const _SectionLabel('Screenshots (max 6)'),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8,
-                ),
-                itemCount: _screenshots.length + 1,
-                itemBuilder: (context, i) {
-                  if (i == _screenshots.length) {
-                    return InkWell(
-                      onTap: _screenshots.length >= 6 ? null : _pickScreenshots,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.fieldFill,
-                          border: Border.all(color: AppColors.border),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.add_a_photo_outlined, color: AppColors.hint),
-                      ),
-                    );
-                  }
-                  return Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(_screenshots[i], width: double.infinity, height: double.infinity, fit: BoxFit.cover),
-                      ),
-                      Positioned(
-                        top: 2, right: 2,
-                        child: GestureDetector(
-                          onTap: () => setState(() => _screenshots.removeAt(i)),
-                          child: const CircleAvatar(
-                            radius: 10, backgroundColor: Colors.black54,
-                            child: Icon(Icons.close, size: 14, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-
-              const SizedBox(height: 24),
-              const _SectionLabel('Account Vault (Private & Encrypted)'),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.4)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.lock_outline, size: 18, color: AppColors.primary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'These details are stored securely and shown to the buyer immediately after payment.',
-                        style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.85)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _vaultEmailCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Account Email'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _vaultPasswordCtrl,
-                obscureText: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Account Password'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _vaultRecoveryCtrl,
-                maxLines: 2,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Recovery Codes (optional)'),
-              ),
-
-              if (_error != null) ...[
-                const SizedBox(height: 16),
-                Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
-              ],
-
-              const SizedBox(height: 24),
-              SizedBox(
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _submitting ? null : _submit,
-                  child: _submitting
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                      : const Text('Post Listing', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-              const SizedBox(height: 30),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary)),
-    );
-  }
-}
-
-class _CommissionPreview extends StatelessWidget {
-  final double price;
-  const _CommissionPreview({required this.price});
-
-  @override
-  Widget build(BuildContext context) {
-    final commission = price * 0.15;
-    final youGet = price - commission;
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.border)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _row('Listing Price', 'LKR ${price.toStringAsFixed(2)}'),
-          _row('Platform Commission (15%)', '- LKR ${commission.toStringAsFixed(2)}'),
-          const Divider(height: 12, color: AppColors.border),
-          _row('You Receive', 'LKR ${youGet.toStringAsFixed(2)}', bold: true),
-        ],
-      ),
-    );
-  }
-
-  Widget _row(String label, String value, {bool bold = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.85), fontWeight: bold ? FontWeight.bold : null)),
-          Text(value, style: TextStyle(fontSize: 12, color: Colors.white, fontWeight: bold ? FontWeight.bold : null)),
-        ],
-      ),
-    );
-  }
-}
+                decoration: const InputDecoration(labelText: 'Title', hint
