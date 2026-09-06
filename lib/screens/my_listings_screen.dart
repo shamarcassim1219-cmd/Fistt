@@ -1,33 +1,59 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
-import 'listing_detail_screen.dart';
 
-class MyListingsScreen extends StatefulWidget {
-  const MyListingsScreen({super.key});
+class ListingDetailScreen extends StatefulWidget {
+  final int listingId;
+  const ListingDetailScreen({super.key, required this.listingId});
 
   @override
-  State<MyListingsScreen> createState() => _MyListingsScreenState();
+  State<ListingDetailScreen> createState() => _ListingDetailScreenState();
 }
 
-class _MyListingsScreenState extends State<MyListingsScreen> {
-  List<dynamic> _listings = [];
+class _ListingDetailScreenState extends State<ListingDetailScreen> {
+  Map<String, dynamic>? _listing;
+  List<dynamic> _bids = [];
   bool _loading = true;
   String? _error;
+  Timer? _countdownTimer;
+  Duration _remaining = Duration.zero;
+  int? _myUserId;
+
+  final _bidCtrl = TextEditingController();
+  bool _placingBid = false;
+  String? _bidError;
+  bool _buying = false;
 
   @override
   void initState() {
     super.initState();
+    _loadMyId();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadMyId() async {
+    try {
+      final profile = await ApiService.getProfile();
+      if (mounted) setState(() => _myUserId = profile['id']);
+    } catch (_) {}
   }
 
   Future<void> _load() async {
     try {
-      final listings = await ApiService.getMyListings();
+      final data = await ApiService.getListingDetail(widget.listingId);
       setState(() {
-        _listings = listings;
+        _listing = data['listing'];
+        _bids = data['bids'];
         _loading = false;
       });
+      _startCountdownIfNeeded();
     } catch (e) {
       setState(() {
         _error = e.toString().replaceFirst('Exception: ', '');
@@ -36,36 +62,152 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     }
   }
 
-  void _confirmRemove(int listingId, String title) {
-    showDialog(
+  void _startCountdownIfNeeded() {
+    _countdownTimer?.cancel();
+    final endsAtStr = _listing?['biddingEndsAt'];
+    if (endsAtStr == null) return;
+
+    final endsAt = DateTime.parse(endsAtStr).toLocal();
+    void tick() {
+      final now = DateTime.now();
+      final diff = endsAt.difference(now);
+      setState(() => _remaining = diff.isNegative ? Duration.zero : diff);
+    }
+    tick();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) => tick());
+  }
+
+  String _formatDuration(Duration d) {
+    if (d.inSeconds <= 0) return 'Bidding ended';
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    final s = d.inSeconds % 60;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')} left';
+  }
+
+  Future<void> _placeBid() async {
+    final amount = double.tryParse(_bidCtrl.text.trim());
+    if (amount == null || amount <= 0) {
+      setState(() => _bidError = 'Enter a valid amount');
+      return;
+    }
+    setState(() {
+      _placingBid = true;
+      _bidError = null;
+    });
+    try {
+      await ApiService.placeBid(widget.listingId, amount);
+      _bidCtrl.clear();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bid placed! Amount held from your wallet.')));
+      await _load();
+    } catch (e) {
+      setState(() => _bidError = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _placingBid = false);
+    }
+  }
+
+  Future<void> _confirmAndBuy(double price) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Remove Listing', style: TextStyle(color: Colors.white)),
+        title: const Text('Confirm Purchase', style: TextStyle(color: Colors.white)),
         content: Text(
-          'Remove "$title"? Any active bidders will be refunded automatically.',
+          'LKR ${price.toStringAsFixed(2)} will be deducted from your wallet. Admin will verify and share credentials shortly.',
           style: const TextStyle(color: AppColors.hint, fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                await ApiService.removeListing(listingId);
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Listing removed')));
-                _load();
-              } catch (e) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-                );
-              }
-            },
-            child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirm & Pay')),
         ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _buying = true);
+    try {
+      await ApiService.createOrder(widget.listingId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Purchase successful! Admin is verifying — check My Purchases.')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _buying = false);
+    }
+  }
+
+  void _showMakeOfferSheet(double currentPrice) {
+    final offerCtrl = TextEditingController();
+    bool sending = false;
+    String? sheetError;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Make an Offer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 6),
+              Text('Listing price: LKR ${currentPrice.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: offerCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(labelText: 'Your Offer (LKR)'),
+              ),
+              if (sheetError != null) ...[
+                const SizedBox(height: 8),
+                Text(sheetError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: sending ? null : () async {
+                    final amount = double.tryParse(offerCtrl.text.trim());
+                    if (amount == null || amount <= 0) {
+                      setModalState(() => sheetError = 'Enter a valid amount');
+                      return;
+                    }
+                    setModalState(() {
+                      sending = true;
+                      sheetError = null;
+                    });
+                    try {
+                      await ApiService.sendOffer(widget.listingId, amount);
+                      if (!ctx.mounted) return;
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Offer sent to seller')));
+                    } catch (e) {
+                      setModalState(() {
+                        sending = false;
+                        sheetError = e.toString().replaceFirst('Exception: ', '');
+                      });
+                    }
+                  },
+                  child: sending
+                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      : const Text('Send Offer'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -74,106 +216,219 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('My Listings')),
+      appBar: AppBar(title: const Text('Listing Details')),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _error != null
               ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
-              : _listings.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text('No listings yet.\nTap "Sell" to post your first account.',
-                            textAlign: TextAlign.center, style: TextStyle(color: AppColors.hint)),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      color: AppColors.primary,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: _listings.length,
-                        itemBuilder: (context, i) {
-                          final l = _listings[i];
-                          final status = l['status'] ?? 'active';
-                          final screenshots = (l['screenshots'] as List?) ?? [];
-                          final allowBidding = l['allowBidding'] == true;
-                          final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Column(
-                              children: [
-                                ListTile(
-                                  contentPadding: const EdgeInsets.all(10),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => ListingDetailScreen(listingId: l['id'])),
-                                    ).then((_) => _load());
-                                  },
-                                  leading: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: screenshots.isNotEmpty
-                                        ? Image.network(screenshots[0], width: 56, height: 56, fit: BoxFit.cover)
-                                        : Container(width: 56, height: 56, color: AppColors.fieldFill, child: const Icon(Icons.image_outlined, color: AppColors.hint)),
-                                  ),
-                                  title: Text(l['title'] ?? '', style: const TextStyle(color: Colors.white)),
-                                  subtitle: Text(
-                                    '${l['game'] ?? ''} · LKR ${(highestBid ?? l['price']).toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
-                                    style: const TextStyle(color: AppColors.hint, fontSize: 12),
-                                  ),
-                                  trailing: _StatusChip(status: status),
-                                ),
-                                if (status == 'active')
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                                    child: SizedBox(
-                                      width: double.infinity,
-                                      child: OutlinedButton.icon(
-                                        onPressed: () => _confirmRemove(l['id'], l['title'] ?? ''),
-                                        icon: const Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
-                                        label: const Text('Remove Listing', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
-                                        style: OutlinedButton.styleFrom(
-                                          side: const BorderSide(color: Colors.redAccent),
-                                          padding: const EdgeInsets.symmetric(vertical: 8),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+              : _buildContent(),
     );
   }
-}
 
-class _StatusChip extends StatelessWidget {
-  final String status;
-  const _StatusChip({required this.status});
+  Widget _buildContent() {
+    final l = _listing!;
+    final screenshots = (l['screenshots'] as List?) ?? [];
+    final allowBidding = l['allowBidding'] == true;
+    final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
+    final basePrice = (l['price'] as num).toDouble();
+    final currentPrice = highestBid ?? basePrice;
+    final biddingActive = allowBidding && l['biddingEndsAt'] != null && _remaining.inSeconds > 0;
+    final biddingNotStarted = allowBidding && l['biddingEndsAt'] == null;
+    final biddingEnded = allowBidding && l['biddingEndsAt'] != null && _remaining.inSeconds <= 0;
 
-  @override
-  Widget build(BuildContext context) {
-    final map = {
-      'active': ('Active', Colors.greenAccent),
-      'pending_escrow': ('Pending', Colors.orangeAccent),
-      'sold': ('Sold', AppColors.primary),
-      'expired': ('Removed', AppColors.hint),
-    };
-    final (label, color) = map[status] ?? ('Unknown', AppColors.hint);
-    return Chip(
-      label: Text(label, style: TextStyle(fontSize: 11, color: color)),
-      backgroundColor: color.withOpacity(0.12),
-      side: BorderSide(color: color.withOpacity(0.4)),
-      visualDensity: VisualDensity.compact,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    final isOwnListing = _myUserId != null && _myUserId == l['sellerId'];
+
+    final canBuyNow = l['status'] == 'active' && !isOwnListing && (!allowBidding || biddingEnded || biddingNotStarted);
+    final canMakeOffer = l['status'] == 'active' && !isOwnListing;
+    final canBid = allowBidding && !isOwnListing && (biddingActive || biddingNotStarted);
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        if (screenshots.isNotEmpty)
+          SizedBox(
+            height: 220,
+            child: PageView(
+              children: screenshots.map<Widget>((url) => ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(url, fit: BoxFit.cover, width: double.infinity),
+                  )).toList(),
+            ),
+          ),
+        const SizedBox(height: 16),
+        Text(l['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Chip(
+              label: Text(l['game'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 12)),
+              backgroundColor: AppColors.fieldFill,
+              side: const BorderSide(color: AppColors.border),
+            ),
+            if (isOwnListing) ...[
+              const SizedBox(width: 8),
+              Chip(
+                label: const Text('Your Listing', style: TextStyle(color: AppColors.primary, fontSize: 12)),
+                backgroundColor: AppColors.primary.withOpacity(0.15),
+                side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(l['description'] ?? '', style: const TextStyle(color: AppColors.hint, fontSize: 14, height: 1.4)),
+        const SizedBox(height: 20),
+
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                allowBidding ? (highestBid != null ? 'Current Highest Bid' : 'Starting Price') : 'Price',
+                style: const TextStyle(color: AppColors.hint, fontSize: 12),
+              ),
+              const SizedBox(height: 4),
+              Text('LKR ${currentPrice.toStringAsFixed(2)}',
+                  style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+              if (allowBidding) ...[
+                const SizedBox(height: 8),
+                if (biddingActive)
+                  Row(
+                    children: [
+                      const Icon(Icons.timer_outlined, size: 14, color: Colors.orangeAccent),
+                      const SizedBox(width: 4),
+                      Text(_formatDuration(_remaining), style: const TextStyle(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                    ],
+                  )
+                else if (biddingNotStarted)
+                  const Text('Bidding opens with the first bid — 12 hours to win', style: TextStyle(color: AppColors.hint, fontSize: 12))
+                else
+                  const Text('Bidding has ended — you can buy at the final price', style: TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+              ],
+            ],
+          ),
+        ),
+
+        if (l['status'] != 'active') ...[
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
+            child: Text(
+              l['status'] == 'sold' ? 'This account has been sold.' : 'This listing is no longer available.',
+              style: const TextStyle(color: AppColors.hint, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+
+        if (isOwnListing) ...[
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, size: 18, color: AppColors.primary),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'This is your own listing. Manage it from My Listings in Settings.',
+                    style: TextStyle(fontSize: 12, color: AppColors.hint),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        if (canBid) ...[
+          const SizedBox(height: 20),
+          const Text('Place a Bid', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _bidCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'More than LKR ${currentPrice.toStringAsFixed(0)}',
+                    prefixText: 'LKR ',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: _placingBid ? null : _placeBid,
+                child: _placingBid
+                    ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                    : const Text('Bid'),
+              ),
+            ],
+          ),
+          if (_bidError != null) ...[
+            const SizedBox(height: 8),
+            Text(_bidError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+          ],
+        ],
+
+        if (canBuyNow) ...[
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: _buying ? null : () => _confirmAndBuy(currentPrice),
+              child: _buying
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  : Text('Buy Now — LKR ${currentPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+
+        if (canMakeOffer) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: OutlinedButton.icon(
+              onPressed: () => _showMakeOfferSheet(currentPrice),
+              icon: const Icon(Icons.local_offer_outlined, size: 18),
+              label: const Text('Make an Offer'),
+            ),
+          ),
+        ],
+
+        if (_bids.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          const Text('Bid History', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+          const SizedBox(height: 8),
+          ..._bids.map((b) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.gavel_outlined, color: AppColors.hint, size: 20),
+                title: Text(b['bidderEmail'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                trailing: Text('LKR ${(b['amount'] as num).toStringAsFixed(2)}',
+                    style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+              )),
+        ],
+
+        const SizedBox(height: 30),
+      ],
     );
   }
 }
