@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/api_service.dart';
-import 'offers_screen.dart';
 import 'login_screen.dart';
 import 'verification_screen.dart';
 import 'profile_management_screen.dart';
 import 'change_password_screen.dart';
 import 'wallet_bank_details_screen.dart';
 import 'my_listings_screen.dart';
+import 'my_purchases_screen.dart';
+import 'my_sales_screen.dart';
 import 'referral_code_screen.dart';
 import 'blocked_users_screen.dart';
+import 'offers_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -37,9 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final profile = await ApiService.getProfile();
       setState(() => _profile = profile);
-    } catch (_) {
-      // silently ignore; email will show 'Guest User' fallback
-    }
+    } catch (_) {}
   }
 
   Future<void> _logout() async {
@@ -80,6 +80,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = _profile;
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(title: const Text('Settings')),
@@ -92,17 +94,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: AppColors.primary.withOpacity(0.2),
-                  child: const Icon(Icons.person, size: 32, color: AppColors.primary),
+                  backgroundImage: user?['profilePhotoUrl'] != null ? NetworkImage(user!['profilePhotoUrl']) : null,
+                  child: user?['profilePhotoUrl'] == null
+                      ? const Icon(Icons.person, size: 32, color: AppColors.primary)
+                      : null,
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(_profile?['email'] ?? 'Guest User',
+                      Text(user?['email'] ?? 'Guest User',
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
                       const SizedBox(height: 4),
-                      _VerifiedBadgeChip(status: _profile?['verifiedStatus'] ?? 'not_verified'),
+                      _VerifiedBadgeChip(status: user?['verifiedStatus'] ?? 'not_verified'),
                     ],
                   ),
                 ),
@@ -126,12 +131,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _tile(Icons.lock_reset, 'Change Password / PIN', null, () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
           }),
-          _tile(Icons.verified_outlined, 'Verified Badge Status', 'Pending / Approved — LKR 150 fee', () async {
-            await Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
-            _loadProfile();
-          }),
+          _tile(
+            Icons.verified_outlined,
+            'Verified Badge Status',
+            'Pending / Approved',
+            () async {
+              await Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
+              _loadProfile();
+            },
+          ),
           _tile(Icons.list_alt_outlined, 'My Listings', 'Active, Sold, Expired', () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const MyListingsScreen()));
+          }),
+          _tile(Icons.shopping_bag_outlined, 'My Purchases', 'Accounts you bought', () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPurchasesScreen()));
+          }),
+          _tile(Icons.storefront_outlined, 'My Sales', 'Accounts you sold', () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const MySalesScreen()));
+          }),
+          _tile(Icons.local_offer_outlined, 'Offers', 'Sent and received offers', () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()));
           }),
           _tile(Icons.bookmark_border, 'Saved / Wishlist Accounts', null, () => _comingSoon('Wishlist')),
           _tile(Icons.account_balance_outlined, 'Wallet & Bank Details', 'Withdrawal accounts', () {
