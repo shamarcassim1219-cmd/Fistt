@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import 'listing_detail_screen.dart';
 
 class MyListingsScreen extends StatefulWidget {
   const MyListingsScreen({super.key});
@@ -73,6 +74,12 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                             ),
                             child: ListTile(
                               contentPadding: const EdgeInsets.all(10),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => ListingDetailScreen(listingId: l['id'])),
+                                ).then((_) => _load());
+                              },
                               leading: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: screenshots.isNotEmpty
