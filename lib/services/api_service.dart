@@ -40,26 +40,62 @@ class ApiService {
   }
 
   // ---------- AUTH ----------
-  static Future<Map<String, dynamic>> register(String email, String password) async {
+  static Future<void> register(String email, String password) async {
     final res = await http.post(
       Uri.parse('$baseUrl/auth/register'),
       headers: await _headers(withAuth: false),
       body: jsonEncode({'email': email, 'password': password}),
+    );
+    await _handle(res);
+  }
+
+  static Future<Map<String, dynamic>> verifyRegistration(String email, String code) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/verify-registration'),
+      headers: await _headers(withAuth: false),
+      body: jsonEncode({'email': email, 'code': code}),
     );
     final data = await _handle(res);
     await saveToken(data['token']);
     return data['user'];
   }
 
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<void> login(String email, String password) async {
     final res = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: await _headers(withAuth: false),
       body: jsonEncode({'email': email, 'password': password}),
     );
+    await _handle(res);
+  }
+
+  static Future<Map<String, dynamic>> verifyLogin(String email, String code) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/verify-login'),
+      headers: await _headers(withAuth: false),
+      body: jsonEncode({'email': email, 'code': code}),
+    );
     final data = await _handle(res);
     await saveToken(data['token']);
     return data['user'];
+  }
+
+  static Future<void> forgotPassword(String email) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/forgot-password'),
+      headers: await _headers(withAuth: false),
+      body: jsonEncode({'email': email}),
+    );
+    await _handle(res);
+  }
+
+  static Future<void> resetPassword(String email, String code, String newPassword) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/reset-password'),
+      headers: await _headers(withAuth: false),
+      body: jsonEncode({'email': email, 'code': code, 'newPassword': newPassword}),
+    );
+    await _handle(res);
   }
 
   // ---------- UPLOAD ----------
