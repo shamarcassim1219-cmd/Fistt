@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
+import 'services/api_service.dart';
 import 'screens/splash_screen.dart';
+import 'screens/notifications_screen.dart';
 
-// ===== App-wide dark design tokens =====
 class AppColors {
   static const bg = Color(0xFF0B0B10);
   static const surface = Color(0xFF15151C);
@@ -12,16 +16,107 @@ class AppColors {
   static const white = Colors.white;
 }
 
-void main() {
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Background messages are handled automatically by the OS notification tray.
+  // No action needed here unless custom background processing is required.
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    // Firebase init failure shouldn't block the app — push notifications just won't work
+  }
+
   runApp(const MyGameApp());
 }
 
-class MyGameApp extends StatelessWidget {
+class MyGameApp extends StatefulWidget {
   const MyGameApp({super.key});
+
+  @override
+  State<MyGameApp> createState() => _MyGameAppState();
+}
+
+class _MyGameAppState extends State<MyGameApp> {
+  @override
+  void initState() {
+    super.initState();
+    _setupFcm();
+  }
+
+  Future<void> _setupFcm() async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+      await messaging.requestPermission(alert: true, badge: true, sound: true);
+
+      final token = await messaging.getToken();
+      if (token != null) {
+        final loggedIn = await ApiService.getToken();
+        if (loggedIn != null) {
+          await ApiService.saveFcmToken(token);
+        }
+      }
+
+      messaging.onTokenRefresh.listen((newToken) async {
+        final loggedIn = await ApiService.getToken();
+        if (loggedIn != null) {
+          await ApiService.saveFcmToken(newToken);
+        }
+      });
+
+      // Foreground messages: show a snackbar-style banner via a top-level overlay
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        final context = navigatorKey.currentContext;
+        if (context != null && message.notification != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${message.notification!.title}: ${message.notification!.body}'),
+              backgroundColor: AppColors.surface,
+              action: SnackBarAction(
+                label: 'View',
+                onPressed: () {
+                  navigatorKey.currentState?.push(
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                  );
+                },
+              ),
+            ),
+          );
+        }
+      });
+
+      // Notification tapped while app was in background
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+        );
+      });
+
+      // App opened from a terminated state via notification tap
+      final initialMessage = await messaging.getInitialMessage();
+      if (initialMessage != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+          );
+        });
+      }
+    } catch (e) {
+      // Non-critical — app continues without push notifications
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'MYGame Marketplace',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
