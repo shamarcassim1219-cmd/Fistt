@@ -44,24 +44,45 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   IconData _iconFor(String type) {
     switch (type) {
-      case 'offer_received': return Icons.local_offer_outlined;
-      case 'offer_accepted': return Icons.check_circle_outline;
-      case 'offer_rejected': return Icons.cancel_outlined;
-      case 'order_completed': return Icons.shopping_bag_outlined;
-      case 'topup_confirmed': return Icons.add_circle_outline;
-      case 'topup_rejected': return Icons.remove_circle_outline;
-      case 'withdrawal_confirmed': return Icons.arrow_circle_up_outlined;
-      case 'withdrawal_rejected': return Icons.arrow_circle_down_outlined;
-      case 'verification_approved': return Icons.verified_outlined;
-      case 'verification_rejected': return Icons.error_outline;
-      case 'new_message': return Icons.chat_bubble_outline;
-      case 'dispute_resolved': return Icons.gavel_outlined;
-      case 'account_banned': return Icons.block;
-      case 'account_unbanned': return Icons.check_circle_outline;
-      case 'wallet_adjusted': return Icons.account_balance_wallet_outlined;
-      case 'referral_bonus': return Icons.card_giftcard;
-      case 'promotion': return Icons.campaign_outlined;
-      default: return Icons.notifications_outlined;
+      case 'offer_received':
+        return Icons.local_offer_outlined;
+      case 'offer_accepted':
+        return Icons.check_circle_outline;
+      case 'offer_rejected':
+        return Icons.cancel_outlined;
+      case 'order_completed':
+        return Icons.shopping_bag_outlined;
+      case 'sale_paid':
+        return Icons.attach_money;
+      case 'topup_confirmed':
+        return Icons.add_circle_outline;
+      case 'topup_rejected':
+        return Icons.remove_circle_outline;
+      case 'withdrawal_confirmed':
+        return Icons.arrow_circle_up_outlined;
+      case 'withdrawal_rejected':
+        return Icons.arrow_circle_down_outlined;
+      case 'verification_approved':
+        return Icons.verified_outlined;
+      case 'verification_rejected':
+        return Icons.error_outline;
+      case 'new_message':
+        return Icons.chat_bubble_outline;
+      case 'dispute_resolved':
+      case 'dispute_raised':
+        return Icons.gavel_outlined;
+      case 'account_banned':
+        return Icons.block;
+      case 'account_unbanned':
+        return Icons.check_circle_outline;
+      case 'wallet_adjusted':
+        return Icons.account_balance_wallet_outlined;
+      case 'referral_bonus':
+        return Icons.card_giftcard;
+      case 'promotion':
+        return Icons.campaign_outlined;
+      default:
+        return Icons.notifications_outlined;
     }
   }
 
@@ -86,11 +107,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         break;
 
       case 'order_completed':
+      case 'dispute_resolved':
         Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPurchasesScreen()));
         break;
 
-      case 'dispute_resolved':
-        Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPurchasesScreen()));
+      case 'sale_paid':
+      case 'dispute_raised':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const MySalesScreen()));
         break;
 
       case 'topup_confirmed':
@@ -123,7 +146,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         break;
 
       default:
-        // No specific screen for account_banned, account_unbanned, promotion — just show in-place
         break;
     }
   }
@@ -148,64 +170,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           final n = _notifications[i];
                           return ListTile(
                             onTap: () => _handleTap(n),
-                            leading: CircleAvatar(
-                              backgroundColor: AppColors.primary.withOpacity(0.15),
-                              child: Icon(_iconFor(n['type'] ?? ''), color: AppColors.primary, size: 20),
-                            ),
-                            title: Text(n['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                            subtitle: Text(n['body'] ?? '', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
-                            trailing: Text(_timeAgo(n['createdAt']), style: const TextStyle(color: AppColors.hint, fontSize: 10)),
-                          );
-                        },
-                      ),
-                    ),
-    );
-  }
-}
-
-  IconData _iconFor(String type) {
-    switch (type) {
-      case 'offer_received': return Icons.local_offer_outlined;
-      case 'offer_accepted': return Icons.check_circle_outline;
-      case 'offer_rejected': return Icons.cancel_outlined;
-      case 'order_completed': return Icons.shopping_bag_outlined;
-      case 'topup_confirmed': return Icons.add_circle_outline;
-      case 'withdrawal_confirmed': return Icons.arrow_circle_up_outlined;
-      case 'verification_approved': return Icons.verified_outlined;
-      case 'verification_rejected': return Icons.error_outline;
-      case 'new_message': return Icons.chat_bubble_outline;
-      default: return Icons.notifications_outlined;
-    }
-  }
-
-  String _timeAgo(String isoString) {
-    final dt = DateTime.parse(isoString).toLocal();
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Notifications')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
-              : _notifications.isEmpty
-                  ? const Center(child: Text('No notifications yet', style: TextStyle(color: AppColors.hint)))
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      color: AppColors.primary,
-                      child: ListView.builder(
-                        itemCount: _notifications.length,
-                        itemBuilder: (context, i) {
-                          final n = _notifications[i];
-                          return ListTile(
                             leading: CircleAvatar(
                               backgroundColor: AppColors.primary.withOpacity(0.15),
                               child: Icon(_iconFor(n['type'] ?? ''), color: AppColors.primary, size: 20),
