@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import 'sale_detail_screen.dart';
 
 class MySalesScreen extends StatefulWidget {
   const MySalesScreen({super.key});
@@ -57,38 +58,26 @@ class _MySalesScreenState extends State<MySalesScreen> {
                           final status = o['status'];
                           return Container(
                             margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: AppColors.border),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                          Text('Sale price: LKR ${(o['price'] as num).toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
-                                          Text('You receive: LKR ${(o['sellerPayout'] as num).toStringAsFixed(2)}', style: const TextStyle(color: Colors.greenAccent, fontSize: 12)),
-                                        ],
-                                      ),
-                                    ),
-                                    _StatusBadge(status: status),
-                                  ],
-                                ),
-                                if (status == 'escrow_held' && o['escrowReleaseAt'] != null) ...[
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Releases: ${DateTime.parse(o['escrowReleaseAt']).toLocal().toString().substring(0, 16)}',
-                                    style: const TextStyle(color: AppColors.hint, fontSize: 11),
-                                  ),
-                                ],
-                              ],
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(12),
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => SaleDetailScreen(order: Map<String, dynamic>.from(o))),
+                                );
+                                _load();
+                              },
+                              title: Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              subtitle: Text(
+                                'Sale: LKR ${(o['price'] as num).toStringAsFixed(2)} · You get: LKR ${(o['sellerPayout'] as num).toStringAsFixed(2)}',
+                                style: const TextStyle(color: AppColors.hint, fontSize: 12),
+                              ),
+                              trailing: _StatusBadge(status: status),
                             ),
                           );
                         },
