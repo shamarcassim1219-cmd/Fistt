@@ -118,9 +118,9 @@ class ApiService {
     await _handle(res);
   }
 
-  static Future<void> updateBankDetails(String bankName, String accountName, String accountNumber, String branch) async {
-    final res = await http.put(
-      Uri.parse('$baseUrl/user/bank-details'),
+  static Future<void> requestBankDetailsChange(String bankName, String accountName, String accountNumber, String branch) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/bank-details/request-change'),
       headers: await _headers(),
       body: jsonEncode({
         'bankName': bankName,
@@ -128,6 +128,15 @@ class ApiService {
         'accountNumber': accountNumber,
         'branch': branch,
       }),
+    );
+    await _handle(res);
+  }
+
+  static Future<void> confirmBankDetailsChange(String code) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/bank-details/confirm-change'),
+      headers: await _headers(),
+      body: jsonEncode({'code': code}),
     );
     await _handle(res);
   }
