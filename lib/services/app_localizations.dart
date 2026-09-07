@@ -21,7 +21,6 @@ class AppLocalizations {
   }
 
   static final Map<String, Map<String, String>> _translations = {
-    // ---------- Common ----------
     'app_name': {'English': 'MYGame Marketplace', 'Sinhala': 'MYGame වෙළඳපොළ', 'Tamil': 'MYGame சந்தை'},
     'login': {'English': 'Login', 'Sinhala': 'පිවිසෙන්න', 'Tamil': 'உள்நுழைய'},
     'sign_up': {'English': 'Sign Up', 'Sinhala': 'ලියාපදිංචි වන්න', 'Tamil': 'பதிவு செய்யவும்'},
@@ -44,7 +43,6 @@ class AppLocalizations {
     'yes': {'English': 'Yes', 'Sinhala': 'ඔව්', 'Tamil': 'ஆம்'},
     'no': {'English': 'No', 'Sinhala': 'නැත', 'Tamil': 'இல்லை'},
 
-    // ---------- Home / Navigation ----------
     'home': {'English': 'Home', 'Sinhala': 'මුල් පිටුව', 'Tamil': 'முகப்பு'},
     'wallet': {'English': 'Wallet', 'Sinhala': 'පසුම්බිය', 'Tamil': 'பணப்பை'},
     'sell': {'English': 'Sell', 'Sinhala': 'විකුණන්න', 'Tamil': 'விற்க'},
@@ -52,7 +50,6 @@ class AppLocalizations {
     'settings': {'English': 'Settings', 'Sinhala': 'සැකසුම්', 'Tamil': 'அமைப்புகள்'},
     'search_accounts': {'English': 'Search accounts...', 'Sinhala': 'ගිණුම් සොයන්න...', 'Tamil': 'கணக்குகளைத் தேடு...'},
 
-    // ---------- Settings screen ----------
     'account': {'English': 'Account', 'Sinhala': 'ගිණුම', 'Tamil': 'கணக்கு'},
     'profile_management': {'English': 'Profile Management', 'Sinhala': 'පැතිකඩ කළමනාකරණය', 'Tamil': 'சுயவிவர மேலாண்மை'},
     'change_password': {'English': 'Change Password / PIN', 'Sinhala': 'මුරපදය වෙනස් කරන්න', 'Tamil': 'கடவுச்சொல்லை மாற்றவும்'},
@@ -76,7 +73,6 @@ class AppLocalizations {
     'report_problem': {'English': 'Report a Problem / Contact Admin', 'Sinhala': 'ගැටළුවක් වාර්තා කරන්න', 'Tamil': 'சிக்கலைப் புகாரளிக்கவும்'},
     'delete_account': {'English': 'Delete Account', 'Sinhala': 'ගිණුම මකන්න', 'Tamil': 'கணக்கை நீக்கு'},
 
-    // ---------- Login/Register ----------
     'welcome_back': {'English': 'Welcome back', 'Sinhala': 'නැවත සාදරයෙන් පිළිගනිමු', 'Tamil': 'மீண்டும் வரவேற்கிறோம்'},
     'login_to_continue': {'English': 'Login to continue', 'Sinhala': 'ඉදිරියට යාමට පිවිසෙන්න', 'Tamil': 'தொடர உள்நுழையவும்'},
     'create_account': {'English': 'Create account', 'Sinhala': 'ගිණුමක් සාදන්න', 'Tamil': 'கணக்கை உருவாக்கு'},
@@ -85,13 +81,23 @@ class AppLocalizations {
     'dont_have_account': {'English': "Don't have an account? ", 'Sinhala': 'ගිණුමක් නැද්ද? ', 'Tamil': 'கணக்கு இல்லையா? '},
     'already_have_account': {'English': 'Already have an account? ', 'Sinhala': 'දැනටමත් ගිණුමක් තිබේද? ', 'Tamil': 'ஏற்கனவே கணக்கு உள்ளதா? '},
 
-    // ---------- Wallet ----------
     'available_balance': {'English': 'Available Balance', 'Sinhala': 'ලබා ගත හැකි ශේෂය', 'Tamil': 'கிடைக்கும் இருப்பு'},
+    'my_wallet': {'English': 'My Wallet', 'Sinhala': 'මගේ පසුම්බිය', 'Tamil': 'எனது பணப்பை'},
+    'top_up': {'English': 'Top Up', 'Sinhala': 'රීචාර්ජ් කරන්න', 'Tamil': 'நிரப்பு'},
     'top_up_wallet': {'English': 'Top Up Wallet', 'Sinhala': 'පසුම්බිය රීචාර්ජ් කරන්න', 'Tamil': 'பணப்பையை நிரப்பு'},
     'withdraw': {'English': 'Withdraw', 'Sinhala': 'ආපසු ගන්න', 'Tamil': 'திரும்பப் பெறு'},
+    'withdraw_to_bank': {'English': 'Withdraw to Bank', 'Sinhala': 'බැංකුවට ආපසු ගන්න', 'Tamil': 'வங்கிக்குத் திரும்பப் பெறு'},
     'transaction_history': {'English': 'Transaction History', 'Sinhala': 'ගනුදෙනු ඉතිහාසය', 'Tamil': 'பரிவர்த்தனை வரலாறு'},
+    'no_transactions': {'English': 'No transactions yet', 'Sinhala': 'තවම ගනුදෙනු නැත', 'Tamil': 'இன்னும் பரிவர்த்தனைகள் இல்லை'},
+    'retry': {'English': 'Retry', 'Sinhala': 'නැවත උත්සාහ කරන්න', 'Tamil': 'மீண்டும் முயற்சிக்கவும்'},
+    'amount_lkr': {'English': 'Amount (LKR)', 'Sinhala': 'මුදල (රු)', 'Tamil': 'தொகை (LKR)'},
+    'deposit_to_account': {'English': 'Deposit to this account', 'Sinhala': 'මෙම ගිණුමට තැන්පත් කරන්න', 'Tamil': 'இந்த கணக்கில் டெபாசிட் செய்யவும்'},
+    'upload_bank_slip': {'English': 'Upload Bank Slip', 'Sinhala': 'බැංකු පත්‍රිකාව උඩුගත කරන්න', 'Tamil': 'வங்கி நழுவலைப் பதிவேற்றவும்'},
+    'tap_upload_slip': {'English': 'Tap to upload slip', 'Sinhala': 'පත්‍රිකාව උඩුගත කිරීමට ස්පර්ශ කරන්න', 'Tamil': 'ஸ்லிப்பைப் பதிவேற்ற தட்டவும்'},
+    'submit_topup': {'English': 'Submit Top-Up', 'Sinhala': 'රීචාර්ජ් ඉදිරිපත් කරන්න', 'Tamil': 'நிரப்புதலைச் சமர்ப்பிக்கவும்'},
+    'request_withdrawal': {'English': 'Request Withdrawal', 'Sinhala': 'ආපසු ගැනීමට ඉල්ලන්න', 'Tamil': 'திரும்பப்பெறலைக் கோரவும்'},
+    'available_colon': {'English': 'Available: LKR', 'Sinhala': 'ලබාගත හැක: රු', 'Tamil': 'கிடைக்கும்: LKR'},
 
-    // ---------- Listings ----------
     'buy_now': {'English': 'Buy Now', 'Sinhala': 'දැන් මිලදී ගන්න', 'Tamil': 'இப்போது வாங்கு'},
     'make_an_offer': {'English': 'Make an Offer', 'Sinhala': 'දීමනාවක් කරන්න', 'Tamil': 'சலுகை செய்யவும்'},
     'place_a_bid': {'English': 'Place a Bid', 'Sinhala': 'ලංසුවක් තබන්න', 'Tamil': 'ஏலம் வையுங்கள்'},

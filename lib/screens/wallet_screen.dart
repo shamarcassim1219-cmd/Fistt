@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -46,91 +47,96 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('My Wallet')),
-      body: Container(
-        color: AppColors.bg,
-        width: double.infinity,
-        height: double.infinity,
-        child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-            : _error != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
-                          const SizedBox(height: 12),
-                          Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13), textAlign: TextAlign.center),
-                          const SizedBox(height: 16),
-                          OutlinedButton(onPressed: _load, child: const Text('Retry')),
-                        ],
-                      ),
-                    ),
-                  )
-                : RefreshIndicator(
-                    onRefresh: _load,
-                    color: AppColors.primary,
-                    child: ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        Container(
-                          width: double.infinity,
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(title: Text(AppLocalizations.t('my_wallet'))),
+          body: Container(
+            color: AppColors.bg,
+            width: double.infinity,
+            height: double.infinity,
+            child: _loading
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                : _error != null
+                    ? Center(
+                        child: Padding(
                           padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF4A2FD6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Available Balance', style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13)),
-                              const SizedBox(height: 6),
-                              Text('LKR ${_balance.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+                              const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+                              const SizedBox(height: 12),
+                              Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13), textAlign: TextAlign.center),
+                              const SizedBox(height: 16),
+                              OutlinedButton(onPressed: _load, child: Text(AppLocalizations.t('retry'))),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Row(
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _load,
+                        color: AppColors.primary,
+                        child: ListView(
+                          padding: const EdgeInsets.all(16),
                           children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _showTopUpSheet(context),
-                                icon: const Icon(Icons.add_circle_outline),
-                                label: const Text('Top Up'),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF4A2FD6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(AppLocalizations.t('available_balance'), style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13)),
+                                  const SizedBox(height: 6),
+                                  Text('LKR ${_balance.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => _showWithdrawSheet(context, _balance),
-                                icon: const Icon(Icons.arrow_circle_up_outlined),
-                                label: const Text('Withdraw'),
-                              ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _showTopUpSheet(context),
+                                    icon: const Icon(Icons.add_circle_outline),
+                                    label: Text(AppLocalizations.t('top_up')),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _showWithdrawSheet(context, _balance),
+                                    icon: const Icon(Icons.arrow_circle_up_outlined),
+                                    label: Text(AppLocalizations.t('withdraw')),
+                                  ),
+                                ),
+                              ],
                             ),
+                            const SizedBox(height: 24),
+                            Text(AppLocalizations.t('transaction_history'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary)),
+                            const SizedBox(height: 8),
+                            if (_transactions.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 30),
+                                child: Center(child: Text(AppLocalizations.t('no_transactions'), style: const TextStyle(color: AppColors.hint))),
+                              )
+                            else
+                              ..._transactions.map((tx) => _TransactionTile(
+                                    type: tx['type'] ?? 'unknown',
+                                    amount: (tx['amount'] as num?)?.toDouble() ?? 0,
+                                    status: tx['status'] ?? 'pending',
+                                  )),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                        const Text('Transaction History', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary)),
-                        const SizedBox(height: 8),
-                        if (_transactions.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 30),
-                            child: Center(child: Text('No transactions yet', style: TextStyle(color: AppColors.hint))),
-                          )
-                        else
-                          ..._transactions.map((tx) => _TransactionTile(
-                                type: tx['type'] ?? 'unknown',
-                                amount: (tx['amount'] as num?)?.toDouble() ?? 0,
-                                status: tx['status'] ?? 'pending',
-                              )),
-                      ],
-                    ),
-                  ),
-      ),
+                      ),
+          ),
+        );
+      },
     );
   }
 
@@ -169,12 +175,12 @@ class _WalletScreenState extends State<WalletScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Top Up Wallet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(AppLocalizations.t('top_up_wallet'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                   const SizedBox(height: 16),
                   if (loadingBankDetails)
                     const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(color: AppColors.primary)))
                   else if (bankDetails != null) ...[
-                    const Text('Deposit to this account', style: TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text(AppLocalizations.t('deposit_to_account'), style: const TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Container(
                       width: double.infinity,
@@ -199,10 +205,10 @@ class _WalletScreenState extends State<WalletScreen> {
                     controller: amountCtrl,
                     keyboardType: TextInputType.number,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(labelText: 'Amount (LKR)'),
+                    decoration: InputDecoration(labelText: AppLocalizations.t('amount_lkr')),
                   ),
                   const SizedBox(height: 12),
-                  const Text('Upload Bank Slip', style: TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text(AppLocalizations.t('upload_bank_slip'), style: const TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   InkWell(
                     onTap: () async {
@@ -221,12 +227,12 @@ class _WalletScreenState extends State<WalletScreen> {
                               borderRadius: BorderRadius.circular(10),
                               child: Image.file(slipFile!, fit: BoxFit.cover, width: double.infinity, height: double.infinity),
                             )
-                          : const Column(
+                          : Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.upload_file_outlined, color: AppColors.hint, size: 28),
-                                SizedBox(height: 6),
-                                Text('Tap to upload slip', style: TextStyle(color: AppColors.hint, fontSize: 12)),
+                                const Icon(Icons.upload_file_outlined, color: AppColors.hint, size: 28),
+                                const SizedBox(height: 6),
+                                Text(AppLocalizations.t('tap_upload_slip'), style: const TextStyle(color: AppColors.hint, fontSize: 12)),
                               ],
                             ),
                     ),
@@ -270,7 +276,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       },
                       child: submitting
                           ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                          : const Text('Submit Top-Up'),
+                          : Text(AppLocalizations.t('submit_topup')),
                     ),
                   ),
                 ],
@@ -296,15 +302,15 @@ class _WalletScreenState extends State<WalletScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Withdraw to Bank', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(AppLocalizations.t('withdraw_to_bank'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
               const SizedBox(height: 4),
-              Text('Available: LKR ${balance.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, color: AppColors.hint)),
+              Text('${AppLocalizations.t('available_colon')} ${balance.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, color: AppColors.hint)),
               const SizedBox(height: 16),
               TextField(
                 controller: amountCtrl,
                 keyboardType: TextInputType.number,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Amount (LKR)'),
+                decoration: InputDecoration(labelText: AppLocalizations.t('amount_lkr')),
               ),
               const SizedBox(height: 12),
               const Text(
@@ -334,7 +340,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   },
                   child: submitting
                       ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                      : const Text('Request Withdrawal'),
+                      : Text(AppLocalizations.t('request_withdrawal')),
                 ),
               ),
             ],
