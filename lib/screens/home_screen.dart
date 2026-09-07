@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 import 'settings_screen.dart';
 import 'add_listing_screen.dart';
 import 'wallet_screen.dart';
@@ -31,27 +32,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: _pages[_tab],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.account_balance_wallet_outlined), selectedIcon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
-          NavigationDestination(icon: Icon(Icons.add_box_outlined), selectedIcon: Icon(Icons.add_box), label: 'Sell'),
-          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: 'Chats'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Settings'),
-        ],
-      ),
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          body: _pages[_tab],
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _tab,
+            onDestinationSelected: (i) => setState(() => _tab = i),
+            destinations: [
+              NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: AppLocalizations.t('home')),
+              NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined), selectedIcon: const Icon(Icons.account_balance_wallet), label: AppLocalizations.t('wallet')),
+              NavigationDestination(icon: const Icon(Icons.add_box_outlined), selectedIcon: const Icon(Icons.add_box), label: AppLocalizations.t('sell')),
+              NavigationDestination(icon: const Icon(Icons.chat_bubble_outline), selectedIcon: const Icon(Icons.chat_bubble), label: AppLocalizations.t('chats')),
+              NavigationDestination(icon: const Icon(Icons.settings_outlined), selectedIcon: const Icon(Icons.settings), label: AppLocalizations.t('settings')),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-/// Checks for the special "BANNED:<reason>" exception thrown by ApiService,
-/// and if found, clears the session and navigates to the BannedScreen.
-/// Returns true if the error was a ban (caller should stop further handling).
 Future<bool> handleBannedError(BuildContext context, Object error) async {
   final errorStr = error.toString();
   if (errorStr.contains('BANNED:')) {
@@ -152,9 +155,9 @@ class _HomeTabState extends State<_HomeTab> {
                       : null,
                 ),
                 const SizedBox(width: 10),
-                const Expanded(
-                  child: Text('MYGame Marketplace',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                Expanded(
+                  child: Text(AppLocalizations.t('app_name'),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
                 Stack(
                   clipBehavior: Clip.none,
@@ -191,7 +194,7 @@ class _HomeTabState extends State<_HomeTab> {
             child: TextField(
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: 'Search accounts...',
+                hintText: AppLocalizations.t('search_accounts'),
                 prefixIcon: const Icon(Icons.search, color: AppColors.hint),
               ),
             ),
@@ -345,9 +348,9 @@ class _ChatsTabState extends State<_ChatsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Text('Chats', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+            child: Text(AppLocalizations.t('chats'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
           ),
           Expanded(
             child: _loading
