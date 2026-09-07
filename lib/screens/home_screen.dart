@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import '../services/games_list.dart';
 import 'settings_screen.dart';
 import 'add_listing_screen.dart';
 import 'wallet_screen.dart';
@@ -82,7 +83,6 @@ class _HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<_HomeTab> {
-  final categories = ['PUBG', 'Free Fire', 'CODM', 'MLBB'];
   String? _selectedGame;
   String _sort = 'newest';
   List<dynamic> _listings = [];
@@ -171,9 +171,9 @@ class _HomeTabState extends State<_HomeTab> {
       builder: (ctx) => SafeArea(
         child: Wrap(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('Sort By', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14)),
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Sort By', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14)),
             ),
             ..._sortLabels.entries.map((e) => ListTile(
                   title: Text(e.value, style: const TextStyle(color: Colors.white)),
@@ -185,6 +185,71 @@ class _HomeTabState extends State<_HomeTab> {
                   },
                 )),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showGameFilterSheet() {
+    final searchCtrl = TextEditingController();
+    List<String> filtered = List.from(GamesList.games);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(ctx).viewInsets.bottom + 16),
+          child: SizedBox(
+            height: MediaQuery.of(ctx).size.height * 0.7,
+            child: Column(
+              children: [
+                const Text('Filter by Game', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: searchCtrl,
+                  autofocus: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: 'Search games...',
+                    prefixIcon: Icon(Icons.search, color: AppColors.hint),
+                  ),
+                  onChanged: (v) {
+                    setModalState(() {
+                      filtered = GamesList.games.where((g) => g.toLowerCase().contains(v.toLowerCase())).toList();
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      ListTile(
+                        title: const Text('All Games', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        trailing: _selectedGame == null ? const Icon(Icons.check, color: AppColors.primary) : null,
+                        onTap: () {
+                          setState(() => _selectedGame = null);
+                          Navigator.pop(ctx);
+                          _loadListings();
+                        },
+                      ),
+                      const Divider(color: AppColors.border),
+                      ...filtered.map((g) => ListTile(
+                            title: Text(g, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                            trailing: _selectedGame == g ? const Icon(Icons.check, color: AppColors.primary) : null,
+                            onTap: () {
+                              setState(() => _selectedGame = g);
+                              Navigator.pop(ctx);
+                              _loadListings();
+                            },
+                          )),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -283,30 +348,34 @@ class _HomeTabState extends State<_HomeTab> {
               ],
             ),
           ),
-          SizedBox(
-            height: 44,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: categories.map((c) {
-                final selected = c == _selectedGame;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(c, style: TextStyle(color: selected ? Colors.white : AppColors.hint)),
-                    selected: selected,
-                    onSelected: (_) {
-                      setState(() => _selectedGame = selected ? null : c);
-                      _loadListings();
-                    },
-                    backgroundColor: AppColors.fieldFill,
-                    selectedColor: AppColors.primary.withOpacity(0.3),
-                    side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
-                  ),
-                );
-              }).toList(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: InkWell(
+              onTap: _showGameFilterSheet,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: _selectedGame != null ? AppColors.primary.withOpacity(0.15) : AppColors.fieldFill,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: _selectedGame != null ? AppColors.primary : AppColors.border),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.videogame_asset_outlined, size: 16, color: _selectedGame != null ? AppColors.primary : AppColors.hint),
+                    const SizedBox(width: 6),
+                    Text(
+                      _selectedGame ?? 'All Games',
+                      style: TextStyle(color: _selectedGame != null ? Colors.white : AppColors.hint, fontSize: 13),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.arrow_drop_down, size: 18, color: _selectedGame != null ? AppColors.primary : AppColors.hint),
+                  ],
+                ),
+              ),
             ),
           ),
+          const SizedBox(height: 8),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
