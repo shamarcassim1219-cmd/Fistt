@@ -245,18 +245,12 @@ class _AddListingScreenState extends State<AddListingScreen> {
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(labelText: '${AppLocalizations.t('price')} (LKR)', prefixText: 'LKR '),
-                    onChanged: (_) => setState(() {}),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) return 'Required';
                       if (double.tryParse(v.trim()) == null) return 'Enter a valid number';
                       return null;
                     },
                   ),
-                  if (_priceCtrl.text.isNotEmpty && double.tryParse(_priceCtrl.text.trim()) != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: _CommissionPreview(price: double.parse(_priceCtrl.text.trim())),
-                    ),
 
                   const SizedBox(height: 16),
                   Container(
@@ -400,43 +394,6 @@ class _SectionLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primary)),
-    );
-  }
-}
-
-class _CommissionPreview extends StatelessWidget {
-  final double price;
-  const _CommissionPreview({required this.price});
-
-  @override
-  Widget build(BuildContext context) {
-    final commission = price * 0.15;
-    final youGet = price - commission;
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.border)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _row(AppLocalizations.t('listing_price_lkr'), 'LKR ${price.toStringAsFixed(2)}'),
-          _row('${AppLocalizations.t('platform_commission')} (15%)', '- LKR ${commission.toStringAsFixed(2)}'),
-          const Divider(height: 12, color: AppColors.border),
-          _row(AppLocalizations.t('you_receive'), 'LKR ${youGet.toStringAsFixed(2)}', bold: true),
-        ],
-      ),
-    );
-  }
-
-  Widget _row(String label, String value, {bool bold = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.85), fontWeight: bold ? FontWeight.bold : null)),
-          Text(value, style: TextStyle(fontSize: 12, color: Colors.white, fontWeight: bold ? FontWeight.bold : null)),
-        ],
-      ),
     );
   }
 }
