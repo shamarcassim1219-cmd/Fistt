@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 
 class OffersScreen extends StatefulWidget {
   const OffersScreen({super.key});
@@ -73,35 +74,40 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        title: const Text('Offers'),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppColors.primary,
-          labelColor: Colors.white,
-          unselectedLabelColor: AppColors.hint,
-          tabs: const [Tab(text: 'Received'), Tab(text: 'Sent')],
-        ),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _receivedList(),
-                    _sentList(),
-                  ],
-                ),
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(
+            title: Text(AppLocalizations.t('offers')),
+            bottom: TabBar(
+              controller: _tabController,
+              indicatorColor: AppColors.primary,
+              labelColor: Colors.white,
+              unselectedLabelColor: AppColors.hint,
+              tabs: [Tab(text: AppLocalizations.t('received')), Tab(text: AppLocalizations.t('sent'))],
+            ),
+          ),
+          body: _loading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : _error != null
+                  ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _receivedList(),
+                        _sentList(),
+                      ],
+                    ),
+        );
+      },
     );
   }
 
   Widget _receivedList() {
     if (_received.isEmpty) {
-      return const Center(child: Text('No offers received yet', style: TextStyle(color: AppColors.hint)));
+      return Center(child: Text(AppLocalizations.t('no_offers_received'), style: const TextStyle(color: AppColors.hint)));
     }
     return RefreshIndicator(
       onRefresh: _load,
@@ -126,7 +132,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          Text('From ${o['buyerEmail']}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                          Text('${AppLocalizations.t('from')} ${o['buyerEmail']}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -138,11 +144,11 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton(onPressed: () => _reject(o['id']), child: const Text('Reject')),
+                        child: OutlinedButton(onPressed: () => _reject(o['id']), child: Text(AppLocalizations.t('reject'))),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: ElevatedButton(onPressed: () => _accept(o['id']), child: const Text('Accept')),
+                        child: ElevatedButton(onPressed: () => _accept(o['id']), child: Text(AppLocalizations.t('accept'))),
                       ),
                     ],
                   ),
@@ -161,7 +167,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
 
   Widget _sentList() {
     if (_sent.isEmpty) {
-      return const Center(child: Text('No offers sent yet', style: TextStyle(color: AppColors.hint)));
+      return Center(child: Text(AppLocalizations.t('no_offers_sent'), style: const TextStyle(color: AppColors.hint)));
     }
     return RefreshIndicator(
       onRefresh: _load,
@@ -190,7 +196,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      Text('Your offer: LKR ${(o['amount'] as num).toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                      Text('${AppLocalizations.t('your_offer_colon')}: LKR ${(o['amount'] as num).toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
                     ],
                   ),
                 ),
@@ -211,10 +217,10 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final map = {
-      'pending': ('Pending', Colors.orangeAccent),
-      'accepted': ('Accepted', Colors.greenAccent),
-      'rejected': ('Rejected', Colors.redAccent),
-      'expired': ('Expired', AppColors.hint),
+      'pending': (AppLocalizations.t('pending'), Colors.orangeAccent),
+      'accepted': (AppLocalizations.t('completed'), Colors.greenAccent),
+      'rejected': (AppLocalizations.t('rejected'), Colors.redAccent),
+      'expired': (AppLocalizations.t('expired'), AppColors.hint),
     };
     final (label, color) = map[status] ?? (status, AppColors.hint);
     return Chip(

@@ -175,5 +175,26 @@ class AppLocalizations {
     'driving_license': {'English': 'Driving License', 'Sinhala': 'රියදුරු බලපත්‍රය', 'Tamil': 'ஓட்டுநர் உரிமம்'},
     'submit_for_review': {'English': 'Submit for Review', 'Sinhala': 'සමාලෝචනය සඳහා ඉදිරිපත් කරන්න', 'Tamil': 'மறுஆய்வுக்கு சமர்ப்பிக்கவும்'},
     'take_selfie': {'English': 'Take a Selfie', 'Sinhala': 'සෙල්ෆියක් ගන්න', 'Tamil': 'செல்ஃபி எடுக்கவும்'},
+
+    'notify_admin_overdue': {'English': 'Notify Admin — Review Overdue', 'Sinhala': 'පරිපාලකට දැනුම් දෙන්න — සමාලෝචනය ප්‍රමාද වී ඇත', 'Tamil': 'நிர்வாகிக்கு அறிவிக்கவும் — மறுஆய்வு தாமதமானது'},
+    'admin_verifying': {'English': 'Admin is verifying this account', 'Sinhala': 'පරිපාලක මෙම ගිණුම තහවුරු කරමින් සිටී', 'Tamil': 'நிர்வாகி இந்த கணக்கை சரிபார்க்கிறார்'},
+    'admin_notify_message': {'English': 'You will be notified once credentials are shared. Usually within 1 hour.', 'Sinhala': 'අක්තපත්‍ර බෙදාගත් වහාම ඔබට දැනුම් දෙනු ලැබේ. සාමාන්‍යයෙන් පැයක් ඇතුළත.', 'Tamil': 'சான்றுகள் பகிரப்பட்டவுடன் உங்களுக்கு அறிவிக்கப்படும். வழக்கமாக 1 மணி நேரத்திற்குள்.'},
+    'dispute_under_review': {'English': 'This order is under dispute review by admin.', 'Sinhala': 'මෙම ඇණවුම පරිපාලක විසින් ආරවුල් සමාලෝචනය කරමින් සිටී.', 'Tamil': 'இந்த ஆர்டர் நிர்வாகியால் தகராறு மறுஆய்வில் உள்ளது.'},
+    'you_receive': {'English': 'You Receive', 'Sinhala': 'ඔබ ලබා ගනී', 'Tamil': 'நீங்கள் பெறுவீர்கள்'},
+    'until_payout': {'English': 'until payout', 'Sinhala': 'ගෙවීම දක්වා', 'Tamil': 'கொடுப்பனவு வரை'},
+    'releasing_soon': {'English': 'Releasing soon', 'Sinhala': 'ඉක්මනින් නිකුත් වේ', 'Tamil': 'விரைவில் வெளியிடப்படும்'},
+    'payment_released': {'English': 'Payment has been released to your wallet.', 'Sinhala': 'ගෙවීම ඔබේ පසුම්බියට නිකුත් කර ඇත.', 'Tamil': 'கட்டணம் உங்கள் பணப்பைக்கு வெளியிடப்பட்டது.'},
+    'sale_under_dispute': {'English': 'This sale is under dispute review by admin.', 'Sinhala': 'මෙම විකුණුම පරිපාලක විසින් ආරවුල් සමාලෝචනය කරමින් සිටී.', 'Tamil': 'இந்த விற்பனை நிர்வாகியால் தகராறு மறுஆய்வில் உள்ளது.'},
+
+    'received': {'English': 'Received', 'Sinhala': 'ලැබුණි', 'Tamil': 'பெறப்பட்டது'},
+    'sent': {'English': 'Sent', 'Sinhala': 'යවන ලදී', 'Tamil': 'அனுப்பப்பட்டது'},
+    'no_offers_received': {'English': 'No offers received yet', 'Sinhala': 'තවම දීමනා ලැබී නැත', 'Tamil': 'இன்னும் சலுகைகள் பெறப்படவில்லை'},
+    'no_offers_sent': {'English': 'No offers sent yet', 'Sinhala': 'තවම දීමනා යවා නැත', 'Tamil': 'இன்னும் சலுகைகள் அனுப்பப்படவில்லை'},
+    'accept': {'English': 'Accept', 'Sinhala': 'පිළිගන්න', 'Tamil': 'ஏற்கவும்'},
+    'reject': {'English': 'Reject', 'Sinhala': 'ප්‍රතික්ෂේප කරන්න', 'Tamil': 'நிராகரி'},
+    'rejected': {'English': 'Rejected', 'Sinhala': 'ප්‍රතික්ෂේප කරන ලදී', 'Tamil': 'நிராகரிக்கப்பட்டது'},
+    'expired': {'English': 'Expired', 'Sinhala': 'කල් ඉකුත් විය', 'Tamil': 'காலாவதியானது'},
+    'from': {'English': 'From', 'Sinhala': 'වෙතින්', 'Tamil': 'இருந்து'},
+    'your_offer_colon': {'English': 'Your offer', 'Sinhala': 'ඔබේ දීමනාව', 'Tamil': 'உங்கள் சலுகை'},
   };
 }

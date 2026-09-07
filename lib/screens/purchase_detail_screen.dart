@@ -1,7 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 import 'vault_reveal_screen.dart';
 import 'admin_chat_screen.dart';
 
@@ -15,32 +15,19 @@ class PurchaseDetailScreen extends StatefulWidget {
 
 class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
   late Map<String, dynamic> _order;
-  Timer? _timer;
-  bool _deadlinePassed = false;
   bool _notifying = false;
 
   @override
   void initState() {
     super.initState();
     _order = widget.order;
-    _checkDeadline();
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) => _checkDeadline());
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  void _checkDeadline() {
+  bool get _deadlinePassed {
     final deadlineStr = _order['adminReviewDeadline'];
-    if (deadlineStr == null || _order['adminReviewed'] == true) return;
+    if (deadlineStr == null || _order['adminReviewed'] == true) return false;
     final deadline = DateTime.parse(deadlineStr).toLocal();
-    final passed = DateTime.now().isAfter(deadline);
-    if (mounted && passed != _deadlinePassed) {
-      setState(() => _deadlinePassed = passed);
-    }
+    return DateTime.now().isAfter(deadline);
   }
 
   Future<void> _notifyAdmin() async {
@@ -65,7 +52,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: AppColors.surface,
-          title: const Text('Raise a Dispute', style: TextStyle(color: Colors.white)),
+          title: Text(AppLocalizations.t('raise_dispute'), style: const TextStyle(color: Colors.white)),
           content: TextField(
             controller: reasonCtrl,
             maxLines: 4,
@@ -73,7 +60,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
             decoration: const InputDecoration(hintText: 'Describe the issue with this account...'),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.t('cancel'))),
             ElevatedButton(
               onPressed: sending ? null : () async {
                 if (reasonCtrl.text.trim().isEmpty) return;
@@ -92,7 +79,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
               },
               child: sending
                   ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                  : const Text('Submit'),
+                  : Text(AppLocalizations.t('submit')),
             ),
           ],
         ),
@@ -102,155 +89,157 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenshots = (_order['screenshots'] as List?) ?? [];
-    final status = _order['status'];
-    final adminReviewed = _order['adminReviewed'] == true;
-    final canViewVault = status != 'disputed' && adminReviewed;
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        final screenshots = (_order['screenshots'] as List?) ?? [];
+        final status = _order['status'];
+        final adminReviewed = _order['adminReviewed'] == true;
+        final canViewVault = status != 'disputed' && adminReviewed;
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Purchase Details')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          if (screenshots.isNotEmpty)
-            SizedBox(
-              height: 200,
-              child: PageView(
-                children: screenshots.map<Widget>((url) => ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(url, fit: BoxFit.cover, width: double.infinity),
-                    )).toList(),
-              ),
-            ),
-          const SizedBox(height: 16),
-          Text(_order['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 6),
-          Chip(
-            label: Text(_order['game'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 12)),
-            backgroundColor: AppColors.fieldFill,
-            side: const BorderSide(color: AppColors.border),
-          ),
-          const SizedBox(height: 20),
-
-          Container(
-            width: double.infinity,
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(title: Text('${AppLocalizations.t('my_purchases')} Details')),
+          body: ListView(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _row('Order ID', '#${_order['id']}'),
-                _row('Amount Paid', 'LKR ${(_order['price'] as num).toStringAsFixed(2)}'),
-                _row('Status', _statusLabel(status)),
-                if (_order['createdAt'] != null)
-                  _row('Purchased On', DateTime.parse(_order['createdAt']).toLocal().toString().substring(0, 16)),
-              ],
-            ),
-          ),
-
-          if (!adminReviewed && status != 'disputed') ...[
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orangeAccent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.orangeAccent.withOpacity(0.4)),
+            children: [
+              if (screenshots.isNotEmpty)
+                SizedBox(
+                  height: 200,
+                  child: PageView(
+                    children: screenshots.map<Widget>((url) => ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(url, fit: BoxFit.cover, width: double.infinity),
+                        )).toList(),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              Text(_order['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              Chip(
+                label: Text(_order['game'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                backgroundColor: AppColors.fieldFill,
+                side: const BorderSide(color: AppColors.border),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
+              const SizedBox(height: 20),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _row(AppLocalizations.t('order_id'), '#${_order['id']}'),
+                    _row(AppLocalizations.t('amount_paid'), 'LKR ${(_order['price'] as num).toStringAsFixed(2)}'),
+                    _row(AppLocalizations.t('status'), _statusLabel(status)),
+                    if (_order['createdAt'] != null)
+                      _row(AppLocalizations.t('purchased_on'), DateTime.parse(_order['createdAt']).toLocal().toString().substring(0, 16)),
+                  ],
+                ),
+              ),
+
+              if (!adminReviewed && status != 'disputed') ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.orangeAccent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.orangeAccent.withOpacity(0.4)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.hourglass_top_outlined, color: Colors.orangeAccent, size: 20),
-                      SizedBox(width: 8),
-                      Text('Admin is verifying this account', style: TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold, fontSize: 13)),
+                      Row(
+                        children: [
+                          const Icon(Icons.hourglass_top_outlined, color: Colors.orangeAccent, size: 20),
+                          const SizedBox(width: 8),
+                          Text(AppLocalizations.t('admin_verifying'), style: const TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold, fontSize: 13)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(AppLocalizations.t('admin_notify_message'), style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                      if (_deadlinePassed) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _notifying ? null : _notifyAdmin,
+                            icon: _notifying
+                                ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                                : const Icon(Icons.notifications_active_outlined, size: 16, color: Colors.orangeAccent),
+                            label: Text(AppLocalizations.t('notify_admin_overdue'), style: const TextStyle(color: Colors.orangeAccent)),
+                            style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.orangeAccent)),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'You will be notified once credentials are shared. Usually within 1 hour.',
-                    style: TextStyle(color: AppColors.hint, fontSize: 12),
+                ),
+              ],
+
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => AdminChatScreen(orderId: _order['id'])));
+                  },
+                  icon: const Icon(Icons.support_agent_outlined),
+                  label: Text(AppLocalizations.t('chat_with_admin')),
+                ),
+              ),
+
+              if (canViewVault) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => VaultRevealScreen(orderId: _order['id'])));
+                    },
+                    icon: const Icon(Icons.lock_open_outlined),
+                    label: Text(AppLocalizations.t('view_credentials')),
                   ),
-                  if (_deadlinePassed) ...[
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _notifying ? null : _notifyAdmin,
-                        icon: _notifying
-                            ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.notifications_active_outlined, size: 16, color: Colors.orangeAccent),
-                        label: const Text('Notify Admin — Review Overdue', style: TextStyle(color: Colors.orangeAccent)),
-                        style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.orangeAccent)),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
+                ),
+              ],
 
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => AdminChatScreen(orderId: _order['id'])));
-              },
-              icon: const Icon(Icons.support_agent_outlined),
-              label: const Text('Chat with Admin'),
-            ),
+              if (status == 'escrow_held') ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: OutlinedButton.icon(
+                    onPressed: _showDisputeDialog,
+                    icon: const Icon(Icons.report_problem_outlined, color: Colors.orangeAccent),
+                    label: Text(AppLocalizations.t('raise_dispute'), style: const TextStyle(color: Colors.orangeAccent)),
+                    style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.orangeAccent)),
+                  ),
+                ),
+              ] else if (status == 'disputed')
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.redAccent.withOpacity(0.4))),
+                  child: Text(AppLocalizations.t('dispute_under_review'), style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                ),
+            ],
           ),
-
-          if (canViewVault) ...[
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => VaultRevealScreen(orderId: _order['id'])));
-                },
-                icon: const Icon(Icons.lock_open_outlined),
-                label: const Text('View Account Credentials'),
-              ),
-            ),
-          ],
-
-          if (status == 'escrow_held') ...[
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: OutlinedButton.icon(
-                onPressed: _showDisputeDialog,
-                icon: const Icon(Icons.report_problem_outlined, color: Colors.orangeAccent),
-                label: const Text('Raise a Dispute', style: TextStyle(color: Colors.orangeAccent)),
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.orangeAccent)),
-              ),
-            ),
-          ] else if (status == 'disputed')
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.redAccent.withOpacity(0.4))),
-              child: const Text('This order is under dispute review by admin.', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   String _statusLabel(String status) {
     final map = {
-      'escrow_held': 'In Escrow',
-      'completed': 'Completed',
-      'disputed': 'Disputed',
-      'refunded': 'Refunded',
+      'escrow_held': AppLocalizations.t('in_escrow'),
+      'completed': AppLocalizations.t('completed'),
+      'disputed': AppLocalizations.t('disputed'),
+      'refunded': AppLocalizations.t('refunded'),
     };
     return map[status] ?? status;
   }
