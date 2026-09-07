@@ -140,7 +140,38 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 24),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: PopupMenuButton<String>(
+                        initialValue: lang,
+                        color: AppColors.surface,
+                        onSelected: (choice) => AppLocalizations.setLanguage(choice),
+                        itemBuilder: (ctx) => ['English', 'Sinhala', 'Tamil']
+                            .map((l) => PopupMenuItem(
+                                  value: l,
+                                  child: Text(l, style: const TextStyle(color: Colors.white)),
+                                ))
+                            .toList(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.fieldFill,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.language, size: 16, color: AppColors.hint),
+                              const SizedBox(width: 6),
+                              Text(lang, style: const TextStyle(color: Colors.white, fontSize: 13)),
+                              const Icon(Icons.arrow_drop_down, size: 18, color: AppColors.hint),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     Text(
                       _isRegister ? AppLocalizations.t('create_account') : AppLocalizations.t('welcome_back'),
                       style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
