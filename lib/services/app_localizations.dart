@@ -196,5 +196,22 @@ class AppLocalizations {
     'expired': {'English': 'Expired', 'Sinhala': 'කල් ඉකුත් විය', 'Tamil': 'காலாவதியானது'},
     'from': {'English': 'From', 'Sinhala': 'වෙතින්', 'Tamil': 'இருந்து'},
     'your_offer_colon': {'English': 'Your offer', 'Sinhala': 'ඔබේ දීමනාව', 'Tamil': 'உங்கள் சலுகை'},
+
+    'no_notifications_yet': {'English': 'No notifications yet', 'Sinhala': 'තවම දැනුම්දීම් නැත', 'Tamil': 'இன்னும் அறிவிப்புகள் இல்லை'},
+    'no_saved_accounts': {'English': 'No saved accounts yet.\nTap the heart icon on a listing to save it here.', 'Sinhala': 'තවම සුරැකි ගිණුම් නැත.\nලැයිස්තුවක් සුරැකීමට හදවත් අයිකනය ස්පර්ශ කරන්න.', 'Tamil': 'இன்னும் சேமிக்கப்பட்ட கணக்குகள் இல்லை.\nஇங்கே சேமிக்க பட்டியலில் உள்ள இதய ஐகானைத் தட்டவும்.'},
+    'saved_accounts': {'English': 'Saved Accounts', 'Sinhala': 'සුරැකි ගිණුම්', 'Tamil': 'சேமிக்கப்பட்ட கணக்குகள்'},
+    'seller_profile': {'English': 'Seller Profile', 'Sinhala': 'විකුණන්නාගේ පැතිකඩ', 'Tamil': 'விற்பனையாளர் சுயவிவரம்'},
+    'block_user': {'English': 'Block User', 'Sinhala': 'පරිශීලකයා අවහිර කරන්න', 'Tamil': 'பயனரைத் தடு'},
+    'block': {'English': 'Block', 'Sinhala': 'අවහිර කරන්න', 'Tamil': 'தடு'},
+    'listings_count': {'English': 'Listings', 'Sinhala': 'ලැයිස්තු', 'Tamil': 'பட்டியல்கள்'},
+    'sold_count': {'English': 'Sold', 'Sinhala': 'විකුණන ලදී', 'Tamil': 'விற்கப்பட்டது'},
+    'active_listings': {'English': 'Active Listings', 'Sinhala': 'ක්‍රියාකාරී ලැයිස්තු', 'Tamil': 'செயலில் உள்ள பட்டியல்கள்'},
+    'no_active_listings': {'English': 'No active listings', 'Sinhala': 'ක්‍රියාකාරී ලැයිස්තු නැත', 'Tamil': 'செயலில் உள்ள பட்டியல்கள் இல்லை'},
+
+    'profile_photo': {'English': 'Profile Photo', 'Sinhala': 'පැතිකඩ ඡායාරූපය', 'Tamil': 'சுயவிவர புகைப்படம்'},
+    'display_name': {'English': 'Display Name', 'Sinhala': 'දර්ශන නම', 'Tamil': 'காட்சி பெயர்'},
+    'phone_number': {'English': 'Phone Number', 'Sinhala': 'දුරකථන අංකය', 'Tamil': 'தொலைபேசி எண்'},
+    'profile_locked_msg': {'English': 'Your profile is locked. Contact support to change your name or phone.', 'Sinhala': 'ඔබේ පැතිකඩ අගුලු දමා ඇත. නම හෝ දුරකථනය වෙනස් කිරීමට සහාය අමතන්න.', 'Tamil': 'உங்கள் சுயவிவரம் பூட்டப்பட்டுள்ளது. பெயர் அல்லது தொலைபேசியை மாற்ற ஆதரவைத் தொடர்பு கொள்ளவும்.'},
+    'save_profile': {'English': 'Save Profile', 'Sinhala': 'පැතිකඩ සුරකින්න', 'Tamil': 'சுயவிவரத்தை சேமி'},
   };
 }
