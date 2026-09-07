@@ -17,7 +17,7 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
@@ -113,6 +113,16 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  void _toggleMode() {
+    setState(() {
+      _isRegister = !_isRegister;
+      _error = null;
+      _emailCtrl.clear();
+      _passCtrl.clear();
+      _referralCtrl.clear();
+    });
+  }
+
   InputDecoration _fieldDecoration({
     required String hint,
     required IconData icon,
@@ -172,14 +182,34 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      _isRegister ? AppLocalizations.t('create_account') : AppLocalizations.t('welcome_back'),
-                      style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _isRegister ? AppLocalizations.t('sign_up_to_get_started') : AppLocalizations.t('login_to_continue'),
-                      style: const TextStyle(color: AppColors.hint, fontSize: 15),
+
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 350),
+                      transitionBuilder: (child, animation) {
+                        final offsetAnim = Tween<Offset>(
+                          begin: const Offset(0.08, 0),
+                          end: Offset.zero,
+                        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(position: offsetAnim, child: child),
+                        );
+                      },
+                      child: Column(
+                        key: ValueKey(_isRegister),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _isRegister ? AppLocalizations.t('create_account') : AppLocalizations.t('welcome_back'),
+                            style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _isRegister ? AppLocalizations.t('sign_up_to_get_started') : AppLocalizations.t('login_to_continue'),
+                            style: const TextStyle(color: AppColors.hint, fontSize: 15),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 36),
 
@@ -210,26 +240,37 @@ class _LoginScreenState extends State<LoginScreen> {
                       validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
                     ),
 
-                    if (_isRegister) ...[
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _referralCtrl,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: _fieldDecoration(hint: 'Referral Code (optional)', icon: Icons.card_giftcard_outlined),
-                      ),
-                    ],
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      child: _isRegister
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 16),
+                              child: TextFormField(
+                                controller: _referralCtrl,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: _fieldDecoration(hint: 'Referral Code (optional)', icon: Icons.card_giftcard_outlined),
+                              ),
+                            )
+                          : const SizedBox(width: double.infinity, height: 0),
+                    ),
 
-                    if (!_isRegister)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()));
-                          },
-                          style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 36)),
-                          child: Text(AppLocalizations.t('forgot_password'), style: const TextStyle(color: Colors.white70, fontSize: 13)),
-                        ),
-                      ),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      child: !_isRegister
+                          ? Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()));
+                                },
+                                style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 36)),
+                                child: Text(AppLocalizations.t('forgot_password'), style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                              ),
+                            )
+                          : const SizedBox(width: double.infinity, height: 0),
+                    ),
 
                     if (_error != null) ...[
                       const SizedBox(height: 8),
@@ -244,7 +285,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _loading ? null : _submit,
                         child: _loading
                             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                            : Text(_isRegister ? AppLocalizations.t('sign_up') : AppLocalizations.t('login'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            : AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 250),
+                                child: Text(
+                                  _isRegister ? AppLocalizations.t('sign_up') : AppLocalizations.t('login'),
+                                  key: ValueKey(_isRegister),
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                              ),
                       ),
                     ),
 
@@ -286,17 +334,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 28),
                     Center(
                       child: TextButton(
-                        onPressed: () => setState(() => _isRegister = !_isRegister),
-                        child: RichText(
-                          text: TextSpan(
-                            style: const TextStyle(color: AppColors.hint, fontSize: 14),
-                            children: [
-                              TextSpan(text: _isRegister ? AppLocalizations.t('already_have_account') : AppLocalizations.t('dont_have_account')),
-                              TextSpan(
-                                text: _isRegister ? AppLocalizations.t('login') : AppLocalizations.t('sign_up'),
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                        onPressed: _toggleMode,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                          child: RichText(
+                            key: ValueKey(_isRegister),
+                            text: TextSpan(
+                              style: const TextStyle(color: AppColors.hint, fontSize: 14),
+                              children: [
+                                TextSpan(text: _isRegister ? AppLocalizations.t('already_have_account') : AppLocalizations.t('dont_have_account')),
+                                TextSpan(
+                                  text: _isRegister ? AppLocalizations.t('login') : AppLocalizations.t('sign_up'),
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
