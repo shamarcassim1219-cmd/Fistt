@@ -16,6 +16,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   bool _loadingStatus = true;
   String _verifiedStatus = 'not_verified';
   String? _documentType;
+  String? _statusLoadError;
 
   final _formKey = GlobalKey<FormState>();
   final _fullNameCtrl = TextEditingController();
@@ -56,9 +57,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
         _verifiedStatus = data['verifiedStatus'] ?? 'not_verified';
         _documentType = data['documentType'];
         _loadingStatus = false;
+        _statusLoadError = null;
       });
     } catch (e) {
-      setState(() => _loadingStatus = false);
+      setState(() {
+        _loadingStatus = false;
+        _statusLoadError = e.toString().replaceFirst('Exception: ', '');
+      });
     }
   }
 
@@ -145,6 +150,32 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Widget _buildBody() {
+    if (_statusLoadError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+              const SizedBox(height: 16),
+              const Text('Failed to load verification status', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Text(_statusLoadError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12), textAlign: TextAlign.center),
+              const SizedBox(height: 20),
+              OutlinedButton(
+                onPressed: () {
+                  setState(() => _loadingStatus = true);
+                  _loadStatus();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (_verifiedStatus == 'pending') {
       return _StatusMessage(
         icon: Icons.hourglass_top_outlined,
