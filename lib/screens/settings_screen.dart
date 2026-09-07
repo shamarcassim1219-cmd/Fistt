@@ -13,6 +13,7 @@ import 'my_sales_screen.dart';
 import 'referral_code_screen.dart';
 import 'blocked_users_screen.dart';
 import 'offers_screen.dart';
+import 'report_problem_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -241,7 +242,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const _SectionHeader('Support'),
           _tile(Icons.help_outline, 'Help & FAQ', null, () => _comingSoon('Help & FAQ')),
-          _tile(Icons.report_gmailerrorred_outlined, 'Report a Problem / Contact Admin', null, () => _comingSoon('Report a problem')),
+          _tile(Icons.report_gmailerrorred_outlined, 'Report a Problem / Contact Admin', null, () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportProblemScreen()));
+          }),
 
           const _SectionHeader('About'),
           const ListTile(
