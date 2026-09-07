@@ -336,6 +336,45 @@ class ApiService {
     await _handle(res);
   }
 
+  // ---------- SELLER PROFILE / BLOCK ----------
+  static Future<Map<String, dynamic>> getSellerProfile(int sellerId) async {
+    final res = await http.get(Uri.parse('$baseUrl/seller/$sellerId/profile'), headers: await _headers(withAuth: false));
+    return await _handle(res);
+  }
+
+  static Future<void> blockUser(int userId) async {
+    final res = await http.post(Uri.parse('$baseUrl/seller/$userId/block'), headers: await _headers());
+    await _handle(res);
+  }
+
+  static Future<void> unblockUser(int userId) async {
+    final res = await http.post(Uri.parse('$baseUrl/seller/$userId/unblock'), headers: await _headers());
+    await _handle(res);
+  }
+
+  // ---------- FAVORITES ----------
+  static Future<void> addFavorite(int listingId) async {
+    final res = await http.post(Uri.parse('$baseUrl/favorites/$listingId'), headers: await _headers());
+    await _handle(res);
+  }
+
+  static Future<void> removeFavorite(int listingId) async {
+    final res = await http.delete(Uri.parse('$baseUrl/favorites/$listingId'), headers: await _headers());
+    await _handle(res);
+  }
+
+  static Future<List<dynamic>> getFavorites() async {
+    final res = await http.get(Uri.parse('$baseUrl/favorites'), headers: await _headers());
+    final data = await _handle(res);
+    return data['listings'];
+  }
+
+  static Future<bool> checkFavorite(int listingId) async {
+    final res = await http.get(Uri.parse('$baseUrl/favorites/check/$listingId'), headers: await _headers());
+    final data = await _handle(res);
+    return data['isFavorite'] ?? false;
+  }
+
   // ---------- CHATS ----------
   static Future<List<dynamic>> getConversations() async {
     final res = await http.get(Uri.parse('$baseUrl/chats'), headers: await _headers());

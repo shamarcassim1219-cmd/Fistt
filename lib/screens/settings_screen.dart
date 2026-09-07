@@ -15,6 +15,7 @@ import 'referral_code_screen.dart';
 import 'blocked_users_screen.dart';
 import 'offers_screen.dart';
 import 'report_problem_screen.dart';
+import 'favorites_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -125,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(user?['email'] ?? 'Guest User',
+                          Text(user?['displayName'] ?? user?['email'] ?? 'Guest User',
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
                           const SizedBox(height: 4),
                           _VerifiedBadgeChip(status: user?['verifiedStatus'] ?? 'not_verified'),
@@ -173,7 +174,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _tile(Icons.local_offer_outlined, AppLocalizations.t('offers'), null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()));
               }),
-              _tile(Icons.bookmark_border, 'Saved / Wishlist Accounts', null, () => _comingSoon('Wishlist')),
+              _tile(Icons.bookmark_border, 'Saved / Wishlist Accounts', null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen()));
+              }),
               _tile(Icons.account_balance_outlined, AppLocalizations.t('wallet_bank_details'), null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletBankDetailsScreen()));
               }),

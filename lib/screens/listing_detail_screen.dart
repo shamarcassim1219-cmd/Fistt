@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import 'seller_profile_screen.dart';
 
 class ListingDetailScreen extends StatefulWidget {
   final int listingId;
@@ -18,6 +19,9 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   String? _error;
   Timer? _countdownTimer;
   Duration _remaining = Duration.zero;
+  int? _myUserId;
+  bool _isFavorite = false;
+  bool _favoriteLoading = false;
 
   final _bidCtrl = TextEditingController();
   bool _placingBid = false;
@@ -27,13 +31,48 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _loadMyId();
     _load();
+    _loadFavoriteStatus();
   }
 
   @override
   void dispose() {
     _countdownTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadMyId() async {
+    try {
+      final profile = await ApiService.getProfile();
+      if (mounted) setState(() => _myUserId = profile['id']);
+    } catch (_) {}
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    try {
+      final isFav = await ApiService.checkFavorite(widget.listingId);
+      if (mounted) setState(() => _isFavorite = isFav);
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFavorite() async {
+    setState(() => _favoriteLoading = true);
+    try {
+      if (_isFavorite) {
+        await ApiService.removeFavorite(widget.listingId);
+      } else {
+        await ApiService.addFavorite(widget.listingId);
+      }
+      if (mounted) setState(() => _isFavorite = !_isFavorite);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _favoriteLoading = false);
+    }
   }
 
   Future<void> _load() async {
@@ -90,7 +129,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       await ApiService.placeBid(widget.listingId, amount);
       _bidCtrl.clear();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bid placed!')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bid placed! Amount held from your wallet.')));
       await _load();
     } catch (e) {
       setState(() => _bidError = e.toString().replaceFirst('Exception: ', ''));
@@ -106,7 +145,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         backgroundColor: AppColors.surface,
         title: const Text('Confirm Purchase', style: TextStyle(color: Colors.white)),
         content: Text(
-          'LKR ${price.toStringAsFixed(2)} will be deducted from your wallet. Account credentials will be available immediately.',
+          'LKR ${price.toStringAsFixed(2)} will be deducted from your wallet. Admin will verify and share credentials shortly.',
           style: const TextStyle(color: AppColors.hint, fontSize: 13),
         ),
         actions: [
@@ -122,7 +161,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       await ApiService.createOrder(widget.listingId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Purchase successful! View credentials in My Purchases.')),
+        const SnackBar(content: Text('Purchase successful! Admin is verifying — check My Purchases.')),
       );
       Navigator.of(context).pop();
     } catch (e) {
@@ -207,7 +246,17 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Listing Details')),
+      appBar: AppBar(
+        title: const Text('Listing Details'),
+        actions: [
+          IconButton(
+            icon: _favoriteLoading
+                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
+                : Icon(_isFavorite ? Icons.favorite : Icons.favorite_border, color: _isFavorite ? Colors.redAccent : Colors.white),
+            onPressed: _favoriteLoading ? null : _toggleFavorite,
+          ),
+        ],
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _error != null
@@ -226,8 +275,12 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     final biddingActive = allowBidding && l['biddingEndsAt'] != null && _remaining.inSeconds > 0;
     final biddingNotStarted = allowBidding && l['biddingEndsAt'] == null;
     final biddingEnded = allowBidding && l['biddingEndsAt'] != null && _remaining.inSeconds <= 0;
-    final canBuyNow = l['status'] == 'active' && (!allowBidding || biddingEnded || biddingNotStarted);
-    final canMakeOffer = l['status'] == 'active';
+
+    final isOwnListing = _myUserId != null && _myUserId == l['sellerId'];
+
+    final canBuyNow = l['status'] == 'active' && !isOwnListing && (!allowBidding || biddingEnded || biddingNotStarted);
+    final canMakeOffer = l['status'] == 'active' && !isOwnListing;
+    final canBid = allowBidding && !isOwnListing && (biddingActive || biddingNotStarted);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -245,11 +298,37 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
         const SizedBox(height: 16),
         Text(l['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 6),
-        Chip(
-          label: Text(l['game'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 12)),
-          backgroundColor: AppColors.fieldFill,
-          side: const BorderSide(color: AppColors.border),
+        Row(
+          children: [
+            Chip(
+              label: Text(l['game'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 12)),
+              backgroundColor: AppColors.fieldFill,
+              side: const BorderSide(color: AppColors.border),
+            ),
+            if (isOwnListing) ...[
+              const SizedBox(width: 8),
+              Chip(
+                label: const Text('Your Listing', style: TextStyle(color: AppColors.primary, fontSize: 12)),
+                backgroundColor: AppColors.primary.withOpacity(0.15),
+                side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+              ),
+            ],
+          ],
         ),
+        const SizedBox(height: 8),
+        if (!isOwnListing && l['sellerId'] != null)
+          InkWell(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => SellerProfileScreen(sellerId: l['sellerId'])));
+            },
+            child: const Row(
+              children: [
+                Icon(Icons.person_outline, size: 16, color: AppColors.primary),
+                SizedBox(width: 4),
+                Text('View Seller Profile', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
         const SizedBox(height: 12),
         Text(l['description'] ?? '', style: const TextStyle(color: AppColors.hint, fontSize: 14, height: 1.4)),
         const SizedBox(height: 20),
@@ -305,7 +384,32 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
           ),
         ],
 
-        if (allowBidding && (biddingActive || biddingNotStarted)) ...[
+        if (isOwnListing) ...[
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, size: 18, color: AppColors.primary),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'This is your own listing. Manage it from My Listings in Settings.',
+                    style: TextStyle(fontSize: 12, color: AppColors.hint),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        if (canBid) ...[
           const SizedBox(height: 20),
           const Text('Place a Bid', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
           const SizedBox(height: 8),
