@@ -64,7 +64,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _logout() async {
     await ApiService.clearToken();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('is_logged_in', false);
+    await prefs.clear();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),

@@ -63,7 +63,7 @@ Future<bool> handleBannedError(BuildContext context, Object error) async {
     final reason = errorStr.split('BANNED:').last.replaceFirst('Exception: ', '');
     await ApiService.clearToken();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('is_logged_in', false);
+    await prefs.clear();
     if (context.mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => BannedScreen(reason: reason)),
@@ -399,6 +399,7 @@ class _HomeTabState extends State<_HomeTab> {
                                 final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
                                 final displayPrice = highestBid ?? (l['price'] as num).toDouble();
                                 final isBoosted = l['boosted'] == true;
+                                final sellerName = l['sellerDisplayName'] ?? '';
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 10),
                                   decoration: BoxDecoration(
@@ -438,19 +439,37 @@ class _HomeTabState extends State<_HomeTab> {
                                     ),
                                     title: Row(
                                       children: [
-                                        Flexible(child: Text(l['title'] ?? '', style: const TextStyle(color: Colors.white), overflow: TextOverflow.ellipsis)),
-                                        if (l['sellerVerified'] == true) ...[
-                                          const SizedBox(width: 4),
-                                          const Icon(Icons.verified, size: 14, color: AppColors.primary),
-                                        ],
+                                        Flexible(child: Text(l['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
                                         if (isBoosted) ...[
                                           const SizedBox(width: 4),
                                           const Icon(Icons.bolt, size: 14, color: Colors.amber),
                                         ],
                                       ],
                                     ),
-                                    subtitle: Text('${l['game'] ?? ''} · LKR ${displayPrice.toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
-                                        style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 2),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.person_outline, size: 11, color: AppColors.hint),
+                                            const SizedBox(width: 3),
+                                            Flexible(
+                                              child: Text('by $sellerName',
+                                                  style: const TextStyle(color: AppColors.hint, fontSize: 11),
+                                                  overflow: TextOverflow.ellipsis),
+                                            ),
+                                            if (l['sellerVerified'] == true) ...[
+                                              const SizedBox(width: 3),
+                                              const Icon(Icons.verified, size: 12, color: AppColors.primary),
+                                            ],
+                                          ],
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text('${l['game'] ?? ''} · LKR ${displayPrice.toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
+                                            style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                                      ],
+                                    ),
                                     trailing: allowBidding
                                         ? const Icon(Icons.gavel_outlined, color: AppColors.primary, size: 18)
                                         : null,
