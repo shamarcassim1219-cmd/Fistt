@@ -118,7 +118,6 @@ class AppLocalizations {
     'recovery_codes': {'English': 'Recovery Codes (optional)', 'Sinhala': 'ප්‍රතිසාධන කේත (විකල්ප)', 'Tamil': 'மீட்பு குறியீடுகள் (விருப்பம்)'},
     'verification_required': {'English': 'Verification Required', 'Sinhala': 'තහවුරු කිරීම අවශ්‍යයි', 'Tamil': 'சரிபார்ப்பு தேவை'},
 
-    // My Listings / Purchases / Sales
     'active': {'English': 'Active', 'Sinhala': 'ක්‍රියාකාරී', 'Tamil': 'செயலில்'},
     'pending': {'English': 'Pending', 'Sinhala': 'අපේක්ෂිත', 'Tamil': 'நிலுவையில்'},
     'sold': {'English': 'Sold', 'Sinhala': 'විකුණන ලදී', 'Tamil': 'விற்கப்பட்டது'},
@@ -145,5 +144,36 @@ class AppLocalizations {
     'sale_price': {'English': 'Sale Price', 'Sinhala': 'විකුණුම් මිල', 'Tamil': 'விற்பனை விலை'},
     'you_receive_amount': {'English': 'You Receive', 'Sinhala': 'ඔබ ලබා ගනී', 'Tamil': 'நீங்கள் பெறுவீர்கள்'},
     'chat_with_admin': {'English': 'Chat with Admin', 'Sinhala': 'පරිපාලක සමඟ කතාබහ කරන්න', 'Tamil': 'நிர்வாகியுடன் அரட்டையடிக்கவும்'},
+
+    'view_seller_profile': {'English': 'View Seller Profile', 'Sinhala': 'විකුණන්නාගේ පැතිකඩ බලන්න', 'Tamil': 'விற்பனையாளர் சுயவிவரத்தைப் பார்க்கவும்'},
+    'your_listing': {'English': 'Your Listing', 'Sinhala': 'ඔබේ ලැයිස්තුව', 'Tamil': 'உங்கள் பட்டியல்'},
+    'current_highest_bid': {'English': 'Current Highest Bid', 'Sinhala': 'වර්තමාන ඉහළම ලංසුව', 'Tamil': 'தற்போதைய அதிக ஏலம்'},
+    'starting_price': {'English': 'Starting Price', 'Sinhala': 'ආරම්භක මිල', 'Tamil': 'தொடக்க விலை'},
+    'bid_history': {'English': 'Bid History', 'Sinhala': 'ලංසු ඉතිහාසය', 'Tamil': 'ஏல வரலாறு'},
+    'confirm_purchase': {'English': 'Confirm Purchase', 'Sinhala': 'මිලදී ගැනීම තහවුරු කරන්න', 'Tamil': 'கொள்முதலை உறுதிப்படுத்தவும்'},
+    'confirm_pay': {'English': 'Confirm & Pay', 'Sinhala': 'තහවුරු කර ගෙවන්න', 'Tamil': 'உறுதிப்படுத்தி செலுத்தவும்'},
+    'your_offer': {'English': 'Your Offer (LKR)', 'Sinhala': 'ඔබේ දීමනාව (රු)', 'Tamil': 'உங்கள் சலுகை (LKR)'},
+    'send_offer': {'English': 'Send Offer', 'Sinhala': 'දීමනාව යවන්න', 'Tamil': 'சலுகையை அனுப்பு'},
+    'listing_price': {'English': 'Listing price', 'Sinhala': 'ලැයිස්තු මිල', 'Tamil': 'பட்டியல் விலை'},
+
+    'type_message': {'English': 'Type a message...', 'Sinhala': 'පණිවිඩයක් ටයිප් කරන්න...', 'Tamil': 'செய்தியை தட்டச்சு செய்யவும்...'},
+    'no_messages_yet': {'English': 'No messages yet — say hello!', 'Sinhala': 'තවම පණිවිඩ නැත — හෙලෝ කියන්න!', 'Tamil': 'இன்னும் செய்திகள் இல்லை — வணக்கம் சொல்லுங்கள்!'},
+    'message_admin': {'English': 'Message admin...', 'Sinhala': 'පරිපාලකට පණිවිඩයක්...', 'Tamil': 'நிர்வாகிக்கு செய்தி...'},
+    'no_admin_messages': {'English': 'No messages yet. Ask admin any questions here.', 'Sinhala': 'තවම පණිවිඩ නැත. ඕනෑම ප්‍රශ්නයක් මෙහි අහන්න.', 'Tamil': 'இன்னும் செய்திகள் இல்லை. இங்கே எந்த கேள்விகளையும் கேளுங்கள்.'},
+
+    'get_verified': {'English': 'Get Verified', 'Sinhala': 'තහවුරු කරගන්න', 'Tamil': 'சரிபார்க்கப்படவும்'},
+    'verification_pending': {'English': 'Verification Pending', 'Sinhala': 'තහවුරු කිරීම අපේක්ෂිතයි', 'Tamil': 'சரிபார்ப்பு நிலுவையில்'},
+    'verified_seller': {'English': 'Verified Seller', 'Sinhala': 'තහවුරු කළ විකුණන්නා', 'Tamil': 'சரிபார்க்கப்பட்ட விற்பனையாளர்'},
+    'get_blue_checkmark': {'English': 'Get the Blue Checkmark', 'Sinhala': 'නිල් සලකුණ ලබාගන්න', 'Tamil': 'நீல அடையாளத்தைப் பெறவும்'},
+    'personal_details': {'English': 'Personal Details', 'Sinhala': 'පුද්ගලික විස්තර', 'Tamil': 'தனிப்பட்ட விவரங்கள்'},
+    'full_name': {'English': 'Full Name (as on document)', 'Sinhala': 'සම්පූර්ණ නම (ලේඛනයේ ඇති පරිදි)', 'Tamil': 'முழு பெயர் (ஆவணத்தில் உள்ளபடி)'},
+    'nic_number': {'English': 'NIC Number', 'Sinhala': 'ජාතික හැඳුනුම්පත් අංකය', 'Tamil': 'தேசிய அடையாள எண்'},
+    'address_field': {'English': 'Address', 'Sinhala': 'ලිපිනය', 'Tamil': 'முகவரி'},
+    'province': {'English': 'Province', 'Sinhala': 'පළාත', 'Tamil': 'மாகாணம்'},
+    'district': {'English': 'District', 'Sinhala': 'දිස්ත්‍රික්කය', 'Tamil': 'மாவட்டம்'},
+    'select_document_type': {'English': 'Select Document Type', 'Sinhala': 'ලේඛන වර්ගය තෝරන්න', 'Tamil': 'ஆவண வகையைத் தேர்ந்தெடுக்கவும்'},
+    'driving_license': {'English': 'Driving License', 'Sinhala': 'රියදුරු බලපත්‍රය', 'Tamil': 'ஓட்டுநர் உரிமம்'},
+    'submit_for_review': {'English': 'Submit for Review', 'Sinhala': 'සමාලෝචනය සඳහා ඉදිරිපත් කරන්න', 'Tamil': 'மறுஆய்வுக்கு சமர்ப்பிக்கவும்'},
+    'take_selfie': {'English': 'Take a Selfie', 'Sinhala': 'සෙල්ෆියක් ගන්න', 'Tamil': 'செல்ஃபி எடுக்கவும்'},
   };
 }

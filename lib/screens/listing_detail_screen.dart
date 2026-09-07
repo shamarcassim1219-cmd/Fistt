@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 import 'seller_profile_screen.dart';
 
 class ListingDetailScreen extends StatefulWidget {
@@ -143,14 +144,14 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Confirm Purchase', style: TextStyle(color: Colors.white)),
+        title: Text(AppLocalizations.t('confirm_purchase'), style: const TextStyle(color: Colors.white)),
         content: Text(
           'LKR ${price.toStringAsFixed(2)} will be deducted from your wallet. Admin will verify and share credentials shortly.',
           style: const TextStyle(color: AppColors.hint, fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirm & Pay')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.t('cancel'))),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.t('confirm_pay'))),
         ],
       ),
     );
@@ -189,15 +190,15 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Make an Offer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(AppLocalizations.t('make_an_offer'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
               const SizedBox(height: 6),
-              Text('Listing price: LKR ${currentPrice.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+              Text('${AppLocalizations.t('listing_price')}: LKR ${currentPrice.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
               const SizedBox(height: 16),
               TextField(
                 controller: offerCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Your Offer (LKR)'),
+                decoration: InputDecoration(labelText: AppLocalizations.t('your_offer')),
               ),
               if (sheetError != null) ...[
                 const SizedBox(height: 8),
@@ -232,7 +233,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   },
                   child: sending
                       ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                      : const Text('Send Offer'),
+                      : Text(AppLocalizations.t('send_offer')),
                 ),
               ),
             ],
@@ -244,24 +245,29 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        title: const Text('Listing Details'),
-        actions: [
-          IconButton(
-            icon: _favoriteLoading
-                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
-                : Icon(_isFavorite ? Icons.favorite : Icons.favorite_border, color: _isFavorite ? Colors.redAccent : Colors.white),
-            onPressed: _favoriteLoading ? null : _toggleFavorite,
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(
+            title: Text(AppLocalizations.t('listing_details')),
+            actions: [
+              IconButton(
+                icon: _favoriteLoading
+                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
+                    : Icon(_isFavorite ? Icons.favorite : Icons.favorite_border, color: _isFavorite ? Colors.redAccent : Colors.white),
+                onPressed: _favoriteLoading ? null : _toggleFavorite,
+              ),
+            ],
           ),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
-              : _buildContent(),
+          body: _loading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : _error != null
+                  ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
+                  : _buildContent(),
+        );
+      },
     );
   }
 
@@ -308,7 +314,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
             if (isOwnListing) ...[
               const SizedBox(width: 8),
               Chip(
-                label: const Text('Your Listing', style: TextStyle(color: AppColors.primary, fontSize: 12)),
+                label: Text(AppLocalizations.t('your_listing'), style: const TextStyle(color: AppColors.primary, fontSize: 12)),
                 backgroundColor: AppColors.primary.withOpacity(0.15),
                 side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
               ),
@@ -321,11 +327,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => SellerProfileScreen(sellerId: l['sellerId'])));
             },
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.person_outline, size: 16, color: AppColors.primary),
-                SizedBox(width: 4),
-                Text('View Seller Profile', style: TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+                const Icon(Icons.person_outline, size: 16, color: AppColors.primary),
+                const SizedBox(width: 4),
+                Text(AppLocalizations.t('view_seller_profile'), style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -345,7 +351,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                allowBidding ? (highestBid != null ? 'Current Highest Bid' : 'Starting Price') : 'Price',
+                allowBidding ? (highestBid != null ? AppLocalizations.t('current_highest_bid') : AppLocalizations.t('starting_price')) : AppLocalizations.t('price'),
                 style: const TextStyle(color: AppColors.hint, fontSize: 12),
               ),
               const SizedBox(height: 4),
@@ -411,7 +417,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
         if (canBid) ...[
           const SizedBox(height: 20),
-          const Text('Place a Bid', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(AppLocalizations.t('place_a_bid'), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -450,7 +456,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               onPressed: _buying ? null : () => _confirmAndBuy(currentPrice),
               child: _buying
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                  : Text('Buy Now — LKR ${currentPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  : Text('${AppLocalizations.t('buy_now')} — LKR ${currentPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -463,14 +469,14 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
             child: OutlinedButton.icon(
               onPressed: () => _showMakeOfferSheet(currentPrice),
               icon: const Icon(Icons.local_offer_outlined, size: 18),
-              label: const Text('Make an Offer'),
+              label: Text(AppLocalizations.t('make_an_offer')),
             ),
           ),
         ],
 
         if (_bids.isNotEmpty) ...[
           const SizedBox(height: 24),
-          const Text('Bid History', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(AppLocalizations.t('bid_history'), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
           const SizedBox(height: 8),
           ..._bids.map((b) => ListTile(
                 contentPadding: EdgeInsets.zero,
