@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
@@ -83,11 +84,20 @@ class _HomeTab extends StatefulWidget {
 class _HomeTabState extends State<_HomeTab> {
   final categories = ['PUBG', 'Free Fire', 'CODM', 'MLBB'];
   String? _selectedGame;
+  String _sort = 'newest';
   List<dynamic> _listings = [];
   bool _loading = true;
   String? _error;
   int _unreadCount = 0;
   Map<String, dynamic>? _profile;
+  final _searchCtrl = TextEditingController();
+  Timer? _debounce;
+
+  final Map<String, String> _sortLabels = {
+    'newest': 'Newest',
+    'price_low': 'Price: Low to High',
+    'price_high': 'Price: High to Low',
+  };
 
   @override
   void initState() {
@@ -95,6 +105,13 @@ class _HomeTabState extends State<_HomeTab> {
     _loadListings();
     _loadUnreadCount();
     _loadProfile();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadProfile() async {
@@ -113,13 +130,24 @@ class _HomeTabState extends State<_HomeTab> {
     } catch (_) {}
   }
 
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      _loadListings();
+    });
+  }
+
   Future<void> _loadListings() async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final listings = await ApiService.getListings(game: _selectedGame);
+      final listings = await ApiService.getListings(
+        game: _selectedGame,
+        search: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
+        sort: _sort,
+      );
       if (!mounted) return;
       setState(() {
         _listings = listings;
@@ -134,6 +162,32 @@ class _HomeTabState extends State<_HomeTab> {
         _loading = false;
       });
     }
+  }
+
+  void _showSortSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Sort By', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14)),
+            ),
+            ..._sortLabels.entries.map((e) => ListTile(
+                  title: Text(e.value, style: const TextStyle(color: Colors.white)),
+                  trailing: _sort == e.key ? const Icon(Icons.check, color: AppColors.primary) : null,
+                  onTap: () {
+                    setState(() => _sort = e.key);
+                    Navigator.pop(ctx);
+                    _loadListings();
+                  },
+                )),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -191,12 +245,42 @@ class _HomeTabState extends State<_HomeTab> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: AppLocalizations.t('search_accounts'),
-                prefixIcon: const Icon(Icons.search, color: AppColors.hint),
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchCtrl,
+                    onChanged: _onSearchChanged,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.t('search_accounts'),
+                      prefixIcon: const Icon(Icons.search, color: AppColors.hint),
+                      suffixIcon: _searchCtrl.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close, color: AppColors.hint, size: 18),
+                              onPressed: () {
+                                _searchCtrl.clear();
+                                _loadListings();
+                              },
+                            )
+                          : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: _showSortSheet,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.fieldFill,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: const Icon(Icons.sort, color: AppColors.hint, size: 22),
+                  ),
+                ),
+              ],
             ),
           ),
           SizedBox(

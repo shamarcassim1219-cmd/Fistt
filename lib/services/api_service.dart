@@ -207,10 +207,13 @@ class ApiService {
   }
 
   // ---------- LISTINGS ----------
-  static Future<List<dynamic>> getListings({String? game}) async {
-    final uri = Uri.parse('$baseUrl/listings').replace(
-      queryParameters: game != null ? {'game': game} : null,
-    );
+  static Future<List<dynamic>> getListings({String? game, String? search, String? sort}) async {
+    final params = <String, String>{};
+    if (game != null) params['game'] = game;
+    if (search != null && search.isNotEmpty) params['search'] = search;
+    if (sort != null) params['sort'] = sort;
+
+    final uri = Uri.parse('$baseUrl/listings').replace(queryParameters: params.isEmpty ? null : params);
     final res = await http.get(uri, headers: await _headers(withAuth: false));
     final data = await _handle(res);
     return data['listings'];
