@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 import 'listing_detail_screen.dart';
 
 class MyListingsScreen extends StatefulWidget {
@@ -42,13 +43,13 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Remove Listing', style: TextStyle(color: Colors.white)),
+        title: Text(AppLocalizations.t('remove_listing'), style: const TextStyle(color: Colors.white)),
         content: Text(
           'Remove "$title"? Any active bidders will be refunded automatically.',
           style: const TextStyle(color: AppColors.hint, fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.t('cancel'))),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -64,7 +65,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                 );
               }
             },
-            child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
+            child: Text(AppLocalizations.t('remove'), style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -82,7 +83,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
           style: TextStyle(color: AppColors.hint, fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.t('cancel'))),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -110,109 +111,114 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('My Listings')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
-              : _listings.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text('No listings yet.\nTap "Sell" to post your first account.',
-                            textAlign: TextAlign.center, style: TextStyle(color: AppColors.hint)),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      color: AppColors.primary,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: _listings.length,
-                        itemBuilder: (context, i) {
-                          final l = _listings[i];
-                          final status = l['status'] ?? 'active';
-                          final screenshots = (l['screenshots'] as List?) ?? [];
-                          final allowBidding = l['allowBidding'] == true;
-                          final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
-                          final isBoosted = l['boosted'] == true;
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: isBoosted ? Colors.amber.withOpacity(0.5) : AppColors.border),
-                            ),
-                            child: Column(
-                              children: [
-                                ListTile(
-                                  contentPadding: const EdgeInsets.all(10),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => ListingDetailScreen(listingId: l['id'])),
-                                    ).then((_) => _load());
-                                  },
-                                  leading: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: screenshots.isNotEmpty
-                                        ? Image.network(screenshots[0], width: 56, height: 56, fit: BoxFit.cover)
-                                        : Container(width: 56, height: 56, color: AppColors.fieldFill, child: const Icon(Icons.image_outlined, color: AppColors.hint)),
-                                  ),
-                                  title: Row(
-                                    children: [
-                                      Flexible(child: Text(l['title'] ?? '', style: const TextStyle(color: Colors.white), overflow: TextOverflow.ellipsis)),
-                                      if (isBoosted) ...[
-                                        const SizedBox(width: 6),
-                                        const Icon(Icons.bolt, size: 14, color: Colors.amber),
-                                      ],
-                                    ],
-                                  ),
-                                  subtitle: Text(
-                                    '${l['game'] ?? ''} · LKR ${(highestBid ?? l['price']).toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
-                                    style: const TextStyle(color: AppColors.hint, fontSize: 12),
-                                  ),
-                                  trailing: _StatusChip(status: status),
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(title: Text(AppLocalizations.t('my_listings'))),
+          body: _loading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : _error != null
+                  ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
+                  : _listings.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(AppLocalizations.t('no_listings_yet'),
+                                textAlign: TextAlign.center, style: const TextStyle(color: AppColors.hint)),
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _load,
+                          color: AppColors.primary,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: _listings.length,
+                            itemBuilder: (context, i) {
+                              final l = _listings[i];
+                              final status = l['status'] ?? 'active';
+                              final screenshots = (l['screenshots'] as List?) ?? [];
+                              final allowBidding = l['allowBidding'] == true;
+                              final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
+                              final isBoosted = l['boosted'] == true;
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: isBoosted ? Colors.amber.withOpacity(0.5) : AppColors.border),
                                 ),
-                                if (status == 'active')
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: OutlinedButton.icon(
-                                            onPressed: _boosting ? null : () => _confirmBoost(l['id'], l['title'] ?? ''),
-                                            icon: const Icon(Icons.bolt, size: 16, color: Colors.amber),
-                                            label: Text(isBoosted ? 'Boosted' : 'Boost', style: const TextStyle(color: Colors.amber, fontSize: 12)),
-                                            style: OutlinedButton.styleFrom(
-                                              side: const BorderSide(color: Colors.amber),
-                                              padding: const EdgeInsets.symmetric(vertical: 8),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: OutlinedButton.icon(
-                                            onPressed: () => _confirmRemove(l['id'], l['title'] ?? ''),
-                                            icon: const Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
-                                            label: const Text('Remove', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
-                                            style: OutlinedButton.styleFrom(
-                                              side: const BorderSide(color: Colors.redAccent),
-                                              padding: const EdgeInsets.symmetric(vertical: 8),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                child: Column(
+                                  children: [
+                                    ListTile(
+                                      contentPadding: const EdgeInsets.all(10),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (_) => ListingDetailScreen(listingId: l['id'])),
+                                        ).then((_) => _load());
+                                      },
+                                      leading: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: screenshots.isNotEmpty
+                                            ? Image.network(screenshots[0], width: 56, height: 56, fit: BoxFit.cover)
+                                            : Container(width: 56, height: 56, color: AppColors.fieldFill, child: const Icon(Icons.image_outlined, color: AppColors.hint)),
+                                      ),
+                                      title: Row(
+                                        children: [
+                                          Flexible(child: Text(l['title'] ?? '', style: const TextStyle(color: Colors.white), overflow: TextOverflow.ellipsis)),
+                                          if (isBoosted) ...[
+                                            const SizedBox(width: 6),
+                                            const Icon(Icons.bolt, size: 14, color: Colors.amber),
+                                          ],
+                                        ],
+                                      ),
+                                      subtitle: Text(
+                                        '${l['game'] ?? ''} · LKR ${(highestBid ?? l['price']).toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
+                                        style: const TextStyle(color: AppColors.hint, fontSize: 12),
+                                      ),
+                                      trailing: _StatusChip(status: status),
                                     ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+                                    if (status == 'active')
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: OutlinedButton.icon(
+                                                onPressed: _boosting ? null : () => _confirmBoost(l['id'], l['title'] ?? ''),
+                                                icon: const Icon(Icons.bolt, size: 16, color: Colors.amber),
+                                                label: Text(isBoosted ? AppLocalizations.t('boosted') : AppLocalizations.t('boost'), style: const TextStyle(color: Colors.amber, fontSize: 12)),
+                                                style: OutlinedButton.styleFrom(
+                                                  side: const BorderSide(color: Colors.amber),
+                                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: OutlinedButton.icon(
+                                                onPressed: () => _confirmRemove(l['id'], l['title'] ?? ''),
+                                                icon: const Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
+                                                label: Text(AppLocalizations.t('remove'), style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+                                                style: OutlinedButton.styleFrom(
+                                                  side: const BorderSide(color: Colors.redAccent),
+                                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+        );
+      },
     );
   }
 }
@@ -224,10 +230,10 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final map = {
-      'active': ('Active', Colors.greenAccent),
-      'pending_escrow': ('Pending', Colors.orangeAccent),
-      'sold': ('Sold', AppColors.primary),
-      'expired': ('Removed', AppColors.hint),
+      'active': (AppLocalizations.t('active'), Colors.greenAccent),
+      'pending_escrow': (AppLocalizations.t('pending'), Colors.orangeAccent),
+      'sold': (AppLocalizations.t('sold'), AppColors.primary),
+      'expired': (AppLocalizations.t('removed'), AppColors.hint),
     };
     final (label, color) = map[status] ?? ('Unknown', AppColors.hint);
     return Chip(

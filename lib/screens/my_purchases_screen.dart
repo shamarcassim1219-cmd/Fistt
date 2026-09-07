@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 import 'purchase_detail_screen.dart';
 
 class MyPurchasesScreen extends StatefulWidget {
@@ -38,55 +39,60 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('My Purchases')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
-              : _orders.isEmpty
-                  ? const Center(child: Text('No purchases yet', style: TextStyle(color: AppColors.hint)))
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      color: AppColors.primary,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: _orders.length,
-                        itemBuilder: (context, i) {
-                          final o = _orders[i];
-                          final screenshots = (o['screenshots'] as List?) ?? [];
-                          final status = o['status'];
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(12),
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => PurchaseDetailScreen(order: Map<String, dynamic>.from(o))),
-                                );
-                                _load();
-                              },
-                              leading: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: screenshots.isNotEmpty
-                                    ? Image.network(screenshots[0], width: 50, height: 50, fit: BoxFit.cover)
-                                    : Container(width: 50, height: 50, color: AppColors.fieldFill, child: const Icon(Icons.image_outlined, color: AppColors.hint)),
-                              ),
-                              title: Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                              subtitle: Text('LKR ${(o['price'] as num).toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
-                              trailing: _StatusBadge(status: status),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(title: Text(AppLocalizations.t('my_purchases'))),
+          body: _loading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : _error != null
+                  ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
+                  : _orders.isEmpty
+                      ? Center(child: Text(AppLocalizations.t('no_purchases_yet'), style: const TextStyle(color: AppColors.hint)))
+                      : RefreshIndicator(
+                          onRefresh: _load,
+                          color: AppColors.primary,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: _orders.length,
+                            itemBuilder: (context, i) {
+                              final o = _orders[i];
+                              final screenshots = (o['screenshots'] as List?) ?? [];
+                              final status = o['status'];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(12),
+                                  onTap: () async {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => PurchaseDetailScreen(order: Map<String, dynamic>.from(o))),
+                                    );
+                                    _load();
+                                  },
+                                  leading: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: screenshots.isNotEmpty
+                                        ? Image.network(screenshots[0], width: 50, height: 50, fit: BoxFit.cover)
+                                        : Container(width: 50, height: 50, color: AppColors.fieldFill, child: const Icon(Icons.image_outlined, color: AppColors.hint)),
+                                  ),
+                                  title: Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  subtitle: Text('LKR ${(o['price'] as num).toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                                  trailing: _StatusBadge(status: status),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+        );
+      },
     );
   }
 }
@@ -98,10 +104,10 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final map = {
-      'escrow_held': ('In Escrow', Colors.orangeAccent),
-      'completed': ('Completed', Colors.greenAccent),
-      'disputed': ('Disputed', Colors.redAccent),
-      'refunded': ('Refunded', AppColors.hint),
+      'escrow_held': (AppLocalizations.t('in_escrow'), Colors.orangeAccent),
+      'completed': (AppLocalizations.t('completed'), Colors.greenAccent),
+      'disputed': (AppLocalizations.t('disputed'), Colors.redAccent),
+      'refunded': (AppLocalizations.t('refunded'), AppColors.hint),
     };
     final (label, color) = map[status] ?? (status, AppColors.hint);
     return Chip(

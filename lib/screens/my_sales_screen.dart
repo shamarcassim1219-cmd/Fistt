@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 import 'sale_detail_screen.dart';
 
 class MySalesScreen extends StatefulWidget {
@@ -38,51 +39,56 @@ class _MySalesScreenState extends State<MySalesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('My Sales')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
-              : _orders.isEmpty
-                  ? const Center(child: Text('No sales yet', style: TextStyle(color: AppColors.hint)))
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      color: AppColors.primary,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: _orders.length,
-                        itemBuilder: (context, i) {
-                          final o = _orders[i];
-                          final status = o['status'];
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(12),
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => SaleDetailScreen(order: Map<String, dynamic>.from(o))),
-                                );
-                                _load();
-                              },
-                              title: Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                              subtitle: Text(
-                                'Sale: LKR ${(o['price'] as num).toStringAsFixed(2)} · You get: LKR ${(o['sellerPayout'] as num).toStringAsFixed(2)}',
-                                style: const TextStyle(color: AppColors.hint, fontSize: 12),
-                              ),
-                              trailing: _StatusBadge(status: status),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(title: Text(AppLocalizations.t('my_sales'))),
+          body: _loading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : _error != null
+                  ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
+                  : _orders.isEmpty
+                      ? Center(child: Text(AppLocalizations.t('no_sales_yet'), style: const TextStyle(color: AppColors.hint)))
+                      : RefreshIndicator(
+                          onRefresh: _load,
+                          color: AppColors.primary,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: _orders.length,
+                            itemBuilder: (context, i) {
+                              final o = _orders[i];
+                              final status = o['status'];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(12),
+                                  onTap: () async {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => SaleDetailScreen(order: Map<String, dynamic>.from(o))),
+                                    );
+                                    _load();
+                                  },
+                                  title: Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  subtitle: Text(
+                                    'Sale: LKR ${(o['price'] as num).toStringAsFixed(2)} · You get: LKR ${(o['sellerPayout'] as num).toStringAsFixed(2)}',
+                                    style: const TextStyle(color: AppColors.hint, fontSize: 12),
+                                  ),
+                                  trailing: _StatusBadge(status: status),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+        );
+      },
     );
   }
 }
@@ -94,10 +100,10 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final map = {
-      'escrow_held': ('In Escrow', Colors.orangeAccent),
-      'completed': ('Paid Out', Colors.greenAccent),
-      'disputed': ('Disputed', Colors.redAccent),
-      'refunded': ('Refunded', AppColors.hint),
+      'escrow_held': (AppLocalizations.t('in_escrow'), Colors.orangeAccent),
+      'completed': (AppLocalizations.t('paid_out'), Colors.greenAccent),
+      'disputed': (AppLocalizations.t('disputed'), Colors.redAccent),
+      'refunded': (AppLocalizations.t('refunded'), AppColors.hint),
     };
     final (label, color) = map[status] ?? (status, AppColors.hint);
     return Chip(
