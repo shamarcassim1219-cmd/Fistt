@@ -72,6 +72,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _confirmLogout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Logout', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(color: AppColors.hint),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _logout();
+            },
+            child: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _confirmDeleteAccount() {
     showDialog(
       context: context,
@@ -155,7 +179,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
               _tile(
                 Icons.verified_outlined,
-                AppLocalizations.t('verified_badge'),
+                'Verification Center',
                 null,
                 () async {
                   await Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
@@ -265,7 +289,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SizedBox(
                   width: double.infinity,
-                  child: OutlinedButton.icon(onPressed: _logout, icon: const Icon(Icons.logout), label: Text(AppLocalizations.t('logout'))),
+                  child: OutlinedButton.icon(onPressed: _confirmLogout, icon: const Icon(Icons.logout), label: Text(AppLocalizations.t('logout'))),
                 ),
               ),
               const SizedBox(height: 10),
