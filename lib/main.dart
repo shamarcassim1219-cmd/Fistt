@@ -5,6 +5,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'services/api_service.dart';
+import 'services/app_localizations.dart';
 import 'screens/splash_screen.dart';
 import 'screens/notifications_screen.dart';
 
@@ -25,6 +26,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await AppLocalizations.loadSavedLanguage();
 
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

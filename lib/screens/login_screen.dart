@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 import 'otp_verify_screen.dart';
 import 'forgot_password_screen.dart';
 import 'home_screen.dart';
@@ -69,11 +70,9 @@ class _LoginScreenState extends State<LoginScreen> {
         serverClientId: '1050625555685-sn2ka7tak117d32k25fh5jstemmdmss3.apps.googleusercontent.com',
       );
 
-      // Sign out first to always show the account picker
       await googleSignIn.signOut();
       final account = await googleSignIn.signIn();
       if (account == null) {
-        // User cancelled the picker
         setState(() => _googleLoading = false);
         return;
       }
@@ -128,152 +127,157 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 24),
-                Text(
-                  _isRegister ? 'Create account' : 'Welcome back',
-                  style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _isRegister ? 'Sign up to get started' : 'Login to continue',
-                  style: const TextStyle(color: AppColors.hint, fontSize: 15),
-                ),
-                const SizedBox(height: 36),
-
-                TextFormField(
-                  controller: _emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: _fieldDecoration(hint: 'Email', icon: Icons.mail_outline),
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
-                ),
-                const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: _passCtrl,
-                  obscureText: _obscurePassword,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: _fieldDecoration(
-                    hint: 'Password',
-                    icon: Icons.lock_outline,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: AppColors.hint, size: 20,
-                      ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                  ),
-                  validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
-                ),
-
-                if (_isRegister) ...[
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _referralCtrl,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: _fieldDecoration(hint: 'Referral Code (optional)', icon: Icons.card_giftcard_outlined),
-                  ),
-                ],
-
-                if (!_isRegister)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()));
-                      },
-                      style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 36)),
-                      child: const Text('Forgot Password?', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                    ),
-                  ),
-
-                if (_error != null) ...[
-                  const SizedBox(height: 8),
-                  Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
-                ],
-
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _submit,
-                    child: _loading
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                        : Text(_isRegister ? 'Sign Up' : 'Login', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-                Row(
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Expanded(child: Divider(color: AppColors.border)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('or continue with', style: TextStyle(color: AppColors.hint, fontSize: 13)),
+                    const SizedBox(height: 24),
+                    Text(
+                      _isRegister ? AppLocalizations.t('create_account') : AppLocalizations.t('welcome_back'),
+                      style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
                     ),
-                    const Expanded(child: Divider(color: AppColors.border)),
-                  ],
-                ),
-                const SizedBox(height: 20),
+                    const SizedBox(height: 6),
+                    Text(
+                      _isRegister ? AppLocalizations.t('sign_up_to_get_started') : AppLocalizations.t('login_to_continue'),
+                      style: const TextStyle(color: AppColors.hint, fontSize: 15),
+                    ),
+                    const SizedBox(height: 36),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _googleLoading ? null : _handleGoogleSignIn,
-                        icon: _googleLoading
-                            ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : const Text('G', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                        label: const Text('Google', style: TextStyle(color: Colors.white)),
-                      ),
+                    TextFormField(
+                      controller: _emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: _fieldDecoration(hint: AppLocalizations.t('email'), icon: Icons.mail_outline),
+                      validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _comingSoon('Apple'),
-                        icon: const Icon(Icons.apple, color: Colors.white, size: 20),
-                        label: const Text('Apple', style: TextStyle(color: Colors.white)),
-                      ),
-                    ),
-                  ],
-                ),
+                    const SizedBox(height: 16),
 
-                const SizedBox(height: 28),
-                Center(
-                  child: TextButton(
-                    onPressed: () => setState(() => _isRegister = !_isRegister),
-                    child: RichText(
-                      text: TextSpan(
-                        style: const TextStyle(color: AppColors.hint, fontSize: 14),
-                        children: [
-                          TextSpan(text: _isRegister ? "Already have an account? " : "Don't have an account? "),
-                          TextSpan(
-                            text: _isRegister ? 'Login' : 'Sign Up',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    TextFormField(
+                      controller: _passCtrl,
+                      obscureText: _obscurePassword,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: _fieldDecoration(
+                        hint: AppLocalizations.t('password'),
+                        icon: Icons.lock_outline,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                            color: AppColors.hint, size: 20,
                           ),
-                        ],
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
+                      ),
+                      validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
+                    ),
+
+                    if (_isRegister) ...[
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _referralCtrl,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: _fieldDecoration(hint: 'Referral Code (optional)', icon: Icons.card_giftcard_outlined),
+                      ),
+                    ],
+
+                    if (!_isRegister)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()));
+                          },
+                          style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 36)),
+                          child: Text(AppLocalizations.t('forgot_password'), style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                        ),
+                      ),
+
+                    if (_error != null) ...[
+                      const SizedBox(height: 8),
+                      Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                    ],
+
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: _loading ? null : _submit,
+                        child: _loading
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                            : Text(_isRegister ? AppLocalizations.t('sign_up') : AppLocalizations.t('login'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
                     ),
-                  ),
+
+                    const SizedBox(height: 28),
+                    Row(
+                      children: [
+                        const Expanded(child: Divider(color: AppColors.border)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text('or continue with', style: TextStyle(color: AppColors.hint, fontSize: 13)),
+                        ),
+                        const Expanded(child: Divider(color: AppColors.border)),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _googleLoading ? null : _handleGoogleSignIn,
+                            icon: _googleLoading
+                                ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Text('G', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                            label: const Text('Google', style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _comingSoon('Apple'),
+                            icon: const Icon(Icons.apple, color: Colors.white, size: 20),
+                            label: const Text('Apple', style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 28),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => setState(() => _isRegister = !_isRegister),
+                        child: RichText(
+                          text: TextSpan(
+                            style: const TextStyle(color: AppColors.hint, fontSize: 14),
+                            children: [
+                              TextSpan(text: _isRegister ? AppLocalizations.t('already_have_account') : AppLocalizations.t('dont_have_account')),
+                              TextSpan(
+                                text: _isRegister ? AppLocalizations.t('login') : AppLocalizations.t('sign_up'),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

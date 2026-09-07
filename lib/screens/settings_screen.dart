@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 import 'login_screen.dart';
 import 'verification_screen.dart';
 import 'profile_management_screen.dart';
@@ -27,7 +28,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notifyOrders = true;
   bool _notifyOffers = true;
   bool _notifyPromos = false;
-  String _language = 'English';
   Map<String, dynamic>? _profile;
 
   @override
@@ -100,182 +100,188 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final user = _profile;
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: AppColors.primary.withOpacity(0.2),
-                  backgroundImage: user?['profilePhotoUrl'] != null ? NetworkImage(user!['profilePhotoUrl']) : null,
-                  child: user?['profilePhotoUrl'] == null
-                      ? const Icon(Icons.person, size: 32, color: AppColors.primary)
-                      : null,
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(title: Text(AppLocalizations.t('settings'))),
+          body: ListView(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: AppColors.primary.withOpacity(0.2),
+                      backgroundImage: user?['profilePhotoUrl'] != null ? NetworkImage(user!['profilePhotoUrl']) : null,
+                      child: user?['profilePhotoUrl'] == null
+                          ? const Icon(Icons.person, size: 32, color: AppColors.primary)
+                          : null,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(user?['email'] ?? 'Guest User',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+                          const SizedBox(height: 4),
+                          _VerifiedBadgeChip(status: user?['verifiedStatus'] ?? 'not_verified'),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, color: AppColors.hint),
+                      onPressed: () async {
+                        await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileManagementScreen()));
+                        _loadProfile();
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(user?['email'] ?? 'Guest User',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
-                      const SizedBox(height: 4),
-                      _VerifiedBadgeChip(status: user?['verifiedStatus'] ?? 'not_verified'),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined, color: AppColors.hint),
-                  onPressed: () async {
-                    await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileManagementScreen()));
-                    _loadProfile();
-                  },
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-
-          const _SectionHeader('Account'),
-          _tile(Icons.person_outline, 'Profile Management', 'Name, photo, phone/email', () async {
-            await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileManagementScreen()));
-            _loadProfile();
-          }),
-          _tile(Icons.lock_reset, 'Change Password / PIN', null, () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
-          }),
-          _tile(
-            Icons.verified_outlined,
-            'Verified Badge Status',
-            'Pending / Approved',
-            () async {
-              await Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
-              _loadProfile();
-            },
-          ),
-          _tile(Icons.list_alt_outlined, 'My Listings', 'Active, Sold, Expired', () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const MyListingsScreen()));
-          }),
-          _tile(Icons.shopping_bag_outlined, 'My Purchases', 'Accounts you bought', () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPurchasesScreen()));
-          }),
-          _tile(Icons.storefront_outlined, 'My Sales', 'Accounts you sold', () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const MySalesScreen()));
-          }),
-          _tile(Icons.local_offer_outlined, 'Offers', 'Sent and received offers', () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()));
-          }),
-          _tile(Icons.bookmark_border, 'Saved / Wishlist Accounts', null, () => _comingSoon('Wishlist')),
-          _tile(Icons.account_balance_outlined, 'Wallet & Bank Details', 'Withdrawal accounts', () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletBankDetailsScreen()));
-          }),
-          _tile(Icons.card_giftcard_outlined, 'Referral Code', 'Share & earn LKR 100 per user', () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralCodeScreen()));
-          }),
-
-          const _SectionHeader('Security'),
-          SwitchListTile(
-            secondary: const Icon(Icons.fingerprint, color: AppColors.hint),
-            title: const Text('Biometric Lock', style: TextStyle(color: Colors.white)),
-            subtitle: const Text('Fingerprint / Face ID to open app', style: TextStyle(color: AppColors.hint)),
-            value: _biometricLock,
-            onChanged: _toggleBiometric,
-          ),
-          _tile(Icons.block_outlined, 'Blocked Users', null, () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const BlockedUsersScreen()));
-          }),
-
-          const _SectionHeader('Notifications'),
-          SwitchListTile(
-            secondary: const Icon(Icons.receipt_long_outlined, color: AppColors.hint),
-            title: const Text('Order Updates', style: TextStyle(color: Colors.white)),
-            value: _notifyOrders,
-            onChanged: (v) => setState(() => _notifyOrders = v),
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.local_offer_outlined, color: AppColors.hint),
-            title: const Text('Offers & Bids', style: TextStyle(color: Colors.white)),
-            value: _notifyOffers,
-            onChanged: (v) => setState(() => _notifyOffers = v),
-          ),
-          SwitchListTile(
-            secondary: const Icon(Icons.campaign_outlined, color: AppColors.hint),
-            title: const Text('Promotions', style: TextStyle(color: Colors.white)),
-            value: _notifyPromos,
-            onChanged: (v) => setState(() => _notifyPromos = v),
-          ),
-
-          const _SectionHeader('Preferences'),
-          ListTile(
-            leading: const Icon(Icons.language_outlined, color: AppColors.hint),
-            title: const Text('Language', style: TextStyle(color: Colors.white)),
-            subtitle: Text(_language, style: const TextStyle(color: AppColors.hint)),
-            onTap: () async {
-              final choice = await showModalBottomSheet<String>(
-                context: context,
-                backgroundColor: AppColors.surface,
-                builder: (ctx) => SafeArea(
-                  child: Wrap(
-                    children: ['Sinhala', 'English', 'Tamil']
-                        .map((l) => ListTile(
-                              title: Text(l, style: const TextStyle(color: Colors.white)),
-                              onTap: () => Navigator.pop(ctx, l),
-                            ))
-                        .toList(),
-                  ),
-                ),
-              );
-              if (choice != null) setState(() => _language = choice);
-            },
-          ),
-
-          const _SectionHeader('Privacy & Data'),
-          _tile(Icons.download_outlined, 'Download My Data', null, () => _comingSoon('Data export')),
-          _tile(Icons.privacy_tip_outlined, 'Privacy & Data Deletion Request', null, () => _comingSoon('Deletion request')),
-          _tile(Icons.description_outlined, 'Terms & Conditions', null, () => _comingSoon('Terms viewer')),
-          _tile(Icons.policy_outlined, 'Privacy Policy', null, () => _comingSoon('Privacy Policy viewer')),
-
-          const _SectionHeader('Support'),
-          _tile(Icons.help_outline, 'Help & FAQ', null, () => _comingSoon('Help & FAQ')),
-          _tile(Icons.report_gmailerrorred_outlined, 'Report a Problem / Contact Admin', null, () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportProblemScreen()));
-          }),
-
-          const _SectionHeader('About'),
-          const ListTile(
-            leading: Icon(Icons.info_outline, color: AppColors.hint),
-            title: Text('App Version', style: TextStyle(color: Colors.white)),
-            subtitle: Text('1.0.0', style: TextStyle(color: AppColors.hint)),
-          ),
-
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(onPressed: _logout, icon: const Icon(Icons.logout), label: const Text('Logout')),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: TextButton.icon(
-                onPressed: _confirmDeleteAccount,
-                icon: const Icon(Icons.delete_forever_outlined, color: Colors.redAccent),
-                label: const Text('Delete Account', style: TextStyle(color: Colors.redAccent)),
               ),
-            ),
+              const Divider(height: 1),
+
+              _SectionHeader(AppLocalizations.t('account')),
+              _tile(Icons.person_outline, AppLocalizations.t('profile_management'), null, () async {
+                await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileManagementScreen()));
+                _loadProfile();
+              }),
+              _tile(Icons.lock_reset, AppLocalizations.t('change_password'), null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
+              }),
+              _tile(
+                Icons.verified_outlined,
+                AppLocalizations.t('verified_badge'),
+                null,
+                () async {
+                  await Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
+                  _loadProfile();
+                },
+              ),
+              _tile(Icons.list_alt_outlined, AppLocalizations.t('my_listings'), null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyListingsScreen()));
+              }),
+              _tile(Icons.shopping_bag_outlined, AppLocalizations.t('my_purchases'), null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPurchasesScreen()));
+              }),
+              _tile(Icons.storefront_outlined, AppLocalizations.t('my_sales'), null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MySalesScreen()));
+              }),
+              _tile(Icons.local_offer_outlined, AppLocalizations.t('offers'), null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()));
+              }),
+              _tile(Icons.bookmark_border, 'Saved / Wishlist Accounts', null, () => _comingSoon('Wishlist')),
+              _tile(Icons.account_balance_outlined, AppLocalizations.t('wallet_bank_details'), null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletBankDetailsScreen()));
+              }),
+              _tile(Icons.card_giftcard_outlined, AppLocalizations.t('referral_code'), null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralCodeScreen()));
+              }),
+
+              _SectionHeader(AppLocalizations.t('security')),
+              SwitchListTile(
+                secondary: const Icon(Icons.fingerprint, color: AppColors.hint),
+                title: Text(AppLocalizations.t('biometric_lock'), style: const TextStyle(color: Colors.white)),
+                subtitle: const Text('Fingerprint / Face ID to open app', style: TextStyle(color: AppColors.hint)),
+                value: _biometricLock,
+                onChanged: _toggleBiometric,
+              ),
+              _tile(Icons.block_outlined, AppLocalizations.t('blocked_users'), null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const BlockedUsersScreen()));
+              }),
+
+              _SectionHeader(AppLocalizations.t('notifications')),
+              SwitchListTile(
+                secondary: const Icon(Icons.receipt_long_outlined, color: AppColors.hint),
+                title: Text(AppLocalizations.t('order_updates'), style: const TextStyle(color: Colors.white)),
+                value: _notifyOrders,
+                onChanged: (v) => setState(() => _notifyOrders = v),
+              ),
+              SwitchListTile(
+                secondary: const Icon(Icons.local_offer_outlined, color: AppColors.hint),
+                title: Text(AppLocalizations.t('offers_bids'), style: const TextStyle(color: Colors.white)),
+                value: _notifyOffers,
+                onChanged: (v) => setState(() => _notifyOffers = v),
+              ),
+              SwitchListTile(
+                secondary: const Icon(Icons.campaign_outlined, color: AppColors.hint),
+                title: Text(AppLocalizations.t('promotions'), style: const TextStyle(color: Colors.white)),
+                value: _notifyPromos,
+                onChanged: (v) => setState(() => _notifyPromos = v),
+              ),
+
+              _SectionHeader(AppLocalizations.t('preferences')),
+              ListTile(
+                leading: const Icon(Icons.language_outlined, color: AppColors.hint),
+                title: Text(AppLocalizations.t('language'), style: const TextStyle(color: Colors.white)),
+                subtitle: Text(lang, style: const TextStyle(color: AppColors.hint)),
+                onTap: () async {
+                  final choice = await showModalBottomSheet<String>(
+                    context: context,
+                    backgroundColor: AppColors.surface,
+                    builder: (ctx) => SafeArea(
+                      child: Wrap(
+                        children: ['English', 'Sinhala', 'Tamil']
+                            .map((l) => ListTile(
+                                  title: Text(l, style: const TextStyle(color: Colors.white)),
+                                  trailing: lang == l ? const Icon(Icons.check, color: AppColors.primary) : null,
+                                  onTap: () => Navigator.pop(ctx, l),
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                  );
+                  if (choice != null) await AppLocalizations.setLanguage(choice);
+                },
+              ),
+
+              _SectionHeader('Privacy & Data'),
+              _tile(Icons.download_outlined, 'Download My Data', null, () => _comingSoon('Data export')),
+              _tile(Icons.privacy_tip_outlined, 'Privacy & Data Deletion Request', null, () => _comingSoon('Deletion request')),
+              _tile(Icons.description_outlined, 'Terms & Conditions', null, () => _comingSoon('Terms viewer')),
+              _tile(Icons.policy_outlined, 'Privacy Policy', null, () => _comingSoon('Privacy Policy viewer')),
+
+              _SectionHeader(AppLocalizations.t('support')),
+              _tile(Icons.help_outline, 'Help & FAQ', null, () => _comingSoon('Help & FAQ')),
+              _tile(Icons.report_gmailerrorred_outlined, AppLocalizations.t('report_problem'), null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportProblemScreen()));
+              }),
+
+              _SectionHeader('About'),
+              const ListTile(
+                leading: Icon(Icons.info_outline, color: AppColors.hint),
+                title: Text('App Version', style: TextStyle(color: Colors.white)),
+                subtitle: Text('1.0.0', style: TextStyle(color: AppColors.hint)),
+              ),
+
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(onPressed: _logout, icon: const Icon(Icons.logout), label: Text(AppLocalizations.t('logout'))),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    onPressed: _confirmDeleteAccount,
+                    icon: const Icon(Icons.delete_forever_outlined, color: Colors.redAccent),
+                    label: Text(AppLocalizations.t('delete_account'), style: const TextStyle(color: Colors.redAccent)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
           ),
-          const SizedBox(height: 30),
-        ],
-      ),
+        );
+      },
     );
   }
 
