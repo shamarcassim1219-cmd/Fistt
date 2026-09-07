@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:async';
 import 'dart:io';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import 'my_sales_screen.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -14,14 +16,24 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> {
   double _balance = 0;
+  double _pendingAmount = 0;
+  DateTime? _nextReleaseAt;
   List<dynamic> _transactions = [];
   bool _loading = true;
   String? _error;
+  Timer? _timer;
+  Duration _remaining = Duration.zero;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -32,17 +44,59 @@ class _WalletScreenState extends State<WalletScreen> {
     try {
       final balance = await ApiService.getWalletBalance();
       final transactions = await ApiService.getTransactions();
+      final sales = await ApiService.getMySales();
+
+      double pending = 0;
+      DateTime? earliestRelease;
+      for (final s in sales) {
+        if (s['status'] == 'escrow_held') {
+          pending += (s['sellerPayout'] as num?)?.toDouble() ?? 0;
+          if (s['escrowReleaseAt'] != null) {
+            final releaseAt = DateTime.parse(s['escrowReleaseAt']).toLocal();
+            if (earliestRelease == null || releaseAt.isBefore(earliestRelease)) {
+              earliestRelease = releaseAt;
+            }
+          }
+        }
+      }
+
       setState(() {
         _balance = balance;
         _transactions = transactions;
+        _pendingAmount = pending;
+        _nextReleaseAt = earliestRelease;
         _loading = false;
       });
+      _startCountdown();
     } catch (e) {
       setState(() {
         _error = e.toString().replaceFirst('Exception: ', '');
         _loading = false;
       });
     }
+  }
+
+  void _startCountdown() {
+    _timer?.cancel();
+    if (_nextReleaseAt == null) return;
+    void tick() {
+      final diff = _nextReleaseAt!.difference(DateTime.now());
+      if (mounted) setState(() => _remaining = diff.isNegative ? Duration.zero : diff);
+    }
+    tick();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => tick());
+  }
+
+  String _formatDuration(Duration d) {
+    if (d.inSeconds <= 0) return 'Releasing soon';
+    final days = d.inDays;
+    final hours = d.inHours % 24;
+    final minutes = d.inMinutes % 60;
+    if (days > 0) return '${days}d ${hours}h ${minutes}m';
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    final s = d.inSeconds % 60;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -97,6 +151,45 @@ class _WalletScreenState extends State<WalletScreen> {
                                 ],
                               ),
                             ),
+
+                            if (_pendingAmount > 0) ...[
+                              const SizedBox(height: 12),
+                              InkWell(
+                                onTap: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const MySalesScreen()));
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orangeAccent.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: Colors.orangeAccent.withOpacity(0.4)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.hourglass_top_outlined, color: Colors.orangeAccent, size: 28),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text('Pending: LKR ${_pendingAmount.toStringAsFixed(2)}',
+                                                style: const TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold, fontSize: 14)),
+                                            const SizedBox(height: 2),
+                                            if (_nextReleaseAt != null)
+                                              Text('Next release in ${_formatDuration(_remaining)}',
+                                                  style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(Icons.chevron_right, color: AppColors.hint),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+
                             const SizedBox(height: 16),
                             Row(
                               children: [
@@ -366,6 +459,8 @@ class _TransactionTile extends StatelessWidget {
       case 'commission': return {'label': 'Platform Commission', 'icon': Icons.percent};
       case 'referral_bonus': return {'label': 'Referral Bonus', 'icon': Icons.card_giftcard};
       case 'purchase_hold': return {'label': 'Purchase (Escrow)', 'icon': Icons.lock_clock_outlined};
+      case 'bid_hold': return {'label': 'Bid Held', 'icon': Icons.gavel_outlined};
+      case 'bid_refund': return {'label': 'Bid Refunded', 'icon': Icons.replay_outlined};
       default: return {'label': type, 'icon': Icons.receipt_long};
     }
   }
