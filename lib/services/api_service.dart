@@ -273,6 +273,11 @@ class ApiService {
     await _handle(res);
   }
 
+  static Future<void> boostListing(int listingId) async {
+    final res = await http.post(Uri.parse('$baseUrl/listings/$listingId/boost'), headers: await _headers());
+    await _handle(res);
+  }
+
   // ---------- ORDERS ----------
   static Future<Map<String, dynamic>> createOrder(int listingId) async {
     final res = await http.post(

@@ -245,12 +245,13 @@ class _HomeTabState extends State<_HomeTab> {
                                 final allowBidding = l['allowBidding'] == true;
                                 final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
                                 final displayPrice = highestBid ?? (l['price'] as num).toDouble();
+                                final isBoosted = l['boosted'] == true;
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 10),
                                   decoration: BoxDecoration(
                                     color: AppColors.surface,
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: AppColors.border),
+                                    border: Border.all(color: isBoosted ? Colors.amber.withOpacity(0.5) : AppColors.border),
                                   ),
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.all(10),
@@ -260,14 +261,27 @@ class _HomeTabState extends State<_HomeTab> {
                                         MaterialPageRoute(builder: (_) => ListingDetailScreen(listingId: l['id'])),
                                       );
                                     },
-                                    leading: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: screenshots.isNotEmpty
-                                          ? Image.network(screenshots[0], width: 56, height: 56, fit: BoxFit.cover)
-                                          : Container(
-                                              width: 56, height: 56, color: AppColors.fieldFill,
-                                              child: const Icon(Icons.image_outlined, color: AppColors.hint),
+                                    leading: Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: screenshots.isNotEmpty
+                                              ? Image.network(screenshots[0], width: 56, height: 56, fit: BoxFit.cover)
+                                              : Container(
+                                                  width: 56, height: 56, color: AppColors.fieldFill,
+                                                  child: const Icon(Icons.image_outlined, color: AppColors.hint),
+                                                ),
+                                        ),
+                                        if (isBoosted)
+                                          Positioned(
+                                            top: -4, left: -4,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(3),
+                                              decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle),
+                                              child: const Icon(Icons.bolt, size: 10, color: Colors.black),
                                             ),
+                                          ),
+                                      ],
                                     ),
                                     title: Row(
                                       children: [
@@ -275,6 +289,10 @@ class _HomeTabState extends State<_HomeTab> {
                                         if (l['sellerVerified'] == true) ...[
                                           const SizedBox(width: 4),
                                           const Icon(Icons.verified, size: 14, color: AppColors.primary),
+                                        ],
+                                        if (isBoosted) ...[
+                                          const SizedBox(width: 4),
+                                          const Icon(Icons.bolt, size: 14, color: Colors.amber),
                                         ],
                                       ],
                                     ),

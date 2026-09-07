@@ -14,6 +14,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
   List<dynamic> _listings = [];
   bool _loading = true;
   String? _error;
+  bool _boosting = false;
 
   @override
   void initState() {
@@ -70,6 +71,43 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
     );
   }
 
+  void _confirmBoost(int listingId, String title) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Boost Listing', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Boost this listing to the top of the home feed for 24 hours? This costs LKR 250 from your wallet.',
+          style: TextStyle(color: AppColors.hint, fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              setState(() => _boosting = true);
+              try {
+                await ApiService.boostListing(listingId);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Listing boosted for 24 hours!')));
+                _load();
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                );
+              } finally {
+                if (mounted) setState(() => _boosting = false);
+              }
+            },
+            child: const Text('Boost — LKR 250'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -99,12 +137,13 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                           final screenshots = (l['screenshots'] as List?) ?? [];
                           final allowBidding = l['allowBidding'] == true;
                           final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
+                          final isBoosted = l['boosted'] == true;
                           return Container(
                             margin: const EdgeInsets.only(bottom: 10),
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border),
+                              border: Border.all(color: isBoosted ? Colors.amber.withOpacity(0.5) : AppColors.border),
                             ),
                             child: Column(
                               children: [
@@ -122,7 +161,15 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                         ? Image.network(screenshots[0], width: 56, height: 56, fit: BoxFit.cover)
                                         : Container(width: 56, height: 56, color: AppColors.fieldFill, child: const Icon(Icons.image_outlined, color: AppColors.hint)),
                                   ),
-                                  title: Text(l['title'] ?? '', style: const TextStyle(color: Colors.white)),
+                                  title: Row(
+                                    children: [
+                                      Flexible(child: Text(l['title'] ?? '', style: const TextStyle(color: Colors.white), overflow: TextOverflow.ellipsis)),
+                                      if (isBoosted) ...[
+                                        const SizedBox(width: 6),
+                                        const Icon(Icons.bolt, size: 14, color: Colors.amber),
+                                      ],
+                                    ],
+                                  ),
                                   subtitle: Text(
                                     '${l['game'] ?? ''} · LKR ${(highestBid ?? l['price']).toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
                                     style: const TextStyle(color: AppColors.hint, fontSize: 12),
@@ -132,17 +179,32 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                 if (status == 'active')
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                                    child: SizedBox(
-                                      width: double.infinity,
-                                      child: OutlinedButton.icon(
-                                        onPressed: () => _confirmRemove(l['id'], l['title'] ?? ''),
-                                        icon: const Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
-                                        label: const Text('Remove Listing', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
-                                        style: OutlinedButton.styleFrom(
-                                          side: const BorderSide(color: Colors.redAccent),
-                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton.icon(
+                                            onPressed: _boosting ? null : () => _confirmBoost(l['id'], l['title'] ?? ''),
+                                            icon: const Icon(Icons.bolt, size: 16, color: Colors.amber),
+                                            label: Text(isBoosted ? 'Boosted' : 'Boost', style: const TextStyle(color: Colors.amber, fontSize: 12)),
+                                            style: OutlinedButton.styleFrom(
+                                              side: const BorderSide(color: Colors.amber),
+                                              padding: const EdgeInsets.symmetric(vertical: 8),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: OutlinedButton.icon(
+                                            onPressed: () => _confirmRemove(l['id'], l['title'] ?? ''),
+                                            icon: const Icon(Icons.delete_outline, size: 16, color: Colors.redAccent),
+                                            label: const Text('Remove', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+                                            style: OutlinedButton.styleFrom(
+                                              side: const BorderSide(color: Colors.redAccent),
+                                              padding: const EdgeInsets.symmetric(vertical: 8),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                               ],
