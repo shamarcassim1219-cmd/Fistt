@@ -4,6 +4,7 @@ import 'dart:io';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import '../services/games_list.dart';
 
 class AddListingScreen extends StatefulWidget {
   const AddListingScreen({super.key});
@@ -15,7 +16,7 @@ class AddListingScreen extends StatefulWidget {
 class _AddListingScreenState extends State<AddListingScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  String _selectedGame = 'PUBG';
+  String? _selectedGame;
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _uidCtrl = TextEditingController();
@@ -32,8 +33,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
   bool _loadingVerification = true;
   String _verifiedStatus = 'not_verified';
-
-  final List<String> _games = ['PUBG', 'Free Fire', 'CODM', 'MLBB'];
 
   @override
   void initState() {
@@ -96,7 +95,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
       setState(() {
         _screenshots.clear();
         _allowBidding = false;
-        _selectedGame = 'PUBG';
+        _selectedGame = null;
         _error = null;
       });
     }
@@ -104,6 +103,10 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedGame == null) {
+      setState(() => _error = 'Please select a game');
+      return;
+    }
     if (_screenshots.isEmpty) {
       setState(() => _error = 'Add at least one screenshot');
       return;
@@ -122,7 +125,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
       final screenshotUrls = await _uploadScreenshots();
 
       await ApiService.createListing(
-        game: _selectedGame,
+        game: _selectedGame!,
         title: _titleCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         inGameUID: _uidCtrl.text.trim(),
@@ -148,6 +151,62 @@ class _AddListingScreenState extends State<AddListingScreen> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  void _showGameSelector() {
+    final searchCtrl = TextEditingController();
+    List<String> filtered = List.from(GamesList.games);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: MediaQuery.of(ctx).viewInsets.bottom + 16),
+          child: SizedBox(
+            height: MediaQuery.of(ctx).size.height * 0.7,
+            child: Column(
+              children: [
+                Text('Select Game', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: searchCtrl,
+                  autofocus: true,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    hintText: 'Search games...',
+                    prefixIcon: Icon(Icons.search, color: AppColors.hint),
+                  ),
+                  onChanged: (v) {
+                    setModalState(() {
+                      filtered = GamesList.games.where((g) => g.toLowerCase().contains(v.toLowerCase())).toList();
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: filtered.length,
+                    itemBuilder: (context, i) {
+                      final g = filtered[i];
+                      return ListTile(
+                        title: Text(g, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                        trailing: _selectedGame == g ? const Icon(Icons.check, color: AppColors.primary) : null,
+                        onTap: () {
+                          setState(() => _selectedGame = g);
+                          Navigator.pop(ctx);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -200,20 +259,27 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   _SectionLabel(AppLocalizations.t('game')),
-                  Wrap(
-                    spacing: 8,
-                    children: _games.map((g) {
-                      final selected = g == _selectedGame;
-                      return ChoiceChip(
-                        label: Text(g),
-                        selected: selected,
-                        onSelected: (_) => setState(() => _selectedGame = g),
-                        backgroundColor: AppColors.fieldFill,
-                        selectedColor: AppColors.primary.withOpacity(0.3),
-                        labelStyle: TextStyle(color: selected ? Colors.white : AppColors.hint),
-                        side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
-                      );
-                    }).toList(),
+                  InkWell(
+                    onTap: _showGameSelector,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.fieldFill,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _selectedGame ?? 'Tap to select a game',
+                              style: TextStyle(color: _selectedGame != null ? Colors.white : AppColors.hint, fontSize: 14),
+                            ),
+                          ),
+                          const Icon(Icons.arrow_drop_down, color: AppColors.hint),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 20),
 
