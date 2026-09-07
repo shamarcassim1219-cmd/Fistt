@@ -223,7 +223,33 @@ class AppLocalizations {
     'resend_code': {'English': 'Resend Code', 'Sinhala': 'කේතය නැවත යවන්න', 'Tamil': 'குறியீட்டை மீண்டும் அனுப்பு'},
 
     'verify_your_email': {'English': 'Verify Your Email', 'Sinhala': 'ඔබේ විද්‍යුත් තැපෑල තහවුරු කරන්න', 'Tamil': 'உங்கள் மின்னஞ்சலைச் சரிபார்க்கவும்'},
-    'enter_code_sent_to': {'English': 'Enter the 6-digit code sent to', 'Sinhala': 'යවන ලද ඉලக්කම් 6 කේතය ඇතුළත් කරන්න', 'Tamil': 'அனுப்பப்பட்ட 6 இலக்க குறியீட்டை உள்ளிடவும்'},
+    'enter_code_sent_to': {'English': 'Enter the 6-digit code sent to', 'Sinhala': 'යවන ලද ඉලක්කම් 6 කේතය ඇතුළත් කරන්න', 'Tamil': 'அனுப்பப்பட்ட 6 இலக்க குறியீட்டை உள்ளிடவும்'},
     'verify': {'English': 'Verify', 'Sinhala': 'තහවුරු කරන්න', 'Tamil': 'சரிபார்க்கவும்'},
+
+    'current_password': {'English': 'Current Password', 'Sinhala': 'වර්තමාන මුරපදය', 'Tamil': 'தற்போதைய கடவுச்சொல்'},
+    'confirm_new_password': {'English': 'Confirm New Password', 'Sinhala': 'නව මුරපදය තහවුරු කරන්න', 'Tamil': 'புதிய கடவுச்சொல்லை உறுதிப்படுத்தவும்'},
+    'update_password': {'English': 'Update Password', 'Sinhala': 'මුරපදය යාවත්කාලීන කරන්න', 'Tamil': 'கடவுச்சொல்லைப் புதுப்பிக்கவும்'},
+
+    'bank_name': {'English': 'Bank Name', 'Sinhala': 'බැංකු නම', 'Tamil': 'வங்கியின் பெயர்'},
+    'account_holder_name': {'English': 'Account Holder Name', 'Sinhala': 'ගිණුම් හිමියාගේ නම', 'Tamil': 'கணக்கு வைத்திருப்பவரின் பெயர்'},
+    'account_number': {'English': 'Account Number', 'Sinhala': 'ගිණුම් අංකය', 'Tamil': 'கணக்கு எண்'},
+    'branch': {'English': 'Branch', 'Sinhala': 'ශාඛාව', 'Tamil': 'கிளை'},
+    'send_verification_code': {'English': 'Send Verification Code', 'Sinhala': 'තහවුරු කිරීමේ කේතය යවන්න', 'Tamil': 'சரிபார்ப்பு குறியீட்டை அனுப்பு'},
+    'bank_details_notice': {'English': 'Changing your bank details requires email verification for security.', 'Sinhala': 'ආරක්ෂාව සඳහා ඔබේ බැංකු විස්තර වෙනස් කිරීමට විද්‍යුත් තැපැල් තහවුරු කිරීම අවශ්‍ය වේ.', 'Tamil': 'உங்கள் வங்கி விவரங்களை மாற்ற பாதுகாப்புக்காக மின்னஞ்சல் சரிபார்ப்பு தேவை.'},
+    'enter_verification_code': {'English': 'Enter Verification Code', 'Sinhala': 'තහවුරු කිරීමේ කේතය ඇතුළත් කරන්න', 'Tamil': 'சரிபார்ப்பு குறியீட்டை உள்ளிடவும்'},
+
+    'your_referral_code': {'English': 'Your Referral Code', 'Sinhala': 'ඔබේ යොමු කේතය', 'Tamil': 'உங்கள் பரிந்துரை குறியீடு'},
+    'share_earn': {'English': 'Share this code with friends. When they sign up and use it, you both earn LKR 100!', 'Sinhala': 'මෙම කේතය මිතුරන් සමඟ බෙදාගන්න. ඔවුන් ලියාපදිංචි වී එය භාවිතා කළහොත්, ඔබ දෙදෙනාටම රු 100 ක් ලැබේ!', 'Tamil': 'இந்த குறியீட்டை நண்பர்களுடன் பகிரவும். அவர்கள் பதிவு செய்து அதைப் பயன்படுத்தும் போது, இருவரும் LKR 100 சம்பாதிக்கிறீர்கள்!'},
+    'copy_code': {'English': 'Copy Code', 'Sinhala': 'කේතය පිටපත් කරන්න', 'Tamil': 'குறியீட்டை நகலெடு'},
+    'share': {'English': 'Share', 'Sinhala': 'බෙදාගන්න', 'Tamil': 'பகிர்'},
+
+    'no_blocked_users': {'English': 'No blocked users', 'Sinhala': 'අවහිර කළ පරිශීලකයින් නැත', 'Tamil': 'தடுக்கப்பட்ட பயனர்கள் இல்லை'},
+    'unblock': {'English': 'Unblock', 'Sinhala': 'අවහිර නොකරන්න', 'Tamil': 'தடையை நீக்கு'},
+
+    'category': {'English': 'Category', 'Sinhala': 'ප්‍රවර්ගය', 'Tamil': 'வகை'},
+    'subject': {'English': 'Subject', 'Sinhala': 'විෂය', 'Tamil': 'பொருள்'},
+    'message': {'English': 'Message', 'Sinhala': 'පණිවිඩය', 'Tamil': 'செய்தி'},
+    'send_to_admin': {'English': 'Send to Admin', 'Sinhala': 'පරිපාලකට යවන්න', 'Tamil': 'நிர்வாகிக்கு அனுப்பு'},
+    'report_notice': {'English': 'Send a message directly to our admin team. We typically respond within 24 hours.', 'Sinhala': 'අපගේ පරිපාලක කණ්ඩායමට කෙලින්ම පණිවිඩයක් යවන්න. අපි සාමාන්‍යයෙන් පැය 24ක් ඇතුළත ප්‍රතිචාර දක්වමු.', 'Tamil': 'எங்கள் நிர்வாக குழுவிற்கு நேரடியாக ஒரு செய்தியை அனுப்பவும். நாங்கள் பொதுவாக 24 மணி நேரத்திற்குள் பதிலளிக்கிறோம்.'},
   };
 }
