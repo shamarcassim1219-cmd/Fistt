@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 import 'home_screen.dart';
 import 'onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OtpVerifyScreen extends StatefulWidget {
   final String email;
-  final String purpose; // 'register' or 'login'
+  final String purpose;
   final String? referralCode;
 
   const OtpVerifyScreen({super.key, required this.email, required this.purpose, this.referralCode});
@@ -41,13 +42,10 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
         await ApiService.verifyLogin(widget.email, code);
       }
 
-      // Save FCM token now that we have a valid auth token
       try {
         final fcmToken = await FirebaseMessaging.instance.getToken();
         if (fcmToken != null) await ApiService.saveFcmToken(fcmToken);
-      } catch (_) {
-        // Non-critical — push notifications just won't work if this fails
-      }
+      } catch (_) {}
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_logged_in', true);
@@ -75,55 +73,60 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.15), shape: BoxShape.circle),
-                child: const Icon(Icons.mark_email_read_outlined, size: 40, color: AppColors.primary),
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.15), shape: BoxShape.circle),
+                    child: const Icon(Icons.mark_email_read_outlined, size: 40, color: AppColors.primary),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(AppLocalizations.t('verify_your_email'), style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${AppLocalizations.t('enter_code_sent_to')}\n${widget.email}',
+                    style: const TextStyle(color: AppColors.hint, fontSize: 14),
+                  ),
+                  const SizedBox(height: 32),
+                  TextField(
+                    controller: _codeCtrl,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    style: const TextStyle(color: Colors.white, fontSize: 28, letterSpacing: 10, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                    decoration: const InputDecoration(counterText: '', hintText: '000000'),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                  ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: _verifying ? null : _verify,
+                      child: _verifying
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                          : Text(AppLocalizations.t('verify'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-              const Text('Verify Your Email', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text(
-                'Enter the 6-digit code sent to\n${widget.email}',
-                style: const TextStyle(color: AppColors.hint, fontSize: 14),
-              ),
-              const SizedBox(height: 32),
-              TextField(
-                controller: _codeCtrl,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                style: const TextStyle(color: Colors.white, fontSize: 28, letterSpacing: 10, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-                decoration: const InputDecoration(counterText: '', hintText: '000000'),
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 12),
-                Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
-              ],
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _verifying ? null : _verify,
-                  child: _verifying
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                      : const Text('Verify', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

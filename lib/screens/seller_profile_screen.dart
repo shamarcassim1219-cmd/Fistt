@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 import 'listing_detail_screen.dart';
 
 class SellerProfileScreen extends StatefulWidget {
@@ -45,13 +46,13 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Block User', style: TextStyle(color: Colors.white)),
+        title: Text(AppLocalizations.t('block_user'), style: const TextStyle(color: Colors.white)),
         content: Text(
           'Block ${_seller?['displayName'] ?? 'this user'}? You will no longer see their listings or receive messages from them.',
           style: const TextStyle(color: AppColors.hint, fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.t('cancel'))),
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
@@ -69,7 +70,7 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
                 );
               }
             },
-            child: const Text('Block', style: TextStyle(color: Colors.redAccent)),
+            child: Text(AppLocalizations.t('block'), style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -78,96 +79,101 @@ class _SellerProfileScreenState extends State<SellerProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        title: const Text('Seller Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.block_outlined),
-            onPressed: _blocking ? null : _confirmBlock,
-            tooltip: 'Block user',
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(
+            title: Text(AppLocalizations.t('seller_profile')),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.block_outlined),
+                onPressed: _blocking ? null : _confirmBlock,
+                tooltip: 'Block user',
+              ),
+            ],
           ),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Center(
-                      child: CircleAvatar(
-                        radius: 44,
-                        backgroundColor: AppColors.primary.withOpacity(0.2),
-                        backgroundImage: _seller?['profilePhotoUrl'] != null ? NetworkImage(_seller!['profilePhotoUrl']) : null,
-                        child: _seller?['profilePhotoUrl'] == null
-                            ? const Icon(Icons.person, size: 44, color: AppColors.primary)
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(_seller?['displayName'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                          if (_seller?['verifiedStatus'] == 'verified') ...[
-                            const SizedBox(width: 6),
-                            const Icon(Icons.verified, color: AppColors.primary, size: 18),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          body: _loading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : _error != null
+                  ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
+                  : ListView(
+                      padding: const EdgeInsets.all(16),
                       children: [
-                        _StatBox(label: 'Listings', value: '${_listings.length}'),
-                        _StatBox(label: 'Sold', value: '${_seller?['totalSold'] ?? 0}'),
+                        Center(
+                          child: CircleAvatar(
+                            radius: 44,
+                            backgroundColor: AppColors.primary.withOpacity(0.2),
+                            backgroundImage: _seller?['profilePhotoUrl'] != null ? NetworkImage(_seller!['profilePhotoUrl']) : null,
+                            child: _seller?['profilePhotoUrl'] == null
+                                ? const Icon(Icons.person, size: 44, color: AppColors.primary)
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(_seller?['displayName'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                              if (_seller?['verifiedStatus'] == 'verified') ...[
+                                const SizedBox(width: 6),
+                                const Icon(Icons.verified, color: AppColors.primary, size: 18),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _StatBox(label: AppLocalizations.t('listings_count'), value: '${_listings.length}'),
+                            _StatBox(label: AppLocalizations.t('sold_count'), value: '${_seller?['totalSold'] ?? 0}'),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Text(AppLocalizations.t('active_listings'), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                        const SizedBox(height: 8),
+                        if (_listings.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 30),
+                            child: Center(child: Text(AppLocalizations.t('no_active_listings'), style: const TextStyle(color: AppColors.hint))),
+                          )
+                        else
+                          ..._listings.map((l) {
+                            final screenshots = (l['screenshots'] as List?) ?? [];
+                            final allowBidding = l['allowBidding'] == true;
+                            final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
+                            final displayPrice = highestBid ?? (l['price'] as num).toDouble();
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(10),
+                                onTap: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => ListingDetailScreen(listingId: l['id'])));
+                                },
+                                leading: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: screenshots.isNotEmpty
+                                      ? Image.network(screenshots[0], width: 56, height: 56, fit: BoxFit.cover)
+                                      : Container(width: 56, height: 56, color: AppColors.fieldFill, child: const Icon(Icons.image_outlined, color: AppColors.hint)),
+                                ),
+                                title: Text(l['title'] ?? '', style: const TextStyle(color: Colors.white)),
+                                subtitle: Text('${l['game'] ?? ''} · LKR ${displayPrice.toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
+                                    style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                              ),
+                            );
+                          }),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    const Text('Active Listings', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
-                    const SizedBox(height: 8),
-                    if (_listings.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 30),
-                        child: Center(child: Text('No active listings', style: TextStyle(color: AppColors.hint))),
-                      )
-                    else
-                      ..._listings.map((l) {
-                        final screenshots = (l['screenshots'] as List?) ?? [];
-                        final allowBidding = l['allowBidding'] == true;
-                        final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
-                        final displayPrice = highestBid ?? (l['price'] as num).toDouble();
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(10),
-                            onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => ListingDetailScreen(listingId: l['id'])));
-                            },
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: screenshots.isNotEmpty
-                                  ? Image.network(screenshots[0], width: 56, height: 56, fit: BoxFit.cover)
-                                  : Container(width: 56, height: 56, color: AppColors.fieldFill, child: const Icon(Icons.image_outlined, color: AppColors.hint)),
-                            ),
-                            title: Text(l['title'] ?? '', style: const TextStyle(color: Colors.white)),
-                            subtitle: Text('${l['game'] ?? ''} · LKR ${displayPrice.toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
-                                style: const TextStyle(color: AppColors.hint, fontSize: 12)),
-                          ),
-                        );
-                      }),
-                  ],
-                ),
+        );
+      },
     );
   }
 }

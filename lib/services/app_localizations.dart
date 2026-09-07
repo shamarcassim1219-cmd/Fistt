@@ -213,5 +213,17 @@ class AppLocalizations {
     'phone_number': {'English': 'Phone Number', 'Sinhala': 'දුරකථන අංකය', 'Tamil': 'தொலைபேசி எண்'},
     'profile_locked_msg': {'English': 'Your profile is locked. Contact support to change your name or phone.', 'Sinhala': 'ඔබේ පැතිකඩ අගුලු දමා ඇත. නම හෝ දුරකථනය වෙනස් කිරීමට සහාය අමතන්න.', 'Tamil': 'உங்கள் சுயவிவரம் பூட்டப்பட்டுள்ளது. பெயர் அல்லது தொலைபேசியை மாற்ற ஆதரவைத் தொடர்பு கொள்ளவும்.'},
     'save_profile': {'English': 'Save Profile', 'Sinhala': 'පැතිකඩ සුරකින්න', 'Tamil': 'சுயவிவரத்தை சேமி'},
+
+    'reset_password': {'English': 'Reset Password', 'Sinhala': 'මුරපදය යළි පිහිටුවන්න', 'Tamil': 'கடவுச்சொல்லை மீட்டமைக்கவும்'},
+    'enter_email_for_code': {'English': 'Enter your account email to receive a reset code', 'Sinhala': 'යළි පිහිටුවීමේ කේතය ලබා ගැනීමට ඔබේ ගිණුමේ විද්‍යුත් තැපෑල ඇතුළත් කරන්න', 'Tamil': 'மீட்டமைப்பு குறியீட்டைப் பெற உங்கள் கணக்கு மின்னஞ்சலை உள்ளிடவும்'},
+    'enter_code_new_password': {'English': 'Enter the code and your new password', 'Sinhala': 'කේතය සහ ඔබේ නව මුරපදය ඇතුළත් කරන්න', 'Tamil': 'குறியீடு மற்றும் உங்கள் புதிய கடவுச்சொல்லை உள்ளிடவும்'},
+    'verification_code': {'English': 'Verification Code', 'Sinhala': 'තහවුරු කිරීමේ කේතය', 'Tamil': 'சரிபார்ப்பு குறியீடு'},
+    'new_password': {'English': 'New Password', 'Sinhala': 'නව මුරපදය', 'Tamil': 'புதிய கடவுச்சொல்'},
+    'send_code': {'English': 'Send Code', 'Sinhala': 'කේතය යවන්න', 'Tamil': 'குறியீட்டை அனுப்பு'},
+    'resend_code': {'English': 'Resend Code', 'Sinhala': 'කේතය නැවත යවන්න', 'Tamil': 'குறியீட்டை மீண்டும் அனுப்பு'},
+
+    'verify_your_email': {'English': 'Verify Your Email', 'Sinhala': 'ඔබේ විද්‍යුත් තැපෑල තහවුරු කරන්න', 'Tamil': 'உங்கள் மின்னஞ்சலைச் சரிபார்க்கவும்'},
+    'enter_code_sent_to': {'English': 'Enter the 6-digit code sent to', 'Sinhala': 'යවන ලද ඉලக්කම් 6 කේතය ඇතුළත් කරන්න', 'Tamil': 'அனுப்பப்பட்ட 6 இலக்க குறியீட்டை உள்ளிடவும்'},
+    'verify': {'English': 'Verify', 'Sinhala': 'තහවුරු කරන්න', 'Tamil': 'சரிபார்க்கவும்'},
   };
 }
