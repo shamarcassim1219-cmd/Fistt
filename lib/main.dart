@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'services/api_service.dart';
 import 'screens/splash_screen.dart';
@@ -19,10 +21,7 @@ class AppColors {
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Background messages are handled automatically by the OS notification tray.
-  // No action needed here unless custom background processing is required.
-}
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,9 +29,7 @@ void main() async {
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  } catch (e) {
-    // Firebase init failure shouldn't block the app — push notifications just won't work
-  }
+  } catch (e) {}
 
   runApp(const MyGameApp());
 }
@@ -44,11 +41,68 @@ class MyGameApp extends StatefulWidget {
   State<MyGameApp> createState() => _MyGameAppState();
 }
 
-class _MyGameAppState extends State<MyGameApp> {
+class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
+  final LocalAuthentication _auth = LocalAuthentication();
+  bool _isLocked = false;
+  bool _biometricEnabled = false;
+  DateTime? _pausedAt;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _setupFcm();
+    _loadBiometricSetting();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _loadBiometricSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    final enabled = prefs.getBool('biometric_lock_enabled') ?? false;
+    setState(() {
+      _biometricEnabled = enabled;
+      _isLocked = enabled;
+    });
+    if (enabled) _tryUnlock();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_biometricEnabled) return;
+
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _pausedAt = DateTime.now();
+    } else if (state == AppLifecycleState.resumed) {
+      if (_pausedAt != null && DateTime.now().difference(_pausedAt!) > const Duration(seconds: 5)) {
+        setState(() => _isLocked = true);
+        _tryUnlock();
+      }
+    }
+  }
+
+  Future<void> _tryUnlock() async {
+    try {
+      final canCheck = await _auth.canCheckBiometrics;
+      final isSupported = await _auth.isDeviceSupported();
+      if (!canCheck || !isSupported) {
+        setState(() => _isLocked = false);
+        return;
+      }
+      final didAuth = await _auth.authenticate(
+        localizedReason: 'Unlock MYGame Marketplace',
+        options: const AuthenticationOptions(biometricOnly: false, stickyAuth: true),
+      );
+      if (didAuth) {
+        setState(() => _isLocked = false);
+      }
+    } catch (e) {
+      setState(() => _isLocked = false);
+    }
   }
 
   Future<void> _setupFcm() async {
@@ -71,7 +125,6 @@ class _MyGameAppState extends State<MyGameApp> {
         }
       });
 
-      // Foreground messages: show a snackbar-style banner via a top-level overlay
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         final context = navigatorKey.currentContext;
         if (context != null && message.notification != null) {
@@ -92,14 +145,12 @@ class _MyGameAppState extends State<MyGameApp> {
         }
       });
 
-      // Notification tapped while app was in background
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         navigatorKey.currentState?.push(
           MaterialPageRoute(builder: (_) => const NotificationsScreen()),
         );
       });
 
-      // App opened from a terminated state via notification tap
       final initialMessage = await messaging.getInitialMessage();
       if (initialMessage != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -108,9 +159,7 @@ class _MyGameAppState extends State<MyGameApp> {
           );
         });
       }
-    } catch (e) {
-      // Non-critical — app continues without push notifications
-    }
+    } catch (e) {}
   }
 
   @override
@@ -194,7 +243,33 @@ class _MyGameAppState extends State<MyGameApp> {
         ),
       ),
       themeMode: ThemeMode.dark,
-      home: const SplashScreen(),
+      home: Stack(
+        children: [
+          const SplashScreen(),
+          if (_isLocked)
+            Positioned.fill(
+              child: Container(
+                color: AppColors.bg,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.fingerprint, size: 80, color: AppColors.primary),
+                      const SizedBox(height: 24),
+                      const Text('App Locked', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: _tryUnlock,
+                        icon: const Icon(Icons.lock_open),
+                        label: const Text('Unlock'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

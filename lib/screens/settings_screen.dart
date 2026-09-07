@@ -33,6 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadProfile();
+    _loadBiometricSetting();
   }
 
   Future<void> _loadProfile() async {
@@ -40,6 +41,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final profile = await ApiService.getProfile();
       setState(() => _profile = profile);
     } catch (_) {}
+  }
+
+  Future<void> _loadBiometricSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() => _biometricLock = prefs.getBool('biometric_lock_enabled') ?? false);
+  }
+
+  Future<void> _toggleBiometric(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('biometric_lock_enabled', value);
+    setState(() => _biometricLock = value);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(value ? 'Biometric lock enabled — takes effect next time you open the app' : 'Biometric lock disabled')),
+      );
+    }
   }
 
   Future<void> _logout() async {
@@ -166,7 +183,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Biometric Lock', style: TextStyle(color: Colors.white)),
             subtitle: const Text('Fingerprint / Face ID to open app', style: TextStyle(color: AppColors.hint)),
             value: _biometricLock,
-            onChanged: (v) => setState(() => _biometricLock = v),
+            onChanged: _toggleBiometric,
           ),
           _tile(Icons.block_outlined, 'Blocked Users', null, () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const BlockedUsersScreen()));
