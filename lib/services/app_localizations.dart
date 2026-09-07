@@ -105,5 +105,20 @@ class AppLocalizations {
     'description': {'English': 'Description', 'Sinhala': 'විස්තරය', 'Tamil': 'விளக்கம்'},
     'sell_an_account': {'English': 'Sell an Account', 'Sinhala': 'ගිණුමක් විකුණන්න', 'Tamil': 'கணக்கை விற்கவும்'},
     'post_listing': {'English': 'Post Listing', 'Sinhala': 'ලැයිස්තුව පළ කරන්න', 'Tamil': 'பட்டியலை இடுகையிடு'},
+
+    'game': {'English': 'Game', 'Sinhala': 'ක්‍රීඩාව', 'Tamil': 'விளையாட்டு'},
+    'listing_details': {'English': 'Listing Details', 'Sinhala': 'ලැයිස්තු විස්තර', 'Tamil': 'பட்டியல் விவரங்கள்'},
+    'title_field': {'English': 'Title', 'Sinhala': 'මාතෘකාව', 'Tamil': 'தலைப்பு'},
+    'in_game_uid': {'English': 'In-Game UID', 'Sinhala': 'ක්‍රීඩාව තුළ UID', 'Tamil': 'விளையாட்டு UID'},
+    'allow_bidding': {'English': 'Allow Bidding', 'Sinhala': 'ලංසු තැබීමට ඉඩ දෙන්න', 'Tamil': 'ஏலம் அனுமதிக்கவும்'},
+    'screenshots_max6': {'English': 'Screenshots (max 6)', 'Sinhala': 'තිර රුව (උපරිම 6)', 'Tamil': 'ஸ்கிரீன்ஷாட்கள் (அதிகபட்சம் 6)'},
+    'account_vault': {'English': 'Account Vault (Private & Encrypted)', 'Sinhala': 'ගිණුම් හැඳුනුම (පුද්ගලික සහ සංකේතාත්මක)', 'Tamil': 'கணக்கு பெட்டகம் (தனிப்பட்ட & குறியாக்கம்)'},
+    'account_email': {'English': 'Account Email', 'Sinhala': 'ගිණුම් විද්‍යුත් තැපෑල', 'Tamil': 'கணக்கு மின்னஞ்சல்'},
+    'account_password': {'English': 'Account Password', 'Sinhala': 'ගිණුම් මුරපදය', 'Tamil': 'கணக்கு கடவுச்சொல்'},
+    'recovery_codes': {'English': 'Recovery Codes (optional)', 'Sinhala': 'ප්‍රතිසාධන කේත (විකල්ප)', 'Tamil': 'மீட்பு குறியீடுகள் (விருப்பம்)'},
+    'verification_required': {'English': 'Verification Required', 'Sinhala': 'තහවුරු කිරීම අවශ්‍යයි', 'Tamil': 'சரிபார்ப்பு தேவை'},
+    'listing_price_lkr': {'English': 'Listing Price', 'Sinhala': 'ලැයිස්තු මිල', 'Tamil': 'பட்டியல் விலை'},
+    'platform_commission': {'English': 'Platform Commission', 'Sinhala': 'වේදිකා කොමිස්', 'Tamil': 'தள கமிஷன்'},
+    'you_receive': {'English': 'You Receive', 'Sinhala': 'ඔබ ලබා ගනී', 'Tamil': 'நீங்கள் பெறுவீர்கள்'},
   };
 }
