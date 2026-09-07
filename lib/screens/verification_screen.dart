@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/app_localizations.dart';
 
 class VerificationScreen extends StatefulWidget {
   const VerificationScreen({super.key});
@@ -129,12 +130,17 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Get Verified')),
-      body: _loadingStatus
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : SafeArea(child: _buildBody()),
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(title: Text(AppLocalizations.t('get_verified'))),
+          body: _loadingStatus
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : SafeArea(child: _buildBody()),
+        );
+      },
     );
   }
 
@@ -143,7 +149,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       return _StatusMessage(
         icon: Icons.hourglass_top_outlined,
         color: Colors.orangeAccent,
-        title: 'Verification Pending',
+        title: AppLocalizations.t('verification_pending'),
         message: 'Your ${_documentType == 'driving_license' ? 'driving license' : 'NIC'} verification is under review. '
             'This usually takes 1-2 business days.',
       );
@@ -153,7 +159,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       return _StatusMessage(
         icon: Icons.verified,
         color: AppColors.primary,
-        title: 'Verified Seller',
+        title: AppLocalizations.t('verified_seller'),
         message: 'Your account is verified. You now have the blue checkmark badge.',
       );
     }
@@ -194,32 +200,32 @@ class _VerificationScreenState extends State<VerificationScreen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.primary.withOpacity(0.4)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.verified, color: AppColors.primary, size: 32),
-                SizedBox(width: 12),
+                const Icon(Icons.verified, color: AppColors.primary, size: 32),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Text('Get the Blue Checkmark',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+                  child: Text(AppLocalizations.t('get_blue_checkmark'),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
 
-          const _StepLabel('Personal Details'),
+          Text(AppLocalizations.t('personal_details'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
           const SizedBox(height: 12),
           TextFormField(
             controller: _fullNameCtrl,
             style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(labelText: 'Full Name (as on document)'),
+            decoration: InputDecoration(labelText: AppLocalizations.t('full_name')),
             validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
           ),
           const SizedBox(height: 12),
           TextFormField(
             controller: _nicNumberCtrl,
             style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(labelText: 'NIC Number'),
+            decoration: InputDecoration(labelText: AppLocalizations.t('nic_number')),
             validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
           ),
           const SizedBox(height: 12),
@@ -227,7 +233,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             controller: _addressCtrl,
             maxLines: 2,
             style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(labelText: 'Address'),
+            decoration: InputDecoration(labelText: AppLocalizations.t('address_field')),
             validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
           ),
           const SizedBox(height: 12),
@@ -235,7 +241,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             value: _selectedProvince,
             dropdownColor: AppColors.surface,
             style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(labelText: 'Province'),
+            decoration: InputDecoration(labelText: AppLocalizations.t('province')),
             items: _provinceDistricts.keys
                 .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                 .toList(),
@@ -249,7 +255,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             value: _selectedDistrict,
             dropdownColor: AppColors.surface,
             style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(labelText: 'District'),
+            decoration: InputDecoration(labelText: AppLocalizations.t('district')),
             items: (_selectedProvince != null ? _provinceDistricts[_selectedProvince]! : <String>[])
                 .map((d) => DropdownMenuItem(value: d, child: Text(d)))
                 .toList(),
@@ -257,7 +263,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
           ),
 
           const SizedBox(height: 24),
-          const _StepLabel('Select Document Type'),
+          Text(AppLocalizations.t('select_document_type'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -274,7 +280,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: _DocTypeOption(
-                  label: 'Driving License',
+                  label: AppLocalizations.t('driving_license'),
                   selected: _selectedDocType == 'driving_license',
                   onTap: () => setState(() => _selectedDocType = 'driving_license'),
                 ),
@@ -283,7 +289,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
           ),
 
           const SizedBox(height: 24),
-          _StepLabel(_selectedDocType == 'nic' ? 'Upload NIC (front)' : 'Upload License (front)'),
+          Text(_selectedDocType == 'nic' ? '2. Upload NIC (front)' : '2. Upload License (front)',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
           const SizedBox(height: 8),
           _UploadBox(
             image: _frontImage,
@@ -294,7 +301,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
           if (_selectedDocType == 'driving_license') ...[
             const SizedBox(height: 24),
-            const _StepLabel('Upload License (back)'),
+            const Text('3. Upload License (back)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
             const SizedBox(height: 8),
             _UploadBox(
               image: _backImage,
@@ -305,7 +312,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
           ],
 
           const SizedBox(height: 24),
-          const _StepLabel('Take a Selfie'),
+          Text(AppLocalizations.t('take_selfie'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
           const SizedBox(height: 8),
           _UploadBox(
             image: _selfieImage,
@@ -326,7 +333,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               onPressed: _submitting ? null : _submit,
               child: _submitting
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                  : const Text('Submit for Review', style: TextStyle(fontWeight: FontWeight.bold)),
+                  : Text(AppLocalizations.t('submit_for_review'), style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
           const SizedBox(height: 30),
@@ -388,16 +395,6 @@ class _DocTypeOption extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _StepLabel extends StatelessWidget {
-  final String text;
-  const _StepLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white));
   }
 }
 
