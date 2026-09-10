@@ -497,6 +497,20 @@ class ApiService {
     await _handle(res);
   }
 
+  static Future<Map<String, dynamic>> getNotificationPreferences() async {
+    final res = await http.get(Uri.parse('$baseUrl/notifications/preferences'), headers: await _headers());
+    return await _handle(res);
+  }
+
+  static Future<void> updateNotificationPreferences(bool notifyOrders, bool notifyOffers, bool notifyPromos) async {
+    final res = await http.put(
+      Uri.parse('$baseUrl/notifications/preferences'),
+      headers: await _headers(),
+      body: jsonEncode({'notifyOrders': notifyOrders, 'notifyOffers': notifyOffers, 'notifyPromos': notifyPromos}),
+    );
+    await _handle(res);
+  }
+
   // ---------- WALLET ----------
   static Future<double> getWalletBalance() async {
     final res = await http.get(Uri.parse('$baseUrl/wallet/balance'), headers: await _headers());
