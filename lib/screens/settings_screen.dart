@@ -174,9 +174,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileManagementScreen()));
                 _loadProfile();
               }),
-              _tile(Icons.lock_reset, AppLocalizations.t('change_password'), null, () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
-              }),
               _tile(
                 Icons.verified_outlined,
                 'Verification Center',
@@ -209,6 +206,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
 
               _SectionHeader(AppLocalizations.t('security')),
+              _tile(Icons.lock_reset, AppLocalizations.t('change_password'), null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
+              }),
               SwitchListTile(
                 secondary: const Icon(Icons.fingerprint, color: AppColors.hint),
                 title: Text(AppLocalizations.t('biometric_lock'), style: const TextStyle(color: Colors.white)),

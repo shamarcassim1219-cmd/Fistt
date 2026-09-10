@@ -22,7 +22,7 @@ class ApiService {
   }
 
   static Future<Map<String, String>> _headers({bool withAuth = true}) async {
-    final headers = {'Content-Type': 'application/json'};
+    final headers = {'Content-Type': 'application/json; charset=utf-8'};
     if (withAuth) {
       final token = await getToken();
       if (token != null) headers['Authorization'] = 'Bearer $token';
@@ -31,7 +31,7 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> _handle(http.Response res) async {
-    final body = jsonDecode(res.body);
+    final body = jsonDecode(utf8.decode(res.bodyBytes));
     if (res.statusCode >= 200 && res.statusCode < 300) {
       return body;
     } else {
@@ -202,6 +202,24 @@ class ApiService {
       Uri.parse('$baseUrl/user/change-password'),
       headers: await _headers(),
       body: jsonEncode({'currentPassword': currentPassword, 'newPassword': newPassword}),
+    );
+    await _handle(res);
+  }
+
+  static Future<void> requestPasswordChange(String currentPassword) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/password/request-change'),
+      headers: await _headers(),
+      body: jsonEncode({'currentPassword': currentPassword}),
+    );
+    await _handle(res);
+  }
+
+  static Future<void> confirmPasswordChange(String code, String newPassword) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/password/confirm-change'),
+      headers: await _headers(),
+      body: jsonEncode({'code': code, 'newPassword': newPassword}),
     );
     await _handle(res);
   }
@@ -538,3 +556,4 @@ class ApiService {
     return await _handle(res);
   }
 }
+EO
