@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/api_service.dart';
@@ -9,7 +10,6 @@ import 'settings_screen.dart';
 import 'add_listing_screen.dart';
 import 'wallet_screen.dart';
 import 'listing_detail_screen.dart';
-import 'chat_conversation_screen.dart';
 import 'notifications_screen.dart';
 import 'banned_screen.dart';
 import 'login_screen.dart';
@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _HomeTab(),
     WalletScreen(),
     AddListingScreen(),
-    _ChatsTab(),
+    _PromotionsTab(),
     SettingsScreen(),
   ];
 
@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
               NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: AppLocalizations.t('home')),
               NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined), selectedIcon: const Icon(Icons.account_balance_wallet), label: AppLocalizations.t('wallet')),
               NavigationDestination(icon: const Icon(Icons.add_box_outlined), selectedIcon: const Icon(Icons.add_box), label: AppLocalizations.t('sell')),
-              NavigationDestination(icon: const Icon(Icons.chat_bubble_outline), selectedIcon: const Icon(Icons.chat_bubble), label: AppLocalizations.t('chats')),
+              const NavigationDestination(icon: Icon(Icons.campaign_outlined), selectedIcon: Icon(Icons.campaign), label: 'Promotions'),
               NavigationDestination(icon: const Icon(Icons.settings_outlined), selectedIcon: const Icon(Icons.settings), label: AppLocalizations.t('settings')),
             ],
           ),
@@ -485,15 +485,15 @@ class _HomeTabState extends State<_HomeTab> {
   }
 }
 
-class _ChatsTab extends StatefulWidget {
-  const _ChatsTab();
+class _PromotionsTab extends StatefulWidget {
+  const _PromotionsTab();
 
   @override
-  State<_ChatsTab> createState() => _ChatsTabState();
+  State<_PromotionsTab> createState() => _PromotionsTabState();
 }
 
-class _ChatsTabState extends State<_ChatsTab> {
-  List<dynamic> _conversations = [];
+class _PromotionsTabState extends State<_PromotionsTab> {
+  List<dynamic> _promotions = [];
   bool _loading = true;
   String? _error;
 
@@ -505,16 +505,14 @@ class _ChatsTabState extends State<_ChatsTab> {
 
   Future<void> _load() async {
     try {
-      final conversations = await ApiService.getConversations();
+      final promotions = await ApiService.getPromotions();
       if (!mounted) return;
       setState(() {
-        _conversations = conversations;
+        _promotions = promotions;
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
-      final wasBanned = await handleBannedError(context, e);
-      if (wasBanned) return;
       setState(() {
         _error = e.toString().replaceFirst('Exception: ', '');
         _loading = false;
@@ -522,14 +520,12 @@ class _ChatsTabState extends State<_ChatsTab> {
     }
   }
 
-  String _timeAgo(String? isoString) {
-    if (isoString == null) return '';
-    final dt = DateTime.parse(isoString).toLocal();
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    return '${diff.inDays}d';
+  Future<void> _openLink(String? url) async {
+    if (url == null || url.isEmpty) return;
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -540,64 +536,69 @@ class _ChatsTabState extends State<_ChatsTab> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Text(AppLocalizations.t('chats'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+            child: Text('Promotions', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
           ),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                 : _error != null
                     ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
-                    : _conversations.isEmpty
-                        ? const Center(child: Text('No conversations yet.\nChats appear after you buy or sell an account.',
-                            textAlign: TextAlign.center, style: TextStyle(color: AppColors.hint)))
+                    : _promotions.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24),
+                              child: Text('No promotions right now.\nCheck back later for deals and offers.',
+                                  textAlign: TextAlign.center, style: TextStyle(color: AppColors.hint)),
+                            ),
+                          )
                         : RefreshIndicator(
                             onRefresh: _load,
                             color: AppColors.primary,
                             child: ListView.builder(
-                              itemCount: _conversations.length,
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _promotions.length,
                               itemBuilder: (context, i) {
-                                final c = _conversations[i];
-                                final unread = (c['unreadCount'] as num?)?.toInt() ?? 0;
-                                return ListTile(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => ChatConversationScreen(
-                                          conversationId: c['id'],
-                                          otherPartyEmail: c['otherPartyEmail'] ?? '',
-                                          listingTitle: c['listingTitle'] ?? '',
+                                final p = _promotions[i];
+                                return InkWell(
+                                  onTap: p['linkUrl'] != null ? () => _openLink(p['linkUrl']) : null,
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surface,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: AppColors.border),
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        AspectRatio(
+                                          aspectRatio: 16 / 9,
+                                          child: Image.network(
+                                            p['imageUrl'] ?? '',
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (ctx, err, stack) => Container(
+                                              color: AppColors.fieldFill,
+                                              child: const Icon(Icons.image_outlined, color: AppColors.hint, size: 40),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ).then((_) => _load());
-                                  },
-                                  leading: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: c['listingImage'] != null
-                                        ? Image.network(c['listingImage'], width: 48, height: 48, fit: BoxFit.cover)
-                                        : Container(width: 48, height: 48, color: AppColors.fieldFill, child: const Icon(Icons.image_outlined, color: AppColors.hint)),
-                                  ),
-                                  title: Text(c['otherPartyEmail'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                                  subtitle: Text(
-                                    c['lastMessage'] ?? c['listingTitle'] ?? '',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(color: unread > 0 ? Colors.white : AppColors.hint, fontSize: 12),
-                                  ),
-                                  trailing: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(_timeAgo(c['lastMessageAt']), style: const TextStyle(color: AppColors.hint, fontSize: 11)),
-                                      if (unread > 0) ...[
-                                        const SizedBox(height: 4),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                                          child: Text('$unread', style: const TextStyle(color: Colors.white, fontSize: 10)),
+                                        Padding(
+                                          padding: const EdgeInsets.all(14),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(p['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                              if ((p['description'] ?? '').toString().isNotEmpty) ...[
+                                                const SizedBox(height: 6),
+                                                Text(p['description'], style: const TextStyle(color: AppColors.hint, fontSize: 13)),
+                                              ],
+                                            ],
+                                          ),
                                         ),
                                       ],
-                                    ],
+                                    ),
                                   ),
                                 );
                               },

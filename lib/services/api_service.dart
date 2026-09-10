@@ -401,6 +401,13 @@ class ApiService {
     return data['isFavorite'] ?? false;
   }
 
+  // ---------- PROMOTIONS ----------
+  static Future<List<dynamic>> getPromotions() async {
+    final res = await http.get(Uri.parse('$baseUrl/promotions'), headers: await _headers(withAuth: false));
+    final data = await _handle(res);
+    return data['promotions'];
+  }
+
   // ---------- CHATS ----------
   static Future<List<dynamic>> getConversations() async {
     final res = await http.get(Uri.parse('$baseUrl/chats'), headers: await _headers());
@@ -556,4 +563,3 @@ class ApiService {
     return await _handle(res);
   }
 }
-EO
