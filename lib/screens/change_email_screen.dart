@@ -75,7 +75,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
       builder: (context, lang, _) {
         return Scaffold(
           backgroundColor: AppColors.bg,
-          appBar: const AppBar(title: Text('Change Email')),
+          appBar: AppBar(title: const Text('Change Email')),
           body: SafeArea(
             child: ListView(
               padding: const EdgeInsets.all(16),

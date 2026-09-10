@@ -568,4 +568,3 @@ class _UploadBox extends StatelessWidget {
     );
   }
 }
-EO
