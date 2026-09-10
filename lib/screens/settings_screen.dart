@@ -17,6 +17,7 @@ import 'blocked_users_screen.dart';
 import 'offers_screen.dart';
 import 'report_problem_screen.dart';
 import 'favorites_screen.dart';
+import 'legal_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -30,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notifyOrders = true;
   bool _notifyOffers = true;
   bool _notifyPromos = false;
+  bool _loadingPrefs = true;
   Map<String, dynamic>? _profile;
 
   @override
@@ -37,6 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _loadProfile();
     _loadBiometricSetting();
+    _loadNotificationPreferences();
   }
 
   Future<void> _loadProfile() async {
@@ -49,6 +52,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadBiometricSetting() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() => _biometricLock = prefs.getBool('biometric_lock_enabled') ?? false);
+  }
+
+  Future<void> _loadNotificationPreferences() async {
+    try {
+      final prefs = await ApiService.getNotificationPreferences();
+      if (!mounted) return;
+      setState(() {
+        _notifyOrders = prefs['notifyOrders'] ?? true;
+        _notifyOffers = prefs['notifyOffers'] ?? true;
+        _notifyPromos = prefs['notifyPromos'] ?? false;
+        _loadingPrefs = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingPrefs = false);
+    }
+  }
+
+  Future<void> _saveNotificationPreferences() async {
+    try {
+      await ApiService.updateNotificationPreferences(_notifyOrders, _notifyOffers, _notifyPromos);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   Future<void> _toggleBiometric(bool value) async {
@@ -91,27 +120,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _logout();
             },
             child: const Text('Logout', style: TextStyle(color: Colors.redAccent)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _confirmDeleteAccount() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text('Delete Account', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'This permanently deletes your profile, listings, and wallet history. This cannot be undone. Continue?',
-          style: TextStyle(color: AppColors.hint),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -226,24 +234,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
 
               _SectionHeader(AppLocalizations.t('notifications')),
-              SwitchListTile(
-                secondary: const Icon(Icons.receipt_long_outlined, color: AppColors.hint),
-                title: Text(AppLocalizations.t('order_updates'), style: const TextStyle(color: Colors.white)),
-                value: _notifyOrders,
-                onChanged: (v) => setState(() => _notifyOrders = v),
-              ),
-              SwitchListTile(
-                secondary: const Icon(Icons.local_offer_outlined, color: AppColors.hint),
-                title: Text(AppLocalizations.t('offers_bids'), style: const TextStyle(color: Colors.white)),
-                value: _notifyOffers,
-                onChanged: (v) => setState(() => _notifyOffers = v),
-              ),
-              SwitchListTile(
-                secondary: const Icon(Icons.campaign_outlined, color: AppColors.hint),
-                title: Text(AppLocalizations.t('promotions'), style: const TextStyle(color: Colors.white)),
-                value: _notifyPromos,
-                onChanged: (v) => setState(() => _notifyPromos = v),
-              ),
+              if (_loadingPrefs)
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                )
+              else ...[
+                SwitchListTile(
+                  secondary: const Icon(Icons.receipt_long_outlined, color: AppColors.hint),
+                  title: Text(AppLocalizations.t('order_updates'), style: const TextStyle(color: Colors.white)),
+                  subtitle: const Text('Order, escrow & dispute updates', style: TextStyle(color: AppColors.hint, fontSize: 11)),
+                  value: _notifyOrders,
+                  onChanged: (v) {
+                    setState(() => _notifyOrders = v);
+                    _saveNotificationPreferences();
+                  },
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.local_offer_outlined, color: AppColors.hint),
+                  title: Text(AppLocalizations.t('offers_bids'), style: const TextStyle(color: Colors.white)),
+                  subtitle: const Text('Offers, bids & new messages', style: TextStyle(color: AppColors.hint, fontSize: 11)),
+                  value: _notifyOffers,
+                  onChanged: (v) {
+                    setState(() => _notifyOffers = v);
+                    _saveNotificationPreferences();
+                  },
+                ),
+                SwitchListTile(
+                  secondary: const Icon(Icons.campaign_outlined, color: AppColors.hint),
+                  title: Text(AppLocalizations.t('promotions'), style: const TextStyle(color: Colors.white)),
+                  subtitle: const Text('Deals and platform announcements', style: TextStyle(color: AppColors.hint, fontSize: 11)),
+                  value: _notifyPromos,
+                  onChanged: (v) {
+                    setState(() => _notifyPromos = v);
+                    _saveNotificationPreferences();
+                  },
+                ),
+              ],
 
               _SectionHeader(AppLocalizations.t('preferences')),
               ListTile(
@@ -271,10 +298,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
 
               _SectionHeader('Privacy & Data'),
-              _tile(Icons.download_outlined, 'Download My Data', null, () => _comingSoon('Data export')),
-              _tile(Icons.privacy_tip_outlined, 'Privacy & Data Deletion Request', null, () => _comingSoon('Deletion request')),
-              _tile(Icons.description_outlined, 'Terms & Conditions', null, () => _comingSoon('Terms viewer')),
-              _tile(Icons.policy_outlined, 'Privacy Policy', null, () => _comingSoon('Privacy Policy viewer')),
+              _tile(Icons.description_outlined, 'Terms & Conditions', null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen(type: 'terms')));
+              }),
+              _tile(Icons.policy_outlined, 'Privacy Policy', null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen(type: 'privacy')));
+              }),
 
               _SectionHeader(AppLocalizations.t('support')),
               _tile(Icons.help_outline, 'Help & FAQ', null, () => _comingSoon('Help & FAQ')),
@@ -295,18 +324,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(onPressed: _confirmLogout, icon: const Icon(Icons.logout), label: Text(AppLocalizations.t('logout'))),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: TextButton.icon(
-                    onPressed: _confirmDeleteAccount,
-                    icon: const Icon(Icons.delete_forever_outlined, color: Colors.redAccent),
-                    label: Text(AppLocalizations.t('delete_account'), style: const TextStyle(color: Colors.redAccent)),
-                  ),
                 ),
               ),
               const SizedBox(height: 30),

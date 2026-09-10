@@ -48,6 +48,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
   final LocalAuthentication _auth = LocalAuthentication();
   bool _isLocked = false;
   bool _biometricEnabled = false;
+  bool _unlocking = false;
   DateTime? _pausedAt;
 
   @override
@@ -88,12 +89,19 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
     }
   }
 
+  // Fingerprint is mandatory when enabled — the app stays locked on any failure,
+  // cancellation, or missing biometric hardware. The only way in is a successful
+  // scan or turning the setting off from within an already-unlocked session.
   Future<void> _tryUnlock() async {
+    if (_unlocking) return;
+    _unlocking = true;
     try {
       final canCheck = await _auth.canCheckBiometrics;
       final isSupported = await _auth.isDeviceSupported();
       if (!canCheck || !isSupported) {
-        setState(() => _isLocked = false);
+        // No biometric hardware available — keep the app locked and let the
+        // user know, rather than silently letting them in.
+        _unlocking = false;
         return;
       }
       final didAuth = await _auth.authenticate(
@@ -103,8 +111,11 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
       if (didAuth) {
         setState(() => _isLocked = false);
       }
+      // If didAuth is false (cancelled/failed), stay locked — no fallback unlock.
     } catch (e) {
-      setState(() => _isLocked = false);
+      // Any plugin/platform error also keeps the app locked.
+    } finally {
+      _unlocking = false;
     }
   }
 
@@ -260,6 +271,15 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
                       const Icon(Icons.fingerprint, size: 80, color: AppColors.primary),
                       const SizedBox(height: 24),
                       const Text('App Locked', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 40),
+                        child: Text(
+                          'Verify your fingerprint or face to continue',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.hint, fontSize: 13),
+                        ),
+                      ),
                       const SizedBox(height: 20),
                       ElevatedButton.icon(
                         onPressed: _tryUnlock,

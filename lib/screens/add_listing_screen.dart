@@ -26,11 +26,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
   final List<String> _customStatKeys = [];
 
   static const List<String> _platforms = [
-    'Gmail', 'Facebook', 'Twitter / X', 'Instagram', 'TikTok',
-    'Discord', 'Steam', 'Apple ID', 'Epic Games', 'Riot Games',
-    'Garena', 'Other',
+    'iCloud', 'Facebook', 'Google', 'Twitter', 'Other',
   ];
-  String _selectedPlatform = 'Gmail';
+  String _selectedPlatform = 'Google';
 
   final _vaultEmailCtrl = TextEditingController();
   final _vaultPasswordCtrl = TextEditingController();
@@ -175,7 +173,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
         _screenshots.clear();
         _allowBidding = false;
         _selectedGame = null;
-        _selectedPlatform = 'Gmail';
+        _selectedPlatform = 'Google';
         _statControllers.clear();
         _customStatKeys.clear();
         _error = null;
@@ -550,20 +548,14 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
                   Text(AppLocalizations.t('account_platform'), style: const TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _platforms.map((p) {
-                      final selected = p == _selectedPlatform;
-                      return ChoiceChip(
-                        label: Text(p, style: TextStyle(fontSize: 12, color: selected ? Colors.white : AppColors.hint)),
-                        selected: selected,
-                        onSelected: (_) => setState(() => _selectedPlatform = p),
-                        backgroundColor: AppColors.fieldFill,
-                        selectedColor: AppColors.primary.withOpacity(0.3),
-                        side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
-                      );
-                    }).toList(),
+                  DropdownButtonFormField<String>(
+                    value: _selectedPlatform,
+                    dropdownColor: AppColors.surface,
+                    style: const TextStyle(color: Colors.white),
+                    items: _platforms
+                        .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedPlatform = v!),
                   ),
                   const SizedBox(height: 12),
 
