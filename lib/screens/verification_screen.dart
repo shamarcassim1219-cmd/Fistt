@@ -199,7 +199,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   setState(() => _loadingStatus = true);
                   _loadStatus();
                 },
-                child: const Text('Retry'),
+                child: Text(AppLocalizations.t('retry')),
               ),
             ],
           ),
@@ -355,7 +355,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: _DocTypeOption(
-                  label: 'Passport',
+                  label: AppLocalizations.t('passport'),
                   selected: _selectedDocType == 'passport',
                   onTap: () => setState(() {
                     _selectedDocType = 'passport';
@@ -390,12 +390,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
             ),
 
             const SizedBox(height: 24),
-            const Text('3. 5-Second Video Selfie', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+            Text('3. ${AppLocalizations.t('video_selfie_title')}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
             const SizedBox(height: 4),
-            const Text(
-              'Record a short 5-second video of your face for liveness verification.',
-              style: TextStyle(color: AppColors.hint, fontSize: 11),
-            ),
+            Text(AppLocalizations.t('video_selfie_desc'), style: const TextStyle(color: AppColors.hint, fontSize: 11)),
             const SizedBox(height: 8),
             InkWell(
               onTap: _recordSelfieVideo,
@@ -409,9 +406,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         children: [
                           const Icon(Icons.check_circle, size: 36, color: Colors.greenAccent),
                           const SizedBox(height: 8),
-                          const Text('Video recorded', style: TextStyle(color: Colors.greenAccent, fontSize: 13)),
+                          Text(AppLocalizations.t('video_recorded'), style: const TextStyle(color: Colors.greenAccent, fontSize: 13)),
                           const SizedBox(height: 4),
-                          Text('Tap to re-record', style: TextStyle(color: AppColors.hint.withOpacity(0.7), fontSize: 11)),
+                          Text(AppLocalizations.t('tap_rerecord'), style: TextStyle(color: AppColors.hint.withOpacity(0.7), fontSize: 11)),
                         ],
                       )
                     : Column(
@@ -419,7 +416,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         children: [
                           const Icon(Icons.videocam_outlined, size: 36, color: AppColors.hint),
                           const SizedBox(height: 8),
-                          const Text('Tap to record 5-second video', style: TextStyle(color: AppColors.hint, fontSize: 13)),
+                          Text(AppLocalizations.t('tap_record_video'), style: const TextStyle(color: AppColors.hint, fontSize: 13)),
                         ],
                       ),
               ),
@@ -428,10 +425,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             const SizedBox(height: 24),
             Text(AppLocalizations.t('take_selfie'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
             const SizedBox(height: 4),
-            const Text(
-              'Take a live selfie using your camera — this cannot be selected from your gallery.',
-              style: TextStyle(color: AppColors.hint, fontSize: 11),
-            ),
+            Text(AppLocalizations.t('live_selfie_notice'), style: const TextStyle(color: AppColors.hint, fontSize: 11)),
             const SizedBox(height: 8),
             _UploadBox(
               image: _selfieImage,

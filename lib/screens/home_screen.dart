@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
               NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: AppLocalizations.t('home')),
               NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined), selectedIcon: const Icon(Icons.account_balance_wallet), label: AppLocalizations.t('wallet')),
               NavigationDestination(icon: const Icon(Icons.add_box_outlined), selectedIcon: const Icon(Icons.add_box), label: AppLocalizations.t('sell')),
-              const NavigationDestination(icon: Icon(Icons.campaign_outlined), selectedIcon: Icon(Icons.campaign), label: 'Promotions'),
+              NavigationDestination(icon: const Icon(Icons.campaign_outlined), selectedIcon: const Icon(Icons.campaign), label: AppLocalizations.t('promotions_tab')),
               NavigationDestination(icon: const Icon(Icons.settings_outlined), selectedIcon: const Icon(Icons.settings), label: AppLocalizations.t('settings')),
             ],
           ),
@@ -530,83 +530,88 @@ class _PromotionsTabState extends State<_PromotionsTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
-            child: Text('Promotions', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-          ),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                : _error != null
-                    ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
-                    : _promotions.isEmpty
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(24),
-                              child: Text('No promotions right now.\nCheck back later for deals and offers.',
-                                  textAlign: TextAlign.center, style: TextStyle(color: AppColors.hint)),
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _load,
-                            color: AppColors.primary,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _promotions.length,
-                              itemBuilder: (context, i) {
-                                final p = _promotions[i];
-                                return InkWell(
-                                  onTap: p['linkUrl'] != null ? () => _openLink(p['linkUrl']) : null,
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Container(
-                                    margin: const EdgeInsets.only(bottom: 16),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.surface,
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                child: Text(AppLocalizations.t('promotions_tab'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+              ),
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    : _error != null
+                        ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
+                        : _promotions.isEmpty
+                            ? Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Text(AppLocalizations.t('no_promotions'),
+                                      textAlign: TextAlign.center, style: const TextStyle(color: AppColors.hint)),
+                                ),
+                              )
+                            : RefreshIndicator(
+                                onRefresh: _load,
+                                color: AppColors.primary,
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: _promotions.length,
+                                  itemBuilder: (context, i) {
+                                    final p = _promotions[i];
+                                    return InkWell(
+                                      onTap: p['linkUrl'] != null ? () => _openLink(p['linkUrl']) : null,
                                       borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: AppColors.border),
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        AspectRatio(
-                                          aspectRatio: 16 / 9,
-                                          child: Image.network(
-                                            p['imageUrl'] ?? '',
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (ctx, err, stack) => Container(
-                                              color: AppColors.fieldFill,
-                                              child: const Icon(Icons.image_outlined, color: AppColors.hint, size: 40),
+                                      child: Container(
+                                        margin: const EdgeInsets.only(bottom: 16),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.surface,
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(color: AppColors.border),
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            AspectRatio(
+                                              aspectRatio: 16 / 9,
+                                              child: Image.network(
+                                                p['imageUrl'] ?? '',
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (ctx, err, stack) => Container(
+                                                  color: AppColors.fieldFill,
+                                                  child: const Icon(Icons.image_outlined, color: AppColors.hint, size: 40),
+                                                ),
+                                              ),
                                             ),
-                                          ),
+                                            Padding(
+                                              padding: const EdgeInsets.all(14),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(p['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                                  if ((p['description'] ?? '').toString().isNotEmpty) ...[
+                                                    const SizedBox(height: 6),
+                                                    Text(p['description'], style: const TextStyle(color: AppColors.hint, fontSize: 13)),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.all(14),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(p['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                                              if ((p['description'] ?? '').toString().isNotEmpty) ...[
-                                                const SizedBox(height: 6),
-                                                Text(p['description'], style: const TextStyle(color: AppColors.hint, fontSize: 13)),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

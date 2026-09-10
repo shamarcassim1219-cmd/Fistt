@@ -107,7 +107,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Add Custom Stat', style: TextStyle(color: Colors.white)),
+        title: Text(AppLocalizations.t('custom_stat'), style: const TextStyle(color: Colors.white)),
         content: TextField(
           controller: ctrl,
           autofocus: true,
@@ -115,7 +115,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
           decoration: const InputDecoration(hintText: 'e.g. Prestige Level'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.t('cancel'))),
           ElevatedButton(
             onPressed: () {
               if (ctrl.text.trim().isNotEmpty) {
@@ -412,11 +412,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
                   if (_selectedGame != null) ...[
                     const SizedBox(height: 20),
-                    _SectionLabel('Account Stats'),
-                    const Text(
-                      'Add key details buyers care about — tap a suggestion or add your own.',
-                      style: TextStyle(color: AppColors.hint, fontSize: 11),
-                    ),
+                    _SectionLabel(AppLocalizations.t('account_stats')),
+                    Text(AppLocalizations.t('stats_hint'), style: const TextStyle(color: AppColors.hint, fontSize: 11)),
                     const SizedBox(height: 10),
 
                     if (_statControllers.isNotEmpty) ...[
@@ -441,27 +438,26 @@ class _AddListingScreenState extends State<AddListingScreen> {
                       const SizedBox(height: 4),
                     ],
 
-                    if (availableSuggestions.isNotEmpty || true)
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          ...availableSuggestions.map((s) => ActionChip(
-                                avatar: const Icon(Icons.add, size: 14, color: AppColors.primary),
-                                label: Text(s, style: const TextStyle(fontSize: 12)),
-                                backgroundColor: AppColors.fieldFill,
-                                side: const BorderSide(color: AppColors.border),
-                                onPressed: () => _addStatField(s),
-                              )),
-                          ActionChip(
-                            avatar: const Icon(Icons.add, size: 14, color: AppColors.hint),
-                            label: const Text('Custom Stat', style: TextStyle(fontSize: 12)),
-                            backgroundColor: AppColors.fieldFill,
-                            side: const BorderSide(color: AppColors.border),
-                            onPressed: _showAddCustomStatDialog,
-                          ),
-                        ],
-                      ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ...availableSuggestions.map((s) => ActionChip(
+                              avatar: const Icon(Icons.add, size: 14, color: AppColors.primary),
+                              label: Text(s, style: const TextStyle(fontSize: 12)),
+                              backgroundColor: AppColors.fieldFill,
+                              side: const BorderSide(color: AppColors.border),
+                              onPressed: () => _addStatField(s),
+                            )),
+                        ActionChip(
+                          avatar: const Icon(Icons.add, size: 14, color: AppColors.hint),
+                          label: Text(AppLocalizations.t('custom_stat'), style: const TextStyle(fontSize: 12)),
+                          backgroundColor: AppColors.fieldFill,
+                          side: const BorderSide(color: AppColors.border),
+                          onPressed: _showAddCustomStatDialog,
+                        ),
+                      ],
+                    ),
                   ],
 
                   const SizedBox(height: 16),
@@ -552,7 +548,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  const Text('Account Platform', style: TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text(AppLocalizations.t('account_platform'), style: const TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,

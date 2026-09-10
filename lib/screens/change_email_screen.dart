@@ -75,16 +75,13 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
       builder: (context, lang, _) {
         return Scaffold(
           backgroundColor: AppColors.bg,
-          appBar: AppBar(title: const Text('Change Email')),
+          appBar: AppBar(title: Text(AppLocalizations.t('change_email'))),
           body: SafeArea(
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
                 if (!_codeSent) ...[
-                  const Text(
-                    'Enter your current password and the new email address. We\'ll send a verification code to the new email to confirm it.',
-                    style: TextStyle(color: AppColors.hint, fontSize: 13),
-                  ),
+                  Text(AppLocalizations.t('change_email_notice'), style: const TextStyle(color: AppColors.hint, fontSize: 13)),
                   const SizedBox(height: 20),
                   TextField(
                     controller: _currentPassCtrl,
@@ -97,13 +94,10 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                     controller: _newEmailCtrl,
                     keyboardType: TextInputType.emailAddress,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(labelText: 'New Email Address'),
+                    decoration: InputDecoration(labelText: AppLocalizations.t('new_email')),
                   ),
                 ] else ...[
-                  Text(
-                    'Enter the 6-digit code sent to ${_newEmailCtrl.text.trim()} to confirm this is your new email.',
-                    style: const TextStyle(color: AppColors.hint, fontSize: 13),
-                  ),
+                  Text(AppLocalizations.t('confirm_email_code_notice'), style: const TextStyle(color: AppColors.hint, fontSize: 13)),
                   const SizedBox(height: 20),
                   TextField(
                     controller: _codeCtrl,
