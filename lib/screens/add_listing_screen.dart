@@ -22,6 +22,16 @@ class _AddListingScreenState extends State<AddListingScreen> {
   final _uidCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
 
+  final Map<String, TextEditingController> _statControllers = {};
+  final List<String> _customStatKeys = [];
+
+  static const List<String> _platforms = [
+    'Gmail', 'Facebook', 'Twitter / X', 'Instagram', 'TikTok',
+    'Discord', 'Steam', 'Apple ID', 'Epic Games', 'Riot Games',
+    'Garena', 'Other',
+  ];
+  String _selectedPlatform = 'Gmail';
+
   final _vaultEmailCtrl = TextEditingController();
   final _vaultPasswordCtrl = TextEditingController();
   final _vaultRecoveryCtrl = TextEditingController();
@@ -40,6 +50,14 @@ class _AddListingScreenState extends State<AddListingScreen> {
     _checkVerification();
   }
 
+  @override
+  void dispose() {
+    for (final c in _statControllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
   Future<void> _checkVerification() async {
     try {
       final profile = await ApiService.getProfile();
@@ -52,6 +70,64 @@ class _AddListingScreenState extends State<AddListingScreen> {
       if (!mounted) return;
       setState(() => _loadingVerification = false);
     }
+  }
+
+  void _onGameSelected(String game) {
+    setState(() {
+      _selectedGame = game;
+      for (final c in _statControllers.values) {
+        c.dispose();
+      }
+      _statControllers.clear();
+      _customStatKeys.clear();
+    });
+  }
+
+  void _addStatField(String key) {
+    if (_statControllers.containsKey(key)) return;
+    setState(() {
+      _statControllers[key] = TextEditingController();
+      if (!GamesList.suggestedStatsFor(_selectedGame ?? '').contains(key)) {
+        _customStatKeys.add(key);
+      }
+    });
+  }
+
+  void _removeStatField(String key) {
+    setState(() {
+      _statControllers[key]?.dispose();
+      _statControllers.remove(key);
+      _customStatKeys.remove(key);
+    });
+  }
+
+  void _showAddCustomStatDialog() {
+    final ctrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Add Custom Stat', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(hintText: 'e.g. Prestige Level'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              if (ctrl.text.trim().isNotEmpty) {
+                _addStatField(ctrl.text.trim());
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _pickScreenshots() async {
@@ -91,11 +167,17 @@ class _AddListingScreenState extends State<AddListingScreen> {
     _vaultEmailCtrl.clear();
     _vaultPasswordCtrl.clear();
     _vaultRecoveryCtrl.clear();
+    for (final c in _statControllers.values) {
+      c.dispose();
+    }
     if (mounted) {
       setState(() {
         _screenshots.clear();
         _allowBidding = false;
         _selectedGame = null;
+        _selectedPlatform = 'Gmail';
+        _statControllers.clear();
+        _customStatKeys.clear();
         _error = null;
       });
     }
@@ -124,6 +206,11 @@ class _AddListingScreenState extends State<AddListingScreen> {
     try {
       final screenshotUrls = await _uploadScreenshots();
 
+      final stats = <String, String>{};
+      _statControllers.forEach((key, ctrl) {
+        if (ctrl.text.trim().isNotEmpty) stats[key] = ctrl.text.trim();
+      });
+
       await ApiService.createListing(
         game: _selectedGame!,
         title: _titleCtrl.text.trim(),
@@ -131,6 +218,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
         inGameUID: _uidCtrl.text.trim(),
         price: double.parse(_priceCtrl.text.trim()),
         screenshots: screenshotUrls,
+        stats: stats,
+        vaultPlatform: _selectedPlatform,
         vaultEmail: _vaultEmailCtrl.text.trim(),
         vaultPassword: _vaultPasswordCtrl.text.trim(),
         vaultRecoveryCodes: _vaultRecoveryCtrl.text.trim(),
@@ -168,7 +257,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
             height: MediaQuery.of(ctx).size.height * 0.7,
             child: Column(
               children: [
-                Text('Select Game', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                const Text('Select Game', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                 const SizedBox(height: 12),
                 TextField(
                   controller: searchCtrl,
@@ -194,7 +283,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                         title: Text(g, style: const TextStyle(color: Colors.white, fontSize: 14)),
                         trailing: _selectedGame == g ? const Icon(Icons.check, color: AppColors.primary) : null,
                         onTap: () {
-                          setState(() => _selectedGame = g);
+                          _onGameSelected(g);
                           Navigator.pop(ctx);
                         },
                       );
@@ -249,6 +338,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
           );
         }
 
+        final suggestedStats = _selectedGame != null ? GamesList.suggestedStatsFor(_selectedGame!) : <String>[];
+        final availableSuggestions = suggestedStats.where((s) => !_statControllers.containsKey(s)).toList();
+
         return Scaffold(
           backgroundColor: AppColors.bg,
           appBar: AppBar(title: Text(AppLocalizations.t('sell_an_account'))),
@@ -295,7 +387,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                     controller: _descCtrl,
                     maxLines: 4,
                     style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(labelText: AppLocalizations.t('description'), hintText: 'Rank, skins, level, region...'),
+                    decoration: InputDecoration(labelText: AppLocalizations.t('description'), hintText: 'Additional details, region, etc...'),
                     validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 12),
@@ -317,6 +409,60 @@ class _AddListingScreenState extends State<AddListingScreen> {
                       return null;
                     },
                   ),
+
+                  if (_selectedGame != null) ...[
+                    const SizedBox(height: 20),
+                    _SectionLabel('Account Stats'),
+                    const Text(
+                      'Add key details buyers care about — tap a suggestion or add your own.',
+                      style: TextStyle(color: AppColors.hint, fontSize: 11),
+                    ),
+                    const SizedBox(height: 10),
+
+                    if (_statControllers.isNotEmpty) ...[
+                      ..._statControllers.entries.map((e) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: e.value,
+                                    style: const TextStyle(color: Colors.white),
+                                    decoration: InputDecoration(labelText: e.key, isDense: true),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 18, color: AppColors.hint),
+                                  onPressed: () => _removeStatField(e.key),
+                                ),
+                              ],
+                            ),
+                          )),
+                      const SizedBox(height: 4),
+                    ],
+
+                    if (availableSuggestions.isNotEmpty || true)
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ...availableSuggestions.map((s) => ActionChip(
+                                avatar: const Icon(Icons.add, size: 14, color: AppColors.primary),
+                                label: Text(s, style: const TextStyle(fontSize: 12)),
+                                backgroundColor: AppColors.fieldFill,
+                                side: const BorderSide(color: AppColors.border),
+                                onPressed: () => _addStatField(s),
+                              )),
+                          ActionChip(
+                            avatar: const Icon(Icons.add, size: 14, color: AppColors.hint),
+                            label: const Text('Custom Stat', style: TextStyle(fontSize: 12)),
+                            backgroundColor: AppColors.fieldFill,
+                            side: const BorderSide(color: AppColors.border),
+                            onPressed: _showAddCustomStatDialog,
+                          ),
+                        ],
+                      ),
+                  ],
 
                   const SizedBox(height: 16),
                   Container(
@@ -405,10 +551,30 @@ class _AddListingScreenState extends State<AddListingScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
+
+                  const Text('Account Platform', style: TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _platforms.map((p) {
+                      final selected = p == _selectedPlatform;
+                      return ChoiceChip(
+                        label: Text(p, style: TextStyle(fontSize: 12, color: selected ? Colors.white : AppColors.hint)),
+                        selected: selected,
+                        onSelected: (_) => setState(() => _selectedPlatform = p),
+                        backgroundColor: AppColors.fieldFill,
+                        selectedColor: AppColors.primary.withOpacity(0.3),
+                        side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+
                   TextFormField(
                     controller: _vaultEmailCtrl,
                     style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(labelText: AppLocalizations.t('account_email')),
+                    decoration: InputDecoration(labelText: '$_selectedPlatform Email / Username'),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
