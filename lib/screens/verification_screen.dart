@@ -29,6 +29,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   File? _frontImage;
   File? _backImage;
   File? _selfieImage;
+  File? _selfieVideo;
   bool _submitting = false;
   String? _error;
 
@@ -70,7 +71,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   Future<void> _pickImage(String slot) async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
-      source: slot == 'selfie' ? ImageSource.camera : ImageSource.gallery,
+      source: ImageSource.camera,
       imageQuality: 85,
     );
     if (picked == null) return;
@@ -81,19 +82,41 @@ class _VerificationScreenState extends State<VerificationScreen> {
     });
   }
 
+  Future<void> _recordSelfieVideo() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickVideo(
+      source: ImageSource.camera,
+      maxDuration: const Duration(seconds: 5),
+      preferredCameraDevice: CameraDevice.front,
+    );
+    if (picked == null) return;
+    setState(() => _selfieVideo = File(picked.path));
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedProvince == null || _selectedDistrict == null) {
       setState(() => _error = 'Please select province and district');
       return;
     }
-    if (_frontImage == null || _selfieImage == null) {
-      setState(() => _error = 'Please upload the required document photo and a selfie');
+    if (_frontImage == null) {
+      setState(() => _error = 'Please upload the front document photo');
       return;
     }
-    if (_selectedDocType == 'driving_license' && _backImage == null) {
-      setState(() => _error = 'Please upload the back of your driving license');
-      return;
+    if (_selectedDocType == 'nic') {
+      if (_backImage == null) {
+        setState(() => _error = 'Please upload the back of your NIC');
+        return;
+      }
+      if (_selfieVideo == null) {
+        setState(() => _error = 'Please record a 5-second video selfie');
+        return;
+      }
+    } else {
+      if (_selfieImage == null) {
+        setState(() => _error = 'Please take a live selfie');
+        return;
+      }
     }
 
     setState(() {
@@ -107,7 +130,14 @@ class _VerificationScreenState extends State<VerificationScreen> {
       if (_backImage != null) {
         backUrl = await ApiService.uploadImage(_backImage!);
       }
-      final selfieUrl = await ApiService.uploadImage(_selfieImage!);
+      String? selfieUrl;
+      if (_selfieImage != null) {
+        selfieUrl = await ApiService.uploadImage(_selfieImage!);
+      }
+      String? selfieVideoUrl;
+      if (_selfieVideo != null) {
+        selfieVideoUrl = await ApiService.uploadImage(_selfieVideo!);
+      }
 
       await ApiService.submitVerification(
         fullName: _fullNameCtrl.text.trim(),
@@ -119,6 +149,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         frontImageUrl: frontUrl,
         backImageUrl: backUrl,
         selfieImageUrl: selfieUrl,
+        selfieVideoUrl: selfieVideoUrl,
       );
 
       if (!mounted) return;
@@ -181,7 +212,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         icon: Icons.hourglass_top_outlined,
         color: Colors.orangeAccent,
         title: AppLocalizations.t('verification_pending'),
-        message: 'Your ${_documentType == 'driving_license' ? 'driving license' : 'NIC'} verification is under review. '
+        message: 'Your ${_docTypeLabel(_documentType)} verification is under review. '
             'This usually takes 1-2 business days.',
       );
     }
@@ -305,52 +336,110 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   onTap: () => setState(() {
                     _selectedDocType = 'nic';
                     _backImage = null;
+                    _selfieImage = null;
                   }),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: _DocTypeOption(
                   label: AppLocalizations.t('driving_license'),
                   selected: _selectedDocType == 'driving_license',
-                  onTap: () => setState(() => _selectedDocType = 'driving_license'),
+                  onTap: () => setState(() {
+                    _selectedDocType = 'driving_license';
+                    _backImage = null;
+                    _selfieVideo = null;
+                  }),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _DocTypeOption(
+                  label: 'Passport',
+                  selected: _selectedDocType == 'passport',
+                  onTap: () => setState(() {
+                    _selectedDocType = 'passport';
+                    _backImage = null;
+                    _selfieVideo = null;
+                  }),
                 ),
               ),
             ],
           ),
 
           const SizedBox(height: 24),
-          Text(_selectedDocType == 'nic' ? '2. Upload NIC (front)' : '2. Upload License (front)',
+          Text(_frontLabelFor(_selectedDocType),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
           const SizedBox(height: 8),
           _UploadBox(
             image: _frontImage,
             icon: Icons.badge_outlined,
-            label: 'Tap to upload front photo',
+            label: 'Tap to take a photo',
             onTap: () => _pickImage('front'),
           ),
 
-          if (_selectedDocType == 'driving_license') ...[
+          if (_selectedDocType == 'nic') ...[
             const SizedBox(height: 24),
-            const Text('3. Upload License (back)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+            const Text('2. Back of NIC', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
             const SizedBox(height: 8),
             _UploadBox(
               image: _backImage,
               icon: Icons.badge_outlined,
-              label: 'Tap to upload back photo',
+              label: 'Tap to take a photo',
               onTap: () => _pickImage('back'),
             ),
-          ],
 
-          const SizedBox(height: 24),
-          Text(AppLocalizations.t('take_selfie'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
-          const SizedBox(height: 8),
-          _UploadBox(
-            image: _selfieImage,
-            icon: Icons.camera_alt_outlined,
-            label: 'Tap to take a selfie',
-            onTap: () => _pickImage('selfie'),
-          ),
+            const SizedBox(height: 24),
+            const Text('3. 5-Second Video Selfie', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+            const SizedBox(height: 4),
+            const Text(
+              'Record a short 5-second video of your face for liveness verification.',
+              style: TextStyle(color: AppColors.hint, fontSize: 11),
+            ),
+            const SizedBox(height: 8),
+            InkWell(
+              onTap: _recordSelfieVideo,
+              child: Container(
+                height: 140,
+                width: double.infinity,
+                decoration: BoxDecoration(color: AppColors.fieldFill, border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(12)),
+                child: _selfieVideo != null
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.check_circle, size: 36, color: Colors.greenAccent),
+                          const SizedBox(height: 8),
+                          const Text('Video recorded', style: TextStyle(color: Colors.greenAccent, fontSize: 13)),
+                          const SizedBox(height: 4),
+                          Text('Tap to re-record', style: TextStyle(color: AppColors.hint.withOpacity(0.7), fontSize: 11)),
+                        ],
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.videocam_outlined, size: 36, color: AppColors.hint),
+                          const SizedBox(height: 8),
+                          const Text('Tap to record 5-second video', style: TextStyle(color: AppColors.hint, fontSize: 13)),
+                        ],
+                      ),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 24),
+            Text(AppLocalizations.t('take_selfie'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+            const SizedBox(height: 4),
+            const Text(
+              'Take a live selfie using your camera — this cannot be selected from your gallery.',
+              style: TextStyle(color: AppColors.hint, fontSize: 11),
+            ),
+            const SizedBox(height: 8),
+            _UploadBox(
+              image: _selfieImage,
+              icon: Icons.camera_alt_outlined,
+              label: 'Tap to take a live selfie',
+              onTap: () => _pickImage('selfie'),
+            ),
+          ],
 
           if (_error != null) ...[
             const SizedBox(height: 16),
@@ -371,6 +460,23 @@ class _VerificationScreenState extends State<VerificationScreen> {
         ],
       ),
     );
+  }
+
+  String _frontLabelFor(String docType) {
+    switch (docType) {
+      case 'nic': return '1. Front of NIC';
+      case 'driving_license': return '1. Front of Driving License';
+      case 'passport': return '1. Passport Photo Page';
+      default: return '1. Front of Document';
+    }
+  }
+
+  String _docTypeLabel(String? docType) {
+    switch (docType) {
+      case 'driving_license': return 'driving license';
+      case 'passport': return 'passport';
+      default: return 'NIC';
+    }
   }
 }
 
@@ -415,14 +521,14 @@ class _DocTypeOption extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
         decoration: BoxDecoration(
           color: selected ? AppColors.primary.withOpacity(0.15) : AppColors.fieldFill,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: selected ? AppColors.primary : AppColors.border),
         ),
         child: Center(
-          child: Text(label, style: TextStyle(color: selected ? Colors.white : AppColors.hint, fontWeight: FontWeight.bold, fontSize: 13)),
+          child: Text(label, textAlign: TextAlign.center, style: TextStyle(color: selected ? Colors.white : AppColors.hint, fontWeight: FontWeight.bold, fontSize: 12)),
         ),
       ),
     );
@@ -462,3 +568,4 @@ class _UploadBox extends StatelessWidget {
     );
   }
 }
+EO

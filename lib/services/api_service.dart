@@ -198,30 +198,31 @@ class ApiService {
   }
 
   static Future<void> changePassword(String currentPassword, String newPassword) async {
-    final res = await http.put(
-      Uri.parse('$baseUrl/user/change-password'),
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/password/change'),
       headers: await _headers(),
       body: jsonEncode({'currentPassword': currentPassword, 'newPassword': newPassword}),
     );
     await _handle(res);
   }
 
-  static Future<void> requestPasswordChange(String currentPassword) async {
+  static Future<void> requestEmailChange(String currentPassword, String newEmail) async {
     final res = await http.post(
-      Uri.parse('$baseUrl/user/password/request-change'),
+      Uri.parse('$baseUrl/user/email/request-change'),
       headers: await _headers(),
-      body: jsonEncode({'currentPassword': currentPassword}),
+      body: jsonEncode({'currentPassword': currentPassword, 'newEmail': newEmail}),
     );
     await _handle(res);
   }
 
-  static Future<void> confirmPasswordChange(String code, String newPassword) async {
+  static Future<String> confirmEmailChange(String code) async {
     final res = await http.post(
-      Uri.parse('$baseUrl/user/password/confirm-change'),
+      Uri.parse('$baseUrl/user/email/confirm-change'),
       headers: await _headers(),
-      body: jsonEncode({'code': code, 'newPassword': newPassword}),
+      body: jsonEncode({'code': code}),
     );
-    await _handle(res);
+    final data = await _handle(res);
+    return data['newEmail'];
   }
 
   // ---------- LISTINGS ----------
@@ -542,7 +543,8 @@ class ApiService {
     required String documentType,
     required String frontImageUrl,
     String? backImageUrl,
-    required String selfieImageUrl,
+    String? selfieImageUrl,
+    String? selfieVideoUrl,
   }) async {
     final res = await http.post(
       Uri.parse('$baseUrl/verification'),
@@ -557,6 +559,7 @@ class ApiService {
         'frontImageUrl': frontImageUrl,
         'backImageUrl': backImageUrl,
         'selfieImageUrl': selfieImageUrl,
+        'selfieVideoUrl': selfieVideoUrl,
       }),
     );
     await _handle(res);

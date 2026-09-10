@@ -7,6 +7,7 @@ import 'login_screen.dart';
 import 'verification_screen.dart';
 import 'profile_management_screen.dart';
 import 'change_password_screen.dart';
+import 'change_email_screen.dart';
 import 'wallet_bank_details_screen.dart';
 import 'my_listings_screen.dart';
 import 'my_purchases_screen.dart';
@@ -206,6 +207,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
 
               _SectionHeader(AppLocalizations.t('security')),
+              _tile(Icons.email_outlined, 'Change Email', null, () async {
+                final changed = await Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangeEmailScreen()));
+                if (changed == true) _loadProfile();
+              }),
               _tile(Icons.lock_reset, AppLocalizations.t('change_password'), null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
               }),
