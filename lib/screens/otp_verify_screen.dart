@@ -1,10 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
 import 'home_screen.dart';
-import 'onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OtpVerifyScreen extends StatefulWidget {
@@ -22,6 +22,51 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
   final _codeCtrl = TextEditingController();
   bool _verifying = false;
   String? _error;
+  bool _resending = false;
+  int _secondsLeft = 30;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startCountdown();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _startCountdown() {
+    _secondsLeft = 30;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsLeft <= 1) {
+        timer.cancel();
+        if (mounted) setState(() => _secondsLeft = 0);
+      } else {
+        if (mounted) setState(() => _secondsLeft--);
+      }
+    });
+  }
+
+  Future<void> _resendCode() async {
+    setState(() {
+      _resending = true;
+      _error = null;
+    });
+    try {
+      await ApiService.resendOtp(widget.email, widget.purpose);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('A new code has been sent')));
+      _startCountdown();
+    } catch (e) {
+      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _resending = false);
+    }
+  }
 
   Future<void> _verify() async {
     final code = _codeCtrl.text.trim();
@@ -52,17 +97,10 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
 
       if (!mounted) return;
 
-      if (widget.purpose == 'register') {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-          (route) => false,
-        );
-      } else {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-          (route) => false,
-        );
-      }
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -119,6 +157,20 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
                           : Text(AppLocalizations.t('verify'), style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: _secondsLeft > 0
+                        ? Text(
+                            'Resend code in ${_secondsLeft}s',
+                            style: const TextStyle(color: AppColors.hint, fontSize: 13),
+                          )
+                        : TextButton(
+                            onPressed: _resending ? null : _resendCode,
+                            child: _resending
+                                ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
+                                : const Text('Resend Code', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                          ),
                   ),
                 ],
               ),

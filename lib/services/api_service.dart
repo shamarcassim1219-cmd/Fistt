@@ -608,6 +608,15 @@ class ApiService {
 
   // ---------- APP UPDATE CHECK ----------
   // Checks GitHub Releases for a newer version than the one currently installed.
+  static Future<void> resendOtp(String email, String purpose) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/resend-otp'),
+      headers: await _headers(withAuth: false),
+      body: jsonEncode({'email': email, 'purpose': purpose}),
+    );
+    await _handle(res);
+  }
+
   static Future<Map<String, dynamic>> checkForUpdate(String currentVersion) async {
     try {
       final res = await http.get(
