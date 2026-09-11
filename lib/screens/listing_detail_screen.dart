@@ -23,6 +23,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   int? _myUserId;
   bool _isFavorite = false;
   bool _favoriteLoading = false;
+  int _myPoints = 0;
 
   final _bidCtrl = TextEditingController();
   bool _placingBid = false;
@@ -35,6 +36,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     _loadMyId();
     _load();
     _loadFavoriteStatus();
+    _loadPoints();
   }
 
   @override
@@ -47,6 +49,13 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     try {
       final profile = await ApiService.getProfile();
       if (mounted) setState(() => _myUserId = profile['id']);
+    } catch (_) {}
+  }
+
+  Future<void> _loadPoints() async {
+    try {
+      final points = await ApiService.getReferralPoints();
+      if (mounted) setState(() => _myPoints = points);
     } catch (_) {}
   }
 
@@ -140,26 +149,91 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   Future<void> _confirmAndBuy(double price) async {
+    int pointsToUse = 0;
+    final maxAffordablePoints = (price / 1.5).floor();
+    final usablePoints = _myPoints > maxAffordablePoints ? maxAffordablePoints : _myPoints;
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: Text(AppLocalizations.t('confirm_purchase'), style: const TextStyle(color: Colors.white)),
-        content: Text(
-          'LKR ${price.toStringAsFixed(2)} will be deducted from your wallet. Admin will verify and share credentials shortly.',
-          style: const TextStyle(color: AppColors.hint, fontSize: 13),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.t('cancel'))),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.t('confirm_pay'))),
-        ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final discount = pointsToUse * 1.5;
+          final payable = (price - discount).clamp(0, price);
+          return AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: Text(AppLocalizations.t('confirm_purchase'), style: const TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'LKR ${price.toStringAsFixed(2)} will be deducted from your wallet. Admin will verify and share credentials shortly.',
+                  style: const TextStyle(color: AppColors.hint, fontSize: 13),
+                ),
+                if (usablePoints > 0) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.fieldFill,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.stars, size: 16, color: Colors.amber),
+                            const SizedBox(width: 6),
+                            Text('You have $_myPoints points (LKR ${(_myPoints * 1.5).toStringAsFixed(2)})',
+                                style: const TextStyle(color: Colors.white, fontSize: 12)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Slider(
+                                value: pointsToUse.toDouble(),
+                                min: 0,
+                                max: usablePoints.toDouble(),
+                                divisions: usablePoints > 0 ? usablePoints : 1,
+                                label: '$pointsToUse pts',
+                                activeColor: AppColors.primary,
+                                onChanged: (v) => setDialogState(() => pointsToUse = v.round()),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Using $pointsToUse points → LKR ${discount.toStringAsFixed(2)} discount',
+                          style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        const Divider(color: AppColors.border, height: 16),
+                        Text(
+                          'You pay: LKR ${payable.toStringAsFixed(2)}',
+                          style: const TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.t('cancel'))),
+              ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.t('confirm_pay'))),
+            ],
+          );
+        },
       ),
     );
     if (confirmed != true) return;
 
     setState(() => _buying = true);
     try {
-      await ApiService.createOrder(widget.listingId);
+      await ApiService.createOrder(widget.listingId, pointsToUse: pointsToUse);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Purchase successful! Admin is verifying — check My Purchases.')),
@@ -274,6 +348,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   Widget _buildContent() {
     final l = _listing!;
     final screenshots = (l['screenshots'] as List?) ?? [];
+    final stats = (l['stats'] as Map?) ?? {};
     final allowBidding = l['allowBidding'] == true;
     final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
     final basePrice = (l['price'] as num).toDouble();
@@ -337,6 +412,21 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
           ),
         const SizedBox(height: 12),
         Text(l['description'] ?? '', style: const TextStyle(color: AppColors.hint, fontSize: 14, height: 1.4)),
+
+        if (stats.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: stats.entries.map<Widget>((e) => Chip(
+                  label: Text('${e.key}: ${e.value}', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  backgroundColor: AppColors.primary.withOpacity(0.15),
+                  side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                  avatar: const Icon(Icons.bar_chart, size: 14, color: AppColors.primary),
+                )).toList(),
+          ),
+        ],
+
         const SizedBox(height: 20),
 
         Container(

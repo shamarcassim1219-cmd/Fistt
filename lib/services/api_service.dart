@@ -305,13 +305,19 @@ class ApiService {
   }
 
   // ---------- ORDERS ----------
-  static Future<Map<String, dynamic>> createOrder(int listingId) async {
+  static Future<Map<String, dynamic>> createOrder(int listingId, {int pointsToUse = 0}) async {
     final res = await http.post(
       Uri.parse('$baseUrl/orders'),
       headers: await _headers(),
-      body: jsonEncode({'listingId': listingId}),
+      body: jsonEncode({'listingId': listingId, 'pointsToUse': pointsToUse}),
     );
     return await _handle(res);
+  }
+
+  static Future<int> getReferralPoints() async {
+    final res = await http.get(Uri.parse('$baseUrl/user/me'), headers: await _headers());
+    final data = await _handle(res);
+    return (data['referralPoints'] as num?)?.toInt() ?? 0;
   }
 
   static Future<List<dynamic>> getMyPurchases() async {
