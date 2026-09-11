@@ -15,7 +15,7 @@ import 'my_sales_screen.dart';
 import 'referral_code_screen.dart';
 import 'blocked_users_screen.dart';
 import 'offers_screen.dart';
-import 'report_problem_screen.dart';
+import 'live_chat_screen.dart';
 import 'favorites_screen.dart';
 import 'legal_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -308,8 +308,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader(AppLocalizations.t('support')),
               _tile(Icons.help_outline, 'Help & FAQ', null, () => _comingSoon('Help & FAQ')),
-              _tile(Icons.report_gmailerrorred_outlined, AppLocalizations.t('report_problem'), null, () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportProblemScreen()));
+              _tile(Icons.support_agent_outlined, 'Live Chat with Admin', null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveChatScreen()));
               }),
 
               _SectionHeader('About'),

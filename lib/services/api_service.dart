@@ -190,6 +190,37 @@ class ApiService {
     await _handle(res);
   }
 
+  // ---------- LIVE CHAT WITH ADMIN ----------
+  static Future<Map<String, dynamic>?> getActiveChatTicket() async {
+    final res = await http.get(Uri.parse('$baseUrl/user/support-chat/active'), headers: await _headers());
+    final data = await _handle(res);
+    return data['ticket'];
+  }
+
+  static Future<int> startLiveChat(String message) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/support-chat/start'),
+      headers: await _headers(),
+      body: jsonEncode({'message': message}),
+    );
+    final data = await _handle(res);
+    return data['ticketId'];
+  }
+
+  static Future<Map<String, dynamic>> getLiveChatMessages(int ticketId) async {
+    final res = await http.get(Uri.parse('$baseUrl/user/support-chat/$ticketId/messages'), headers: await _headers());
+    return await _handle(res);
+  }
+
+  static Future<void> sendLiveChatMessage(int ticketId, String content) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/support-chat/$ticketId/reply'),
+      headers: await _headers(),
+      body: jsonEncode({'content': content}),
+    );
+    await _handle(res);
+  }
+
   static Future<void> requestBankDetailsChange(String bankName, String accountName, String accountNumber, String branch) async {
     final res = await http.post(
       Uri.parse('$baseUrl/user/bank-details/request-change'),
