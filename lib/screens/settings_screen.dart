@@ -18,6 +18,7 @@ import 'offers_screen.dart';
 import 'report_problem_screen.dart';
 import 'favorites_screen.dart';
 import 'legal_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -312,11 +313,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
 
               _SectionHeader('About'),
-              const ListTile(
-                leading: Icon(Icons.info_outline, color: AppColors.hint),
-                title: Text('App Version', style: TextStyle(color: Colors.white)),
-                subtitle: Text('1.0.0', style: TextStyle(color: AppColors.hint)),
-              ),
+              _tile(Icons.info_outline, 'App Version', '1.0.0 — Tap to check for updates', _checkForUpdate),
 
               const SizedBox(height: 10),
               Padding(
@@ -332,6 +329,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _checkForUpdate() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const AlertDialog(
+        backgroundColor: AppColors.surface,
+        content: Row(
+          children: [
+            CircularProgressIndicator(color: AppColors.primary),
+            SizedBox(width: 20),
+            Text('Checking for updates...', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final result = await ApiService.checkForUpdate('1.0.0');
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      if (result['updateAvailable'] == true) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: const Text('Update Available', style: TextStyle(color: Colors.white)),
+            content: Text(
+              'Version ${result['latestVersion']} is available.\n\n${result['releaseNotes'] ?? ''}',
+              style: const TextStyle(color: AppColors.hint, fontSize: 13),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Later')),
+              if (result['downloadUrl'] != null)
+                ElevatedButton(
+                  onPressed: () async {
+                    final uri = Uri.tryParse(result['downloadUrl']);
+                    if (uri != null && await canLaunchUrl(uri)) {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    }
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  child: const Text('Download'),
+                ),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("You're on the latest version")),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    }
   }
 
   Widget _tile(IconData icon, String title, String? subtitle, VoidCallback onTap) {
