@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/secure_screen_mixin.dart';
 import '../main.dart';
 import '../services/app_localizations.dart';
 import 'admin_chat_screen.dart';
@@ -12,7 +13,7 @@ class SaleDetailScreen extends StatefulWidget {
   State<SaleDetailScreen> createState() => _SaleDetailScreenState();
 }
 
-class _SaleDetailScreenState extends State<SaleDetailScreen> {
+class _SaleDetailScreenState extends State<SaleDetailScreen> with SecureScreenMixin {
   Timer? _timer;
   Duration _remaining = Duration.zero;
 

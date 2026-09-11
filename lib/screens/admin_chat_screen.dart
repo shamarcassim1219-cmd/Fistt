@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/secure_screen_mixin.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 
@@ -11,7 +12,7 @@ class AdminChatScreen extends StatefulWidget {
   State<AdminChatScreen> createState() => _AdminChatScreenState();
 }
 
-class _AdminChatScreenState extends State<AdminChatScreen> {
+class _AdminChatScreenState extends State<AdminChatScreen> with SecureScreenMixin {
   int? _conversationId;
   List<dynamic> _messages = [];
   bool _loading = true;

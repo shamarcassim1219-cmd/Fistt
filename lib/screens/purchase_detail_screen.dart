@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/secure_screen_mixin.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
@@ -13,7 +14,7 @@ class PurchaseDetailScreen extends StatefulWidget {
   State<PurchaseDetailScreen> createState() => _PurchaseDetailScreenState();
 }
 
-class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> {
+class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with SecureScreenMixin {
   late Map<String, dynamic> _order;
   bool _notifying = false;
 

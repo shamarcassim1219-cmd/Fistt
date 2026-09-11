@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/secure_screen_mixin.dart';
 import 'package:flutter/services.dart';
 import '../main.dart';
 import '../services/api_service.dart';
@@ -11,7 +12,7 @@ class VaultRevealScreen extends StatefulWidget {
   State<VaultRevealScreen> createState() => _VaultRevealScreenState();
 }
 
-class _VaultRevealScreenState extends State<VaultRevealScreen> {
+class _VaultRevealScreenState extends State<VaultRevealScreen> with SecureScreenMixin {
   Map<String, dynamic>? _vault;
   bool _loading = true;
   String? _error;
