@@ -221,6 +221,16 @@ class ApiService {
     await _handle(res);
   }
 
+  // ---------- REPORT LISTING / USER ----------
+  static Future<void> reportContent(String targetType, int targetId, String reason, String? details) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/report'),
+      headers: await _headers(),
+      body: jsonEncode({'targetType': targetType, 'targetId': targetId, 'reason': reason, 'details': details}),
+    );
+    await _handle(res);
+  }
+
   static Future<void> requestBankDetailsChange(String bankName, String accountName, String accountNumber, String branch) async {
     final res = await http.post(
       Uri.parse('$baseUrl/user/bank-details/request-change'),
@@ -477,6 +487,12 @@ class ApiService {
     final res = await http.get(Uri.parse('$baseUrl/chats/$conversationId/messages'), headers: await _headers());
     final data = await _handle(res);
     return data['messages'];
+  }
+
+  static Future<int> getOtherUserId(int conversationId) async {
+    final res = await http.get(Uri.parse('$baseUrl/chats/$conversationId/other-user'), headers: await _headers());
+    final data = await _handle(res);
+    return data['otherUserId'];
   }
 
   static Future<void> sendMessage(int conversationId, String content) async {

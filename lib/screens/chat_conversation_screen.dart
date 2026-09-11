@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import '../widgets/report_dialog.dart';
 
 class ChatConversationScreen extends StatefulWidget {
   final int conversationId;
@@ -31,6 +32,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
 
   String _headerEmail = '';
   String _headerTitle = '';
+  int? _otherUserId;
 
   @override
   void initState() {
@@ -40,6 +42,9 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
     });
     _load();
     _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _load(silent: true));
+    ApiService.getOtherUserId(widget.conversationId).then((id) {
+      if (mounted) setState(() => _otherUserId = id);
+    }).catchError((_) {});
   }
 
   @override
@@ -135,6 +140,14 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
                   Text(_headerTitle, style: const TextStyle(fontSize: 11, color: AppColors.hint)),
               ],
             ),
+            actions: [
+              if (_otherUserId != null)
+                IconButton(
+                  icon: const Icon(Icons.flag_outlined, color: Colors.white),
+                  tooltip: 'Report User',
+                  onPressed: () => showReportDialog(context, targetType: 'user', targetId: _otherUserId!),
+                ),
+            ],
           ),
           body: Column(
             children: [

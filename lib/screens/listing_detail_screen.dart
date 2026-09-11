@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import '../widgets/report_dialog.dart';
 import 'seller_profile_screen.dart';
 
 class ListingDetailScreen extends StatefulWidget {
@@ -332,6 +333,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                     ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
                     : Icon(_isFavorite ? Icons.favorite : Icons.favorite_border, color: _isFavorite ? Colors.redAccent : Colors.white),
                 onPressed: _favoriteLoading ? null : _toggleFavorite,
+              ),
+              IconButton(
+                icon: const Icon(Icons.flag_outlined, color: Colors.white),
+                tooltip: 'Report Listing',
+                onPressed: () => showReportDialog(context, targetType: 'listing', targetId: widget.listingId),
               ),
             ],
           ),
