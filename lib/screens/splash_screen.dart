@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
-import 'onboarding_screen.dart';
-import 'agreement_screen.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 
@@ -24,22 +22,11 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 2));
     final prefs = await SharedPreferences.getInstance();
 
-    final seenOnboarding = prefs.getBool('seen_onboarding') ?? false;
-    final agreedTerms = prefs.getBool('agreed_terms') ?? false;
     final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
 
     if (!mounted) return;
 
-    Widget next;
-    if (!seenOnboarding) {
-      next = const OnboardingScreen();
-    } else if (!agreedTerms) {
-      next = const AgreementScreen();
-    } else if (!isLoggedIn) {
-      next = const LoginScreen();
-    } else {
-      next = const HomeScreen();
-    }
+    Widget next = isLoggedIn ? const HomeScreen() : const LoginScreen();
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => next),

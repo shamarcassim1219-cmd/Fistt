@@ -95,9 +95,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
       if (!mounted) return;
 
-      final seenOnboarding = prefs.getBool('seen_onboarding') ?? false;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => seenOnboarding ? const HomeScreen() : const OnboardingScreen()),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
         (route) => false,
       );
     } catch (e) {

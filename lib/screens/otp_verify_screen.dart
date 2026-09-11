@@ -53,9 +53,8 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
       if (!mounted) return;
 
       if (widget.purpose == 'register') {
-        final seenOnboarding = prefs.getBool('seen_onboarding') ?? false;
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => seenOnboarding ? const HomeScreen() : const OnboardingScreen()),
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
           (route) => false,
         );
       } else {
