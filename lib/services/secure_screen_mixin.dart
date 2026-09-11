@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_windowmanager_plus/flutter_windowmanager_plus.dart';
 
 /// Mixin for any State that shows sensitive content (account credentials,
