@@ -29,7 +29,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
   File? _frontImage;
   File? _backImage;
   File? _selfieImage;
-  File? _selfieVideo;
   bool _submitting = false;
   String? _error;
 
@@ -82,17 +81,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
     });
   }
 
-  Future<void> _recordSelfieVideo() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickVideo(
-      source: ImageSource.camera,
-      maxDuration: const Duration(seconds: 5),
-      preferredCameraDevice: CameraDevice.front,
-    );
-    if (picked == null) return;
-    setState(() => _selfieVideo = File(picked.path));
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedProvince == null || _selectedDistrict == null) {
@@ -103,20 +91,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
       setState(() => _error = 'Please upload the front document photo');
       return;
     }
-    if (_selectedDocType == 'nic') {
-      if (_backImage == null) {
-        setState(() => _error = 'Please upload the back of your NIC');
-        return;
-      }
-      if (_selfieVideo == null) {
-        setState(() => _error = 'Please record a 5-second video selfie');
-        return;
-      }
-    } else {
-      if (_selfieImage == null) {
-        setState(() => _error = 'Please take a live selfie');
-        return;
-      }
+    if (_selectedDocType == 'nic' && _backImage == null) {
+      setState(() => _error = 'Please upload the back of your NIC');
+      return;
+    }
+    if (_selfieImage == null) {
+      setState(() => _error = 'Please take a live selfie');
+      return;
     }
 
     setState(() {
@@ -130,14 +111,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       if (_backImage != null) {
         backUrl = await ApiService.uploadImage(_backImage!);
       }
-      String? selfieUrl;
-      if (_selfieImage != null) {
-        selfieUrl = await ApiService.uploadImage(_selfieImage!);
-      }
-      String? selfieVideoUrl;
-      if (_selfieVideo != null) {
-        selfieVideoUrl = await ApiService.uploadImage(_selfieVideo!);
-      }
+      final selfieUrl = await ApiService.uploadImage(_selfieImage!);
 
       await ApiService.submitVerification(
         fullName: _fullNameCtrl.text.trim(),
@@ -149,7 +123,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         frontImageUrl: frontUrl,
         backImageUrl: backUrl,
         selfieImageUrl: selfieUrl,
-        selfieVideoUrl: selfieVideoUrl,
+        selfieVideoUrl: null,
       );
 
       if (!mounted) return;
@@ -199,7 +173,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   setState(() => _loadingStatus = true);
                   _loadStatus();
                 },
-                child: Text(AppLocalizations.t('retry')),
+                child: const Text('Retry'),
               ),
             ],
           ),
@@ -336,7 +310,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   onTap: () => setState(() {
                     _selectedDocType = 'nic';
                     _backImage = null;
-                    _selfieImage = null;
                   }),
                 ),
               ),
@@ -348,7 +321,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   onTap: () => setState(() {
                     _selectedDocType = 'driving_license';
                     _backImage = null;
-                    _selfieVideo = null;
                   }),
                 ),
               ),
@@ -360,7 +332,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
                   onTap: () => setState(() {
                     _selectedDocType = 'passport';
                     _backImage = null;
-                    _selfieVideo = null;
                   }),
                 ),
               ),
@@ -388,52 +359,19 @@ class _VerificationScreenState extends State<VerificationScreen> {
               label: 'Tap to take a photo',
               onTap: () => _pickImage('back'),
             ),
-
-            const SizedBox(height: 24),
-            Text('3. ${AppLocalizations.t('video_selfie_title')}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
-            const SizedBox(height: 4),
-            Text(AppLocalizations.t('video_selfie_desc'), style: const TextStyle(color: AppColors.hint, fontSize: 11)),
-            const SizedBox(height: 8),
-            InkWell(
-              onTap: _recordSelfieVideo,
-              child: Container(
-                height: 140,
-                width: double.infinity,
-                decoration: BoxDecoration(color: AppColors.fieldFill, border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(12)),
-                child: _selfieVideo != null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.check_circle, size: 36, color: Colors.greenAccent),
-                          const SizedBox(height: 8),
-                          Text(AppLocalizations.t('video_recorded'), style: const TextStyle(color: Colors.greenAccent, fontSize: 13)),
-                          const SizedBox(height: 4),
-                          Text(AppLocalizations.t('tap_rerecord'), style: TextStyle(color: AppColors.hint.withOpacity(0.7), fontSize: 11)),
-                        ],
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.videocam_outlined, size: 36, color: AppColors.hint),
-                          const SizedBox(height: 8),
-                          Text(AppLocalizations.t('tap_record_video'), style: const TextStyle(color: AppColors.hint, fontSize: 13)),
-                        ],
-                      ),
-              ),
-            ),
-          ] else ...[
-            const SizedBox(height: 24),
-            Text(AppLocalizations.t('take_selfie'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
-            const SizedBox(height: 4),
-            Text(AppLocalizations.t('live_selfie_notice'), style: const TextStyle(color: AppColors.hint, fontSize: 11)),
-            const SizedBox(height: 8),
-            _UploadBox(
-              image: _selfieImage,
-              icon: Icons.camera_alt_outlined,
-              label: 'Tap to take a live selfie',
-              onTap: () => _pickImage('selfie'),
-            ),
           ],
+
+          const SizedBox(height: 24),
+          Text(AppLocalizations.t('take_selfie'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+          const SizedBox(height: 4),
+          Text(AppLocalizations.t('live_selfie_notice'), style: const TextStyle(color: AppColors.hint, fontSize: 11)),
+          const SizedBox(height: 8),
+          _UploadBox(
+            image: _selfieImage,
+            icon: Icons.camera_alt_outlined,
+            label: 'Tap to take a live selfie',
+            onTap: () => _pickImage('selfie'),
+          ),
 
           if (_error != null) ...[
             const SizedBox(height: 16),
