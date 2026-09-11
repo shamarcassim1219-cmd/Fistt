@@ -6,7 +6,6 @@ import '../services/app_localizations.dart';
 import 'otp_verify_screen.dart';
 import 'forgot_password_screen.dart';
 import 'home_screen.dart';
-import 'onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
@@ -22,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _referralCtrl = TextEditingController();
+  final _displayNameCtrl = TextEditingController();
   bool _isRegister = false;
   bool _loading = false;
   bool _googleLoading = false;
@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
     try {
       if (_isRegister) {
-        await ApiService.register(_emailCtrl.text.trim(), _passCtrl.text.trim());
+        await ApiService.register(_emailCtrl.text.trim(), _passCtrl.text.trim(), _displayNameCtrl.text.trim());
       } else {
         await ApiService.login(_emailCtrl.text.trim(), _passCtrl.text.trim());
       }
@@ -119,6 +119,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       _emailCtrl.clear();
       _passCtrl.clear();
       _referralCtrl.clear();
+      _displayNameCtrl.clear();
     });
   }
 
@@ -211,6 +212,22 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                       ),
                     ),
                     const SizedBox(height: 36),
+
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      child: _isRegister
+                          ? Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: TextFormField(
+                                controller: _displayNameCtrl,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: _fieldDecoration(hint: 'Display Name', icon: Icons.badge_outlined),
+                                validator: (v) => _isRegister && (v == null || v.trim().isEmpty) ? 'Enter a display name' : null,
+                              ),
+                            )
+                          : const SizedBox(width: double.infinity, height: 0),
+                    ),
 
                     TextFormField(
                       controller: _emailCtrl,

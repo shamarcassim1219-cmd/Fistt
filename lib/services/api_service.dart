@@ -45,11 +45,11 @@ class ApiService {
   }
 
   // ---------- AUTH ----------
-  static Future<void> register(String email, String password) async {
+  static Future<void> register(String email, String password, String displayName) async {
     final res = await http.post(
       Uri.parse('$baseUrl/auth/register'),
       headers: await _headers(withAuth: false),
-      body: jsonEncode({'email': email, 'password': password}),
+      body: jsonEncode({'email': email, 'password': password, 'displayName': displayName}),
     );
     await _handle(res);
   }
