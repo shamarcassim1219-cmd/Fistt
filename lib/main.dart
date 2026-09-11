@@ -106,7 +106,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
       }
       final didAuth = await _auth.authenticate(
         localizedReason: 'Unlock MYGame Marketplace',
-        options: const AuthenticationOptions(biometricOnly: false, stickyAuth: true),
+        options: const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
       );
       if (didAuth) {
         setState(() => _isLocked = false);
