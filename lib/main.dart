@@ -96,9 +96,11 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
 
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       _pausedAt = DateTime.now();
-    } else if (state == AppLifecycleState.resumed) {
-      if (_pausedAt != null && DateTime.now().difference(_pausedAt!) > const Duration(seconds: 5)) {
+      if (!_isLocked) {
         setState(() => _isLocked = true);
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      if (_pausedAt != null) {
         _tryUnlock();
       }
     }

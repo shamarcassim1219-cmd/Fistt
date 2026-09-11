@@ -301,41 +301,20 @@ class _VerificationScreenState extends State<VerificationScreen> {
           const SizedBox(height: 24),
           Text(AppLocalizations.t('select_document_type'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _DocTypeOption(
-                  label: 'NIC',
-                  selected: _selectedDocType == 'nic',
-                  onTap: () => setState(() {
-                    _selectedDocType = 'nic';
-                    _backImage = null;
-                  }),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _DocTypeOption(
-                  label: AppLocalizations.t('driving_license'),
-                  selected: _selectedDocType == 'driving_license',
-                  onTap: () => setState(() {
-                    _selectedDocType = 'driving_license';
-                    _backImage = null;
-                  }),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _DocTypeOption(
-                  label: AppLocalizations.t('passport'),
-                  selected: _selectedDocType == 'passport',
-                  onTap: () => setState(() {
-                    _selectedDocType = 'passport';
-                    _backImage = null;
-                  }),
-                ),
-              ),
+          DropdownButtonFormField<String>(
+            value: _selectedDocType,
+            dropdownColor: AppColors.surface,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(labelText: AppLocalizations.t('select_document_type')),
+            items: [
+              DropdownMenuItem(value: 'nic', child: Text('NIC')),
+              DropdownMenuItem(value: 'driving_license', child: Text(AppLocalizations.t('driving_license'))),
+              DropdownMenuItem(value: 'passport', child: Text(AppLocalizations.t('passport'))),
             ],
+            onChanged: (v) => setState(() {
+              _selectedDocType = v ?? 'nic';
+              _backImage = null;
+            }),
           ),
 
           const SizedBox(height: 24),
