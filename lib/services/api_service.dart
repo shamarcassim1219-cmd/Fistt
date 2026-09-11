@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'device_service.dart';
 
 class ApiService {
   static const String baseUrl = 'https://api.finbassshamar.online';
@@ -54,10 +55,15 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> verifyRegistration(String email, String code, {String? referralCode}) async {
+    final deviceFingerprint = await DeviceService.getFingerprint();
+    final deviceModel = await DeviceService.getModel();
     final res = await http.post(
       Uri.parse('$baseUrl/auth/verify-registration'),
       headers: await _headers(withAuth: false),
-      body: jsonEncode({'email': email, 'code': code, 'referralCode': referralCode}),
+      body: jsonEncode({
+        'email': email, 'code': code, 'referralCode': referralCode,
+        'deviceFingerprint': deviceFingerprint, 'deviceModel': deviceModel,
+      }),
     );
     final data = await _handle(res);
     await saveToken(data['token']);
@@ -74,10 +80,15 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> verifyLogin(String email, String code) async {
+    final deviceFingerprint = await DeviceService.getFingerprint();
+    final deviceModel = await DeviceService.getModel();
     final res = await http.post(
       Uri.parse('$baseUrl/auth/verify-login'),
       headers: await _headers(withAuth: false),
-      body: jsonEncode({'email': email, 'code': code}),
+      body: jsonEncode({
+        'email': email, 'code': code,
+        'deviceFingerprint': deviceFingerprint, 'deviceModel': deviceModel,
+      }),
     );
     final data = await _handle(res);
     await saveToken(data['token']);
@@ -103,10 +114,15 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> googleSignIn(String idToken) async {
+    final deviceFingerprint = await DeviceService.getFingerprint();
+    final deviceModel = await DeviceService.getModel();
     final res = await http.post(
       Uri.parse('$baseUrl/auth/google'),
       headers: await _headers(withAuth: false),
-      body: jsonEncode({'idToken': idToken}),
+      body: jsonEncode({
+        'idToken': idToken,
+        'deviceFingerprint': deviceFingerprint, 'deviceModel': deviceModel,
+      }),
     );
     final data = await _handle(res);
     await saveToken(data['token']);
