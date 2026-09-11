@@ -313,7 +313,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
 
               _SectionHeader('About'),
-              _tile(Icons.info_outline, 'App Version', '1.0.0 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.2 — Tap to check for updates', _checkForUpdate),
 
               const SizedBox(height: 10),
               Padding(
@@ -348,7 +348,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.0');
+      final result = await ApiService.checkForUpdate('1.0.2');
       if (!mounted) return;
       Navigator.pop(context);
 

@@ -73,6 +73,11 @@ jobs:
           grep -q "android.permission.USE_BIOMETRIC" "$MANIFEST" || sed -i '/<\/manifest>/i\    <uses-permission android:name="android.permission.USE_BIOMETRIC" \/>' "$MANIFEST"
           grep -q "android.permission.USE_FINGERPRINT" "$MANIFEST" || sed -i '/<\/manifest>/i\    <uses-permission android:name="android.permission.USE_FINGERPRINT" \/>' "$MANIFEST"
 
+      - name: Add queries block for url_launcher (browser/download intents)
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          grep -q "<queries>" "$MANIFEST" || sed -i '/<\/manifest>/i\    <queries>\n        <intent>\n            <action android:name="android.intent.action.VIEW" \/>\n            <data android:scheme="https" \/>\n        <\/intent>\n    <\/queries>' "$MANIFEST"
+
       - name: Switch MainActivity to FlutterFragmentActivity for biometric prompt support
         run: |
           KOTLIN_FILE=$(find android/app/src/main/kotlin -name "MainActivity.kt")
