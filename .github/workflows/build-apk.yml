@@ -112,6 +112,9 @@ jobs:
       - name: Print signing config
         run: cat android/app/build.gradle | grep -A 15 "signingConfigs\|buildTypes"
 
+      - name: Print applicationId
+        run: grep -n "applicationId" android/app/build.gradle
+
       - name: Build APK
         run: flutter build apk --release
 
