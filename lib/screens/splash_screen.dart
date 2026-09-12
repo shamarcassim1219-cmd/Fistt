@@ -28,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
-    Widget next = isLoggedIn ? const HomeScreen() : const LoginScreen();
+    Widget next = const HomeScreen(); // Guest browsing allowed - login only required for protected actions
 
     if (!seenIntro) {
       next = IntroScreen(next: next);

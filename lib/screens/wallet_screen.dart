@@ -5,6 +5,8 @@ import 'dart:io';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import '../services/auth_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'my_sales_screen.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -20,6 +22,7 @@ class _WalletScreenState extends State<WalletScreen> {
   DateTime? _nextReleaseAt;
   List<dynamic> _transactions = [];
   bool _loading = true;
+  bool _isGuest = false;
   String? _error;
   Timer? _timer;
   Duration _remaining = Duration.zero;
@@ -27,7 +30,27 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   void initState() {
     super.initState();
+    _checkLoginThenLoad();
+  }
+
+  Future<void> _checkLoginThenLoad() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    if (!isLoggedIn) {
+      setState(() {
+        _isGuest = true;
+        _loading = false;
+      });
+      return;
+    }
     _load();
+  }
+
+  Future<void> _loginAndLoad() async {
+    if (await requireLogin(context)) {
+      setState(() => _isGuest = false);
+      _load();
+    }
   }
 
   @override
@@ -111,7 +134,23 @@ class _WalletScreenState extends State<WalletScreen> {
             color: AppColors.bg,
             width: double.infinity,
             height: double.infinity,
-            child: _loading
+            child: _isGuest
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.account_balance_wallet_outlined, color: AppColors.hint, size: 48),
+                          const SizedBox(height: 12),
+                          Text(AppLocalizations.t('login_to_continue'), style: const TextStyle(color: Colors.white70, fontSize: 14), textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          ElevatedButton(onPressed: _loginAndLoad, child: Text(AppLocalizations.t('login'))),
+                        ],
+                      ),
+                    ),
+                  )
+                : _loading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                 : _error != null
                     ? Center(

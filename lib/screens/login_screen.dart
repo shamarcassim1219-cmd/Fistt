@@ -12,7 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final bool isGate;
+  const LoginScreen({super.key, this.isGate = false});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -51,6 +52,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
             email: _emailCtrl.text.trim(),
             purpose: _isRegister ? 'register' : 'login',
             referralCode: _isRegister ? _referralCtrl.text.trim() : null,
+            isGate: widget.isGate,
           ),
         ),
       );
@@ -103,10 +105,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
       if (!mounted) return;
 
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-        (route) => false,
-      );
+      if (widget.isGate) {
+        Navigator.of(context).pop(true);
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+      }
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -340,7 +346,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                         icon: _googleLoading
                             ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                             : const Text('G', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                        label: const Text('Continue with Google', style: TextStyle(color: Colors.white)),
+                        label: Text(AppLocalizations.t('continue_with_google'), style: const TextStyle(color: Colors.white)),
                       ),
                     ),
 

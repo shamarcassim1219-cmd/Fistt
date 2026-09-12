@@ -11,8 +11,9 @@ class OtpVerifyScreen extends StatefulWidget {
   final String email;
   final String purpose;
   final String? referralCode;
+  final bool isGate;
 
-  const OtpVerifyScreen({super.key, required this.email, required this.purpose, this.referralCode});
+  const OtpVerifyScreen({super.key, required this.email, required this.purpose, this.referralCode, this.isGate = false});
 
   @override
   State<OtpVerifyScreen> createState() => _OtpVerifyScreenState();
@@ -102,10 +103,15 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
 
       if (!mounted) return;
 
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-        (route) => false,
-      );
+      if (widget.isGate) {
+        Navigator.of(context).pop();
+        Navigator.of(context).pop(true);
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+      }
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {

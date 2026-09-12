@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/auth_helper.dart';
 import '../services/app_localizations.dart';
 import '../services/games_list.dart';
 
@@ -182,6 +183,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
   }
 
   Future<void> _submit() async {
+    if (!await requireLogin(context)) return;
+    if (!mounted) return;
     if (!_formKey.currentState!.validate()) return;
     if (_selectedGame == null) {
       setState(() => _error = 'Please select a game');

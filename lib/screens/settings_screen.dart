@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/auth_helper.dart';
 import '../services/app_localizations.dart';
 import 'login_screen.dart';
 import 'verification_screen.dart';
@@ -196,6 +197,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader(AppLocalizations.t('account')),
               _tile(Icons.person_outline, AppLocalizations.t('profile_management'), null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileManagementScreen()));
                 _loadProfile();
               }),
@@ -204,38 +207,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 'Verification Center',
                 null,
                 () async {
+                  if (!await requireLogin(context)) return;
+                  if (!context.mounted) return;
                   await Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
                   _loadProfile();
                 },
               ),
-              _tile(Icons.list_alt_outlined, AppLocalizations.t('my_listings'), null, () {
+              _tile(Icons.list_alt_outlined, AppLocalizations.t('my_listings'), null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyListingsScreen()));
               }),
-              _tile(Icons.shopping_bag_outlined, AppLocalizations.t('my_purchases'), null, () {
+              _tile(Icons.shopping_bag_outlined, AppLocalizations.t('my_purchases'), null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPurchasesScreen()));
               }),
-              _tile(Icons.storefront_outlined, AppLocalizations.t('my_sales'), null, () {
+              _tile(Icons.storefront_outlined, AppLocalizations.t('my_sales'), null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MySalesScreen()));
               }),
-              _tile(Icons.local_offer_outlined, AppLocalizations.t('offers'), null, () {
+              _tile(Icons.local_offer_outlined, AppLocalizations.t('offers'), null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()));
               }),
-              _tile(Icons.bookmark_border, 'Saved / Wishlist Accounts', null, () {
+              _tile(Icons.bookmark_border, 'Saved / Wishlist Accounts', null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen()));
               }),
-              _tile(Icons.account_balance_outlined, AppLocalizations.t('wallet_bank_details'), null, () {
+              _tile(Icons.account_balance_outlined, AppLocalizations.t('wallet_bank_details'), null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletBankDetailsScreen()));
               }),
-              _tile(Icons.card_giftcard_outlined, AppLocalizations.t('referral_code'), null, () {
+              _tile(Icons.card_giftcard_outlined, AppLocalizations.t('referral_code'), null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralCodeScreen()));
               }),
 
               _SectionHeader(AppLocalizations.t('security')),
               _tile(Icons.email_outlined, 'Change Email', null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 final changed = await Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangeEmailScreen()));
                 if (changed == true) _loadProfile();
               }),
-              _tile(Icons.lock_reset, AppLocalizations.t('change_password'), null, () {
+              _tile(Icons.lock_reset, AppLocalizations.t('change_password'), null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
               }),
               if (!kIsWeb)
@@ -246,7 +269,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 value: _biometricLock,
                 onChanged: _toggleBiometric,
               ),
-              _tile(Icons.block_outlined, AppLocalizations.t('blocked_users'), null, () {
+              _tile(Icons.block_outlined, AppLocalizations.t('blocked_users'), null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const BlockedUsersScreen()));
               }),
 
@@ -334,7 +359,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.12 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.13 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -376,7 +401,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.12');
+      final result = await ApiService.checkForUpdate('1.0.13');
       if (!mounted) return;
       Navigator.pop(context);
 
