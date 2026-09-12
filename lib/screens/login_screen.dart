@@ -332,26 +332,15 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     ),
                     const SizedBox(height: 20),
 
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _googleLoading ? null : _handleGoogleSignIn,
-                            icon: _googleLoading
-                                ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                : const Text('G', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                            label: const Text('Google', style: TextStyle(color: Colors.white)),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () => _comingSoon('Apple'),
-                            icon: const Icon(Icons.apple, color: Colors.white, size: 20),
-                            label: const Text('Apple', style: TextStyle(color: Colors.white)),
-                          ),
-                        ),
-                      ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _googleLoading ? null : _handleGoogleSignIn,
+                        icon: _googleLoading
+                            ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Text('G', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        label: const Text('Continue with Google', style: TextStyle(color: Colors.white)),
+                      ),
                     ),
 
                     const SizedBox(height: 28),
