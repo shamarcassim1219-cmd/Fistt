@@ -101,6 +101,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
       }
     } else if (state == AppLifecycleState.resumed) {
       if (_pausedAt != null) {
+        _pausedAt = null; // consume it — don't re-trigger on later spurious resumes
         _tryUnlock();
       }
     }

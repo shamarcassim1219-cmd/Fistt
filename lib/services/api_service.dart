@@ -549,6 +549,16 @@ class ApiService {
     } catch (_) {}
   }
 
+  static Future<void> clearFcmToken() async {
+    try {
+      final res = await http.delete(
+        Uri.parse('$baseUrl/notifications/fcm-token'),
+        headers: await _headers(),
+      );
+      await _handle(res);
+    } catch (_) {}
+  }
+
   static Future<List<dynamic>> getNotifications() async {
     final res = await http.get(Uri.parse('$baseUrl/notifications'), headers: await _headers());
     final data = await _handle(res);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
@@ -93,6 +94,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _logout() async {
+    // Clear the server-side FCM token first (while we still have a valid
+    // auth token) so this device stops receiving this account's push
+    // notifications, and invalidate the local FCM token too so a fresh
+    // one is issued whoever logs in next on this device.
+    await ApiService.clearFcmToken();
+    try {
+      await FirebaseMessaging.instance.deleteToken();
+    } catch (_) {}
+
     await ApiService.clearToken();
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -313,7 +323,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
 
               _SectionHeader('About'),
-              _tile(Icons.info_outline, 'App Version', '1.0.2 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.3 — Tap to check for updates', _checkForUpdate),
 
               const SizedBox(height: 10),
               Padding(
@@ -348,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.2');
+      final result = await ApiService.checkForUpdate('1.0.3');
       if (!mounted) return;
       Navigator.pop(context);
 
