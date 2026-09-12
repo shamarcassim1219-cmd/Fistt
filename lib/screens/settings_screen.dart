@@ -237,6 +237,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _tile(Icons.lock_reset, AppLocalizations.t('change_password'), null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
               }),
+              if (!kIsWeb)
               SwitchListTile(
                 secondary: const Icon(Icons.fingerprint, color: AppColors.hint),
                 title: Text(AppLocalizations.t('biometric_lock'), style: const TextStyle(color: Colors.white)),
@@ -248,6 +249,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const BlockedUsersScreen()));
               }),
 
+              if (!kIsWeb) ...[
               _SectionHeader(AppLocalizations.t('notifications')),
               if (_loadingPrefs)
                 const Padding(
@@ -285,6 +287,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _saveNotificationPreferences();
                   },
                 ),
+              ],
               ],
 
               _SectionHeader(AppLocalizations.t('preferences')),
