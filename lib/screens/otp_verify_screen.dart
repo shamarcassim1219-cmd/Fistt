@@ -82,10 +82,12 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
     });
 
     try {
-      if (widget.purpose == 'register') {
-        await ApiService.verifyRegistration(widget.email, code, referralCode: widget.referralCode);
+      Map<String, dynamic> userData;
+      final isNewAccount = widget.purpose == 'register';
+      if (isNewAccount) {
+        userData = await ApiService.verifyRegistration(widget.email, code, referralCode: widget.referralCode);
       } else {
-        await ApiService.verifyLogin(widget.email, code);
+        userData = await ApiService.verifyLogin(widget.email, code);
       }
 
       try {
@@ -100,6 +102,11 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_logged_in', true);
+      final displayName = userData['displayName'] as String?;
+      if (displayName != null && displayName.isNotEmpty) {
+        await prefs.setString('pending_welcome_name', displayName);
+        await prefs.setBool('pending_welcome_is_new', isNewAccount);
+      }
 
       if (!mounted) return;
 

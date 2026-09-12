@@ -126,7 +126,7 @@ class ApiService {
     );
     final data = await _handle(res);
     await saveToken(data['token']);
-    return data['user'];
+    return data;
   }
 
   // ---------- UPLOAD ----------

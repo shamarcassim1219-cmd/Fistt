@@ -33,6 +33,26 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showWelcomeIfPending());
+  }
+
+  Future<void> _showWelcomeIfPending() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString('pending_welcome_name');
+    if (name == null || name.isEmpty) return;
+    final isNew = prefs.getBool('pending_welcome_is_new') ?? false;
+    await prefs.remove('pending_welcome_name');
+    await prefs.remove('pending_welcome_is_new');
+    if (!mounted) return;
+    final message = isNew ? 'Welcome, $name!' : 'Welcome back, $name!';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<String>(
       valueListenable: AppLocalizations.currentLanguage,

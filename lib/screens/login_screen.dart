@@ -40,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _googleSignIn = GoogleSignIn(
+      scopes: ['email', 'profile'],
       clientId: kIsWeb ? '354593690287-4snsdmlt1ij5q7a1grbadb28b5g5nm67.apps.googleusercontent.com' : null,
       serverClientId: kIsWeb ? null : '354593690287-4snsdmlt1ij5q7a1grbadb28b5g5nm67.apps.googleusercontent.com',
     );
@@ -68,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         throw Exception('Failed to get Google ID token');
       }
 
-      await ApiService.googleSignIn(idToken);
+      final signInData = await ApiService.googleSignIn(idToken);
 
       try {
         await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
@@ -78,6 +79,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_logged_in', true);
+      final signedInName = signInData['user']?['displayName'] as String?;
+      if (signedInName != null && signedInName.isNotEmpty) {
+        await prefs.setString('pending_welcome_name', signedInName);
+        await prefs.setBool('pending_welcome_is_new', signInData['isNewUser'] == true);
+      }
 
       if (!mounted) return;
 
@@ -149,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         throw Exception('Failed to get Google ID token');
       }
 
-      await ApiService.googleSignIn(idToken);
+      final signInData = await ApiService.googleSignIn(idToken);
 
       try {
         await FirebaseMessaging.instance.requestPermission(
@@ -163,6 +169,11 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_logged_in', true);
+      final signedInName = signInData['user']?['displayName'] as String?;
+      if (signedInName != null && signedInName.isNotEmpty) {
+        await prefs.setString('pending_welcome_name', signedInName);
+        await prefs.setBool('pending_welcome_is_new', signInData['isNewUser'] == true);
+      }
 
       if (!mounted) return;
 
