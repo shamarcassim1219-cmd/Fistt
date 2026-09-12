@@ -19,6 +19,7 @@ import 'offers_screen.dart';
 import 'live_chat_screen.dart';
 import 'favorites_screen.dart';
 import 'legal_screen.dart';
+import 'help_faq_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:dio/dio.dart';
@@ -324,7 +325,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
 
               _SectionHeader(AppLocalizations.t('support')),
-              _tile(Icons.help_outline, 'Help & FAQ', null, () => _comingSoon('Help & FAQ')),
+              _tile(Icons.help_outline, 'Help & FAQ', null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpFaqScreen()));
+              }),
               _tile(Icons.support_agent_outlined, 'Live Chat with Admin', null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveChatScreen()));
               }),
