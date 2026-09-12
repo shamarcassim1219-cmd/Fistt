@@ -1,0 +1,44 @@
+name: Build and Deploy Web
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.0'
+          channel: 'stable'
+
+      - name: Generate missing web platform folder
+        run: flutter create --platforms=web --project-name mygame_app --org com.mygame.app .
+
+      - name: Create missing asset folders
+        run: |
+          mkdir -p assets/images
+          mkdir -p assets/lang
+          touch assets/images/.gitkeep
+          touch assets/lang/.gitkeep
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web
+        run: flutter build web --release
+
+      - name: Deploy to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir: ./build/web/
+          server-dir: ./
