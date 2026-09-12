@@ -37,6 +37,9 @@ jobs:
       - name: Add custom loading screen to web/index.html
         run: python3 fix_web_loading.py
 
+      - name: Fix SEO title and description
+        run: python3 fix_web_seo.py
+
       - name: Generate web favicon and icons from app logo
         run: |
           convert assets/icon/app_icon.png -resize 32x32 web/favicon.png
