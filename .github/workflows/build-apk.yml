@@ -31,7 +31,9 @@ jobs:
         run: flutter pub get
 
       - name: Restore Firebase config
-        run: echo "${{ secrets.FIREBASE_ANDROID_CONFIG }}" > android/app/google-services.json
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_ANDROID_CONFIG }}
+        run: echo "$FIREBASE_CONFIG" > android/app/google-services.json
 
       - name: Validate google-services.json
         run: python3 -c "import json; json.load(open('android/app/google-services.json'))"
