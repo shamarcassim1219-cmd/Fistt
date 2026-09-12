@@ -118,11 +118,11 @@ jobs:
       - name: Print restored google-services.json oauth_client
         run: python3 -c "import json; d=json.load(open('android/app/google-services.json')); [print(c['client_info']['android_client_info']['package_name'], c['oauth_client']) for c in d['client']]"
 
-      - name: Build APK
-        run: flutter build apk --release
-
       - name: Force explicit signing config using restored keystore
         run: python3 fix_signing.py
+
+      - name: Build APK
+        run: flutter build apk --release
 
       - name: Print ACTUAL built APK signature (final verification)
         run: keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk | grep -i "SHA1"
