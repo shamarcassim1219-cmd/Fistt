@@ -400,24 +400,34 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     ),
                     const SizedBox(height: 20),
 
-                    kIsWeb
-                        ? SizedBox(
-                            width: double.infinity,
-                            height: 44,
-                            child: _googleLoading
-                                ? const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)))
-                                : buildGoogleWebButton(),
-                          )
-                        : SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: _googleLoading ? null : _handleGoogleSignIn,
-                              icon: _googleLoading
-                                  ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                  : const Text('G', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                              label: Text(AppLocalizations.t('continue_with_google'), style: const TextStyle(color: Colors.white)),
+                    Center(
+                      child: kIsWeb
+                          ? SizedBox(
+                              height: 48,
+                              width: 48,
+                              child: _googleLoading
+                                  ? const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+                                  : buildGoogleWebButton(),
+                            )
+                          : InkWell(
+                              onTap: _googleLoading ? null : _handleGoogleSignIn,
+                              borderRadius: BorderRadius.circular(50),
+                              child: Container(
+                                height: 48,
+                                width: 48,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Center(
+                                  child: _googleLoading
+                                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                      : const Text('G', style: TextStyle(color: Color(0xFF4285F4), fontWeight: FontWeight.bold, fontSize: 20)),
+                                ),
+                              ),
                             ),
-                          ),
+                    ),
 
                     const SizedBox(height: 28),
                     Center(
