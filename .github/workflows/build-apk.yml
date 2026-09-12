@@ -121,6 +121,9 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
+      - name: Force explicit signing config using restored keystore
+        run: python3 fix_signing.py
+
       - name: Print ACTUAL built APK signature (final verification)
         run: keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk | grep -i "SHA1"
 
