@@ -35,19 +35,12 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _biometricLock = false;
-  bool _notifyOrders = true;
-  bool _notifyOffers = true;
-  bool _notifyPromos = false;
-  bool _loadingPrefs = true;
   Map<String, dynamic>? _profile;
 
   @override
   void initState() {
     super.initState();
     _loadProfile();
-    _loadBiometricSetting();
-    _loadNotificationPreferences();
   }
 
   Future<void> _loadProfile() async {
@@ -55,48 +48,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final profile = await ApiService.getProfile();
       setState(() => _profile = profile);
     } catch (_) {}
-  }
-
-  Future<void> _loadBiometricSetting() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() => _biometricLock = prefs.getBool('biometric_lock_enabled') ?? false);
-  }
-
-  Future<void> _loadNotificationPreferences() async {
-    try {
-      final prefs = await ApiService.getNotificationPreferences();
-      if (!mounted) return;
-      setState(() {
-        _notifyOrders = prefs['notifyOrders'] ?? true;
-        _notifyOffers = prefs['notifyOffers'] ?? true;
-        _notifyPromos = prefs['notifyPromos'] ?? false;
-        _loadingPrefs = false;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _loadingPrefs = false);
-    }
-  }
-
-  Future<void> _saveNotificationPreferences() async {
-    try {
-      await ApiService.updateNotificationPreferences(_notifyOrders, _notifyOffers, _notifyPromos);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-      );
-    }
-  }
-
-  Future<void> _toggleBiometric(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('biometric_lock_enabled', value);
-    setState(() => _biometricLock = value);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(value ? 'Biometric lock enabled — takes effect next time you open the app' : 'Biometric lock disabled')),
-      );
-    }
   }
 
   Future<void> _logout() async {
@@ -261,60 +212,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
               }),
-              if (!kIsWeb)
-              SwitchListTile(
-                secondary: const Icon(Icons.fingerprint, color: AppColors.hint),
-                title: Text(AppLocalizations.t('biometric_lock'), style: const TextStyle(color: Colors.white)),
-                subtitle: const Text('Fingerprint / Face ID to open app', style: TextStyle(color: AppColors.hint)),
-                value: _biometricLock,
-                onChanged: _toggleBiometric,
-              ),
               _tile(Icons.block_outlined, AppLocalizations.t('blocked_users'), null, () async {
                 if (!await requireLogin(context)) return;
                 if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const BlockedUsersScreen()));
               }),
-
-              if (!kIsWeb) ...[
-              _SectionHeader(AppLocalizations.t('notifications')),
-              if (_loadingPrefs)
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                )
-              else ...[
-                SwitchListTile(
-                  secondary: const Icon(Icons.receipt_long_outlined, color: AppColors.hint),
-                  title: Text(AppLocalizations.t('order_updates'), style: const TextStyle(color: Colors.white)),
-                  subtitle: const Text('Order, escrow & dispute updates', style: TextStyle(color: AppColors.hint, fontSize: 11)),
-                  value: _notifyOrders,
-                  onChanged: (v) {
-                    setState(() => _notifyOrders = v);
-                    _saveNotificationPreferences();
-                  },
-                ),
-                SwitchListTile(
-                  secondary: const Icon(Icons.local_offer_outlined, color: AppColors.hint),
-                  title: Text(AppLocalizations.t('offers_bids'), style: const TextStyle(color: Colors.white)),
-                  subtitle: const Text('Offers, bids & new messages', style: TextStyle(color: AppColors.hint, fontSize: 11)),
-                  value: _notifyOffers,
-                  onChanged: (v) {
-                    setState(() => _notifyOffers = v);
-                    _saveNotificationPreferences();
-                  },
-                ),
-                SwitchListTile(
-                  secondary: const Icon(Icons.campaign_outlined, color: AppColors.hint),
-                  title: Text(AppLocalizations.t('promotions'), style: const TextStyle(color: Colors.white)),
-                  subtitle: const Text('Deals and platform announcements', style: TextStyle(color: AppColors.hint, fontSize: 11)),
-                  value: _notifyPromos,
-                  onChanged: (v) {
-                    setState(() => _notifyPromos = v);
-                    _saveNotificationPreferences();
-                  },
-                ),
-              ],
-              ],
 
               _SectionHeader(AppLocalizations.t('preferences')),
               ListTile(
@@ -359,7 +261,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.15 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.16 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -401,7 +303,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.15');
+      final result = await ApiService.checkForUpdate('1.0.16');
       if (!mounted) return;
       Navigator.pop(context);
 
