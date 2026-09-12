@@ -323,7 +323,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
 
               _SectionHeader('About'),
-              _tile(Icons.info_outline, 'App Version', '1.0.3 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.4 — Tap to check for updates', _checkForUpdate),
 
               const SizedBox(height: 10),
               Padding(
@@ -358,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.3');
+      final result = await ApiService.checkForUpdate('1.0.4');
       if (!mounted) return;
       Navigator.pop(context);
 
@@ -378,10 +378,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ElevatedButton(
                   onPressed: () async {
                     final uri = Uri.tryParse(result['downloadUrl']);
-                    if (uri != null && await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    bool launched = false;
+                    if (uri != null) {
+                      try {
+                        launched = await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      } catch (_) {
+                        launched = false;
+                      }
                     }
                     if (ctx.mounted) Navigator.pop(ctx);
+                    if (!launched && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Could not open download link. Copy this URL: ${result['downloadUrl']}',
+                          ),
+                          duration: const Duration(seconds: 8),
+                        ),
+                      );
+                    }
                   },
                   child: const Text('Download'),
                 ),
