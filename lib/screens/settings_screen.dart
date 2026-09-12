@@ -21,6 +21,9 @@ import 'favorites_screen.dart';
 import 'legal_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -324,7 +327,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
 
               _SectionHeader('About'),
-              _tile(Icons.info_outline, 'App Version', '1.0.5 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.6 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -366,7 +369,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.5');
+      final result = await ApiService.checkForUpdate('1.0.6');
       if (!mounted) return;
       Navigator.pop(context);
 
@@ -384,30 +387,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Later')),
               if (result['downloadUrl'] != null)
                 ElevatedButton(
-                  onPressed: () async {
-                    final uri = Uri.tryParse(result['downloadUrl']);
-                    bool launched = false;
-                    if (uri != null) {
-                      try {
-                        launched = await launchUrl(
-                          uri,
-                          mode: LaunchMode.externalApplication,
-                        );
-                      } catch (_) {
-                        launched = false;
-                      }
-                    }
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    if (!launched && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Could not open download link. Copy this URL: ${result['downloadUrl']}',
-                          ),
-                          duration: const Duration(seconds: 8),
-                        ),
-                      );
-                    }
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _downloadAndInstallUpdate(result['downloadUrl']);
                   },
                   child: const Text('Download'),
                 ),
@@ -425,6 +407,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
+    }
+  }
+
+  Future<void> _downloadAndInstallUpdate(String url) async {
+    if (kIsWeb) {
+      final uri = Uri.tryParse(url);
+      if (uri != null) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      return;
+    }
+
+    double progress = 0;
+    void Function(void Function())? refreshDialog;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) {
+          refreshDialog = setDialogState;
+          return AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: const Text('Downloading Update', style: TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LinearProgressIndicator(
+                  value: progress > 0 ? progress : null,
+                  color: AppColors.primary,
+                  backgroundColor: AppColors.border,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  progress > 0 ? '${(progress * 100).toStringAsFixed(0)}%' : 'Starting download...',
+                  style: const TextStyle(color: AppColors.hint, fontSize: 13),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    try {
+      final dir = await getTemporaryDirectory();
+      final filePath = '${dir.path}/app-release.apk';
+
+      await Dio().download(
+        url,
+        filePath,
+        onReceiveProgress: (received, total) {
+          if (total > 0) {
+            progress = received / total;
+            refreshDialog?.call(() {});
+          }
+        },
+      );
+
+      if (mounted) Navigator.pop(context);
+      await OpenFilex.open(filePath);
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Download failed: ${e.toString().replaceFirst('Exception: ', '')}')),
+        );
+      }
     }
   }
 
