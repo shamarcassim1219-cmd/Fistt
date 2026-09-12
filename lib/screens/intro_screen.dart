@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
@@ -10,8 +11,9 @@ class IntroScreen extends StatefulWidget {
   State<IntroScreen> createState() => _IntroScreenState();
 }
 
-class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStateMixin {
+class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin {
   late final AnimationController _controller;
+  late final AnimationController _floatController;
 
   late final Animation<double> _iconFade;
   late final Animation<double> _iconScale;
@@ -19,18 +21,25 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
   late final Animation<double> _titleFade;
   late final Animation<Offset> _subtitleSlide;
   late final Animation<double> _subtitleFade;
-  late final Animation<Offset> _chipsSlide;
-  late final Animation<double> _chipsFade;
+  late final Animation<double> _buttonFadeOnly;
   late final Animation<Offset> _buttonSlide;
   late final Animation<double> _buttonFade;
+
+  final List<Map<String, dynamic>> _chipData = [
+    {'icon': Icons.gps_fixed_rounded, 'label': 'PUBG'},
+    {'icon': Icons.local_fire_department_rounded, 'label': 'Free Fire'},
+    {'icon': Icons.military_tech_rounded, 'label': 'CODM'},
+    {'icon': Icons.shield_rounded, 'label': 'MLBB'},
+  ];
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1300));
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+    _floatController = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600))..repeat();
 
     _iconFade = CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.4, curve: Curves.easeOut));
-    _iconScale = Tween<double>(begin: 0.6, end: 1.0)
+    _iconScale = Tween<double>(begin: 0.5, end: 1.0)
         .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.45, curve: Curves.easeOutBack)));
 
     _titleFade = CurvedAnimation(parent: _controller, curve: const Interval(0.2, 0.6, curve: Curves.easeOut));
@@ -41,13 +50,10 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
     _subtitleSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
         .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.3, 0.7, curve: Curves.easeOut)));
 
-    _chipsFade = CurvedAnimation(parent: _controller, curve: const Interval(0.45, 0.85, curve: Curves.easeOut));
-    _chipsSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.45, 0.85, curve: Curves.easeOut)));
-
-    _buttonFade = CurvedAnimation(parent: _controller, curve: const Interval(0.6, 1.0, curve: Curves.easeOut));
+    _buttonFade = CurvedAnimation(parent: _controller, curve: const Interval(0.7, 1.0, curve: Curves.easeOut));
+    _buttonFadeOnly = _buttonFade;
     _buttonSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.6, 1.0, curve: Curves.easeOut)));
+        .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.7, 1.0, curve: Curves.easeOut)));
 
     _controller.forward();
   }
@@ -55,6 +61,7 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
   @override
   void dispose() {
     _controller.dispose();
+    _floatController.dispose();
     super.dispose();
   }
 
@@ -67,21 +74,53 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _gameChip(IconData icon, String label) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-          ),
-          child: Icon(icon, size: 30, color: AppColors.primary),
+  Widget _animatedChip(int index) {
+    final data = _chipData[index];
+    final start = 0.45 + (index * 0.08);
+    final end = (start + 0.35).clamp(0.0, 1.0);
+    final entranceFade = CurvedAnimation(parent: _controller, curve: Interval(start, end, curve: Curves.easeOut));
+    final entranceSlide = Tween<Offset>(begin: const Offset(0, 0.4), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _controller, curve: Interval(start, end, curve: Curves.easeOutBack)));
+    final phaseOffset = index * (pi / 2);
+
+    return FadeTransition(
+      opacity: entranceFade,
+      child: SlideTransition(
+        position: entranceSlide,
+        child: AnimatedBuilder(
+          animation: _floatController,
+          builder: (context, child) {
+            final t = _floatController.value * 2 * pi + phaseOffset;
+            final floatY = sin(t) * 5;
+            final glow = (sin(t) + 1) / 2;
+            return Transform.translate(
+              offset: Offset(0, floatY),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.12 + glow * 0.08),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.3 + glow * 0.3)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.15 + glow * 0.25),
+                          blurRadius: 12 + glow * 10,
+                          spreadRadius: glow * 2,
+                        ),
+                      ],
+                    ),
+                    child: Icon(data['icon'] as IconData, size: 30, color: AppColors.primary),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(data['label'] as String, style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                ],
+              ),
+            );
+          },
         ),
-        const SizedBox(height: 8),
-        Text(label, style: const TextStyle(color: AppColors.hint, fontSize: 12)),
-      ],
+      ),
     );
   }
 
@@ -111,13 +150,31 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
                   opacity: _iconFade,
                   child: ScaleTransition(
                     scale: _iconScale,
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.sports_esports_rounded, size: 70, color: AppColors.primary),
+                    child: AnimatedBuilder(
+                      animation: _floatController,
+                      builder: (context, child) {
+                        final t = _floatController.value * 2 * pi;
+                        final glow = (sin(t) + 1) / 2;
+                        final breathe = 1.0 + sin(t) * 0.04;
+                        return Transform.scale(
+                          scale: breathe,
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withOpacity(0.25 + glow * 0.35),
+                                  blurRadius: 24 + glow * 20,
+                                  spreadRadius: glow * 4,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(Icons.sports_esports_rounded, size: 70, color: AppColors.primary),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -146,37 +203,45 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
                   ),
                 ),
                 const SizedBox(height: 36),
-                FadeTransition(
-                  opacity: _chipsFade,
-                  child: SlideTransition(
-                    position: _chipsSlide,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _gameChip(Icons.gps_fixed_rounded, 'PUBG'),
-                        _gameChip(Icons.local_fire_department_rounded, 'Free Fire'),
-                        _gameChip(Icons.military_tech_rounded, 'CODM'),
-                        _gameChip(Icons.shield_rounded, 'MLBB'),
-                      ],
-                    ),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(_chipData.length, (i) => _animatedChip(i)),
                 ),
                 const Spacer(flex: 3),
                 FadeTransition(
                   opacity: _buttonFade,
                   child: SlideTransition(
                     position: _buttonSlide,
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 54,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                        onPressed: () => _getStarted(context),
-                        child: const Text('Get Started', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-                      ),
+                    child: AnimatedBuilder(
+                      animation: _floatController,
+                      builder: (context, child) {
+                        final t = _floatController.value * 2 * pi;
+                        final glow = (sin(t) + 1) / 2;
+                        return Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withOpacity(0.25 + glow * 0.3),
+                                blurRadius: 16 + glow * 14,
+                                spreadRadius: glow * 1.5,
+                              ),
+                            ],
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              ),
+                              onPressed: () => _getStarted(context),
+                              child: const Text('Get Started', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
