@@ -113,10 +113,18 @@ jobs:
           name: mygame-app-release
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Prepare APK for web download
+      - name: Prepare APK and version info for web download
         run: |
           mkdir -p deploy_apk
           cp build/app/outputs/flutter-apk/app-release.apk deploy_apk/app-release.apk
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+          cat > deploy_apk/version.json << JSONEOF
+          {
+            "version": "$VERSION",
+            "downloadUrl": "https://buysellgame.store/downloads/app-release.apk",
+            "releaseNotes": "New update v$VERSION"
+          }
+          JSONEOF
 
       - name: Deploy APK to cPanel downloads folder
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

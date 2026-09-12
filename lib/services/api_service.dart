@@ -677,31 +677,24 @@ class ApiService {
   static Future<Map<String, dynamic>> checkForUpdate(String currentVersion) async {
     try {
       final res = await http.get(
-        Uri.parse('https://api.github.com/repos/shamarcassim1219-cmd/Fistt/releases/latest'),
-        headers: {'Accept': 'application/vnd.github+json'},
+        Uri.parse('https://buysellgame.store/downloads/version.json?t=${DateTime.now().millisecondsSinceEpoch}'),
       );
 
-      if (res.statusCode == 404) {
-        return {'updateAvailable': false, 'noReleases': true};
-      }
       if (res.statusCode != 200) {
         throw Exception('Could not check for updates right now');
       }
 
       final data = jsonDecode(res.body);
-      final latestTag = (data['tag_name'] ?? '').toString().replaceFirst('v', '');
-      final downloadUrl = (data['assets'] as List?)?.cast<Map<String, dynamic>>().firstWhere(
-            (a) => (a['name'] ?? '').toString().endsWith('.apk'),
-            orElse: () => {},
-          )['browser_download_url'];
+      final latestVersion = (data['version'] ?? '').toString();
+      final downloadUrl = data['downloadUrl'];
 
-      final isNewer = _isVersionNewer(latestTag, currentVersion);
+      final isNewer = _isVersionNewer(latestVersion, currentVersion);
 
       return {
         'updateAvailable': isNewer,
-        'latestVersion': latestTag,
+        'latestVersion': latestVersion,
         'downloadUrl': downloadUrl,
-        'releaseNotes': data['body'],
+        'releaseNotes': data['releaseNotes'],
       };
     } catch (e) {
       throw Exception('Could not check for updates: ${e.toString().replaceFirst('Exception: ', '')}');
