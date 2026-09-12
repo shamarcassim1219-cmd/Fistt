@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -37,17 +38,19 @@ void main() async {
 
   await AppLocalizations.loadSavedLanguage();
 
-  try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  if (!kIsWeb) {
+    try {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    final localNotifications = FlutterLocalNotificationsPlugin();
-    await localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(_channel);
-    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    await localNotifications.initialize(const InitializationSettings(android: androidInit));
-  } catch (e) {}
+      final localNotifications = FlutterLocalNotificationsPlugin();
+      await localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_channel);
+      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+      await localNotifications.initialize(const InitializationSettings(android: androidInit));
+    } catch (e) {}
+  }
 
   runApp(const MyGameApp());
 }
@@ -70,8 +73,10 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _setupFcm();
-    _loadBiometricSetting();
+    if (!kIsWeb) {
+      _setupFcm();
+      _loadBiometricSetting();
+    }
   }
 
   @override

@@ -20,6 +20,7 @@ import 'live_chat_screen.dart';
 import 'favorites_screen.dart';
 import 'legal_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -324,6 +325,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               _tile(Icons.info_outline, 'App Version', '1.0.4 — Tap to check for updates', _checkForUpdate),
+              if (kIsWeb)
+                _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
+                  launchUrl(
+                    Uri.parse('https://buysellgame.store/downloads/app-release.apk'),
+                    mode: LaunchMode.externalApplication,
+                  );
+                }),
 
               const SizedBox(height: 10),
               Padding(

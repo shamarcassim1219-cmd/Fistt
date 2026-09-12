@@ -112,3 +112,17 @@ jobs:
         with:
           name: mygame-app-release
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Prepare APK for web download
+        run: |
+          mkdir -p deploy_apk
+          cp build/app/outputs/flutter-apk/app-release.apk deploy_apk/app-release.apk
+
+      - name: Deploy APK to cPanel downloads folder
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir: ./deploy_apk/
+          server-dir: ./downloads/
