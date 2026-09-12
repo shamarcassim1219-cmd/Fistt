@@ -30,6 +30,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate app launcher icon
+        run: flutter pub run flutter_launcher_icons
+
       - name: Restore Firebase config
         env:
           FIREBASE_CONFIG: ${{ secrets.FIREBASE_ANDROID_CONFIG }}
