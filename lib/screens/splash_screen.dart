@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
+import 'intro_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -23,10 +24,15 @@ class _SplashScreenState extends State<SplashScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    final seenIntro = prefs.getBool('seen_intro') ?? false;
 
     if (!mounted) return;
 
     Widget next = isLoggedIn ? const HomeScreen() : const LoginScreen();
+
+    if (!seenIntro) {
+      next = IntroScreen(next: next);
+    }
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => next),
