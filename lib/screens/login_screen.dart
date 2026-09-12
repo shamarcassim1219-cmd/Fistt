@@ -69,7 +69,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
     try {
       final googleSignIn = GoogleSignIn(
-        serverClientId: '354593690287-4snsdmlt1ij5q7a1grbadb28b5g5nm67.apps.googleusercontent.com',
+        clientId: kIsWeb ? '354593690287-4snsdmlt1ij5q7a1grbadb28b5g5nm67.apps.googleusercontent.com' : null,
+        serverClientId: kIsWeb ? null : '354593690287-4snsdmlt1ij5q7a1grbadb28b5g5nm67.apps.googleusercontent.com',
       );
 
       await googleSignIn.signOut();
