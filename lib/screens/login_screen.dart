@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
@@ -10,6 +11,7 @@ import 'forgot_password_screen.dart';
 import 'home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import '../services/google_web_button.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isGate;
@@ -30,6 +32,70 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
   bool _googleLoading = false;
   bool _obscurePassword = true;
   String? _error;
+  late final GoogleSignIn _googleSignIn;
+  StreamSubscription<GoogleSignInAccount?>? _googleSub;
+  bool _googleProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _googleSignIn = GoogleSignIn(
+      clientId: kIsWeb ? '354593690287-4snsdmlt1ij5q7a1grbadb28b5g5nm67.apps.googleusercontent.com' : null,
+      serverClientId: kIsWeb ? null : '354593690287-4snsdmlt1ij5q7a1grbadb28b5g5nm67.apps.googleusercontent.com',
+    );
+    if (kIsWeb) {
+      _googleSub = _googleSignIn.onCurrentUserChanged.listen(_onGoogleUserChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    _googleSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _onGoogleUserChanged(GoogleSignInAccount? account) async {
+    if (account == null || _googleProcessing) return;
+    _googleProcessing = true;
+    setState(() {
+      _googleLoading = true;
+      _error = null;
+    });
+    try {
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null) {
+        throw Exception('Failed to get Google ID token');
+      }
+
+      await ApiService.googleSignIn(idToken);
+
+      try {
+        await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
+        final fcmToken = await FirebaseMessaging.instance.getToken();
+        if (fcmToken != null) await ApiService.saveFcmToken(fcmToken);
+      } catch (_) {}
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_logged_in', true);
+
+      if (!mounted) return;
+
+      if (widget.isGate) {
+        Navigator.of(context).pop(true);
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      _googleProcessing = false;
+      if (mounted) setState(() => _googleLoading = false);
+    }
+  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -70,13 +136,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     });
 
     try {
-      final googleSignIn = GoogleSignIn(
-        clientId: kIsWeb ? '354593690287-4snsdmlt1ij5q7a1grbadb28b5g5nm67.apps.googleusercontent.com' : null,
-        serverClientId: kIsWeb ? null : '354593690287-4snsdmlt1ij5q7a1grbadb28b5g5nm67.apps.googleusercontent.com',
-      );
-
-      await googleSignIn.signOut();
-      final account = await googleSignIn.signIn();
+      await _googleSignIn.signOut();
+      final account = await _googleSignIn.signIn();
       if (account == null) {
         setState(() => _googleLoading = false);
         return;
@@ -339,16 +400,24 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                     ),
                     const SizedBox(height: 20),
 
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _googleLoading ? null : _handleGoogleSignIn,
-                        icon: _googleLoading
-                            ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : const Text('G', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                        label: Text(AppLocalizations.t('continue_with_google'), style: const TextStyle(color: Colors.white)),
-                      ),
-                    ),
+                    kIsWeb
+                        ? SizedBox(
+                            width: double.infinity,
+                            height: 44,
+                            child: _googleLoading
+                                ? const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+                                : buildGoogleWebButton(),
+                          )
+                        : SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _googleLoading ? null : _handleGoogleSignIn,
+                              icon: _googleLoading
+                                  ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  : const Text('G', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                              label: Text(AppLocalizations.t('continue_with_google'), style: const TextStyle(color: Colors.white)),
+                            ),
+                          ),
 
                     const SizedBox(height: 28),
                     Center(
