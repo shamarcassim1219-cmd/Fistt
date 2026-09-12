@@ -608,11 +608,11 @@ class ApiService {
     return data['transactions'];
   }
 
-  static Future<void> requestTopUp(double amount, String slipUrl) async {
+  static Future<void> requestTopUp(double amount, String slipUrl, String referenceNumber) async {
     final res = await http.post(
       Uri.parse('$baseUrl/wallet/topup'),
       headers: await _headers(),
-      body: jsonEncode({'amount': amount, 'slipUrl': slipUrl}),
+      body: jsonEncode({'amount': amount, 'slipUrl': slipUrl, 'referenceNumber': referenceNumber}),
     );
     await _handle(res);
   }

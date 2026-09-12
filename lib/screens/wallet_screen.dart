@@ -274,6 +274,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
   void _showTopUpSheet(BuildContext context) {
     final amountCtrl = TextEditingController();
+    final referenceCtrl = TextEditingController();
     File? slipFile;
     bool submitting = false;
     bool loadingBankDetails = true;
@@ -340,6 +341,12 @@ class _WalletScreenState extends State<WalletScreen> {
                     decoration: InputDecoration(labelText: AppLocalizations.t('amount_lkr')),
                   ),
                   const SizedBox(height: 12),
+                  TextField(
+                    controller: referenceCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: 'Bank Transfer Reference Number'),
+                  ),
+                  const SizedBox(height: 12),
                   Text(AppLocalizations.t('upload_bank_slip'), style: const TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   InkWell(
@@ -380,8 +387,13 @@ class _WalletScreenState extends State<WalletScreen> {
                     child: ElevatedButton(
                       onPressed: submitting ? null : () async {
                         final amount = double.tryParse(amountCtrl.text.trim());
+                        final referenceNumber = referenceCtrl.text.trim();
                         if (amount == null || amount <= 0) {
                           setModalState(() => sheetError = 'Enter a valid amount');
+                          return;
+                        }
+                        if (referenceNumber.isEmpty) {
+                          setModalState(() => sheetError = 'Enter the bank transfer reference number');
                           return;
                         }
                         if (slipFile == null) {
@@ -394,7 +406,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         });
                         try {
                           final slipUrl = await ApiService.uploadImage(slipFile!);
-                          await ApiService.requestTopUp(amount, slipUrl);
+                          await ApiService.requestTopUp(amount, slipUrl, referenceNumber);
                           if (!ctx.mounted) return;
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Top-up request submitted')));
@@ -457,9 +469,28 @@ class _WalletScreenState extends State<WalletScreen> {
                 child: ElevatedButton(
                   onPressed: submitting ? null : () async {
                     final amount = double.tryParse(amountCtrl.text.trim());
-                    if (amount == null || amount <= 0) return;
+                    if (amount == null || amount <= 0) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Please enter a valid amount')));
+                      return;
+                    }
+                    if (amount > balance) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Amount exceeds your available balance')));
+                      return;
+                    }
                     setModalState(() => submitting = true);
                     try {
+                      final profile = await ApiService.getProfile();
+                      final accountNumber = (profile['bankAccountNumber'] ?? '').toString().trim();
+                      if (accountNumber.isEmpty) {
+                        if (!ctx.mounted) return;
+                        setModalState(() => submitting = false);
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please add your bank account details first (Settings → Wallet & Bank Details)')),
+                        );
+                        return;
+                      }
+
                       await ApiService.requestWithdrawal(amount);
                       if (!ctx.mounted) return;
                       Navigator.pop(ctx);
