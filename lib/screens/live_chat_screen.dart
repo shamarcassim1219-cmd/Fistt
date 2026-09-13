@@ -17,6 +17,8 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   String _ticketStatus = 'open';
   List<dynamic> _messages = [];
   Timer? _pollTimer;
+  Timer? _typingDebounce;
+  bool _adminTyping = false;
   final _msgCtrl = TextEditingController();
   final _startCtrl = TextEditingController();
   bool _sending = false;
@@ -27,12 +29,22 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   void initState() {
     super.initState();
     _checkActiveTicket();
+    _msgCtrl.addListener(_onTextChanged);
   }
 
   @override
   void dispose() {
     _pollTimer?.cancel();
+    _typingDebounce?.cancel();
+    _msgCtrl.removeListener(_onTextChanged);
     super.dispose();
+  }
+
+  void _onTextChanged() {
+    if (_msgCtrl.text.trim().isEmpty || _ticketId == null) return;
+    if (_typingDebounce?.isActive ?? false) return;
+    _typingDebounce = Timer(const Duration(seconds: 3), () {});
+    ApiService.sendLiveChatTyping(_ticketId!);
   }
 
   Future<void> _checkActiveTicket() async {
@@ -72,6 +84,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
       setState(() {
         _messages = data['messages'];
         _ticketStatus = data['status'];
+        _adminTyping = data['adminTyping'] == true;
       });
     } catch (_) {}
   }
@@ -206,6 +219,14 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
                   },
                 ),
         ),
+        if (!isClosed && _adminTyping)
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Typing...', style: TextStyle(color: AppColors.hint, fontSize: 12, fontStyle: FontStyle.italic)),
+            ),
+          ),
         if (isClosed)
           Container(
             width: double.infinity,

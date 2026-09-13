@@ -212,6 +212,15 @@ class ApiService {
     return await _handle(res);
   }
 
+  static Future<void> sendLiveChatTyping(int ticketId) async {
+    try {
+      await http.post(
+        Uri.parse('$baseUrl/user/support-chat/$ticketId/typing'),
+        headers: await _headers(),
+      );
+    } catch (_) {}
+  }
+
   static Future<void> sendLiveChatMessage(int ticketId, String content) async {
     final res = await http.post(
       Uri.parse('$baseUrl/user/support-chat/$ticketId/reply'),
