@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:async';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
@@ -22,6 +24,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
   final _fullNameCtrl = TextEditingController();
   final _nicNumberCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
+  bool? _nicDuplicate;
+  bool _checkingNic = false;
+  Timer? _nicDebounce;
   String? _selectedProvince;
   String? _selectedDistrict;
 
@@ -50,6 +55,37 @@ class _VerificationScreenState extends State<VerificationScreen> {
     _loadStatus();
   }
 
+  @override
+  void dispose() {
+    _nicDebounce?.cancel();
+    _fullNameCtrl.dispose();
+    _nicNumberCtrl.dispose();
+    _addressCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onNicChanged(String value) {
+    _nicDebounce?.cancel();
+    if (value.trim().isEmpty) {
+      setState(() => _nicDuplicate = null);
+      return;
+    }
+    _nicDebounce = Timer(const Duration(milliseconds: 600), () async {
+      setState(() => _checkingNic = true);
+      try {
+        final exists = await ApiService.checkNicExists(value.trim());
+        if (!mounted) return;
+        setState(() {
+          _nicDuplicate = exists;
+          _checkingNic = false;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _checkingNic = false);
+      }
+    });
+  }
+
   Future<void> _loadStatus() async {
     try {
       final data = await ApiService.getVerificationStatusFull();
@@ -74,10 +110,30 @@ class _VerificationScreenState extends State<VerificationScreen> {
       imageQuality: 85,
     );
     if (picked == null) return;
+
+    final newFile = File(picked.path);
+    final newBytes = await newFile.readAsBytes();
+
+    final otherImages = <File?>[
+      if (slot != 'front') _frontImage,
+      if (slot != 'back') _backImage,
+      if (slot != 'selfie') _selfieImage,
+    ];
+
+    for (final other in otherImages) {
+      if (other == null) continue;
+      final otherBytes = await other.readAsBytes();
+      if (listEquals(newBytes, otherBytes)) {
+        setState(() => _error = 'This photo has already been used for another document. Please take a different photo.');
+        return;
+      }
+    }
+
     setState(() {
-      if (slot == 'front') _frontImage = File(picked.path);
-      if (slot == 'back') _backImage = File(picked.path);
-      if (slot == 'selfie') _selfieImage = File(picked.path);
+      _error = null;
+      if (slot == 'front') _frontImage = newFile;
+      if (slot == 'back') _backImage = newFile;
+      if (slot == 'selfie') _selfieImage = newFile;
     });
   }
 
@@ -261,8 +317,27 @@ class _VerificationScreenState extends State<VerificationScreen> {
           TextFormField(
             controller: _nicNumberCtrl,
             style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(labelText: AppLocalizations.t('nic_number')),
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+            onChanged: _onNicChanged,
+            decoration: InputDecoration(
+              labelText: AppLocalizations.t('nic_number'),
+              suffixIcon: _checkingNic
+                  ? const Padding(
+                      padding: EdgeInsets.all(14),
+                      child: SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                    )
+                  : (_nicDuplicate == true
+                      ? const Icon(Icons.error_outline, color: Colors.redAccent)
+                      : (_nicDuplicate == false ? const Icon(Icons.check_circle_outline, color: Colors.greenAccent) : null)),
+              errorText: _nicDuplicate == true ? 'This NIC is already registered to another account' : null,
+              enabledBorder: _nicDuplicate == true
+                  ? OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.redAccent))
+                  : null,
+            ),
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) return 'Required';
+              if (_nicDuplicate == true) return 'This NIC is already registered to another account';
+              return null;
+            },
           ),
           const SizedBox(height: 12),
           TextFormField(

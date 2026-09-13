@@ -705,6 +705,15 @@ class ApiService {
     return await _handle(res);
   }
 
+  static Future<bool> checkNicExists(String nic) async {
+    final res = await http.get(
+      Uri.parse('$baseUrl/verification/check-nic?nic=${Uri.encodeQueryComponent(nic)}'),
+      headers: await _headers(),
+    );
+    final data = await _handle(res);
+    return data['exists'] == true;
+  }
+
   // ---------- APP UPDATE CHECK ----------
   // Checks GitHub Releases for a newer version than the one currently installed.
   static Future<void> resendOtp(String email, String purpose) async {
