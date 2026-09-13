@@ -19,6 +19,8 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   Timer? _pollTimer;
   Timer? _typingDebounce;
   bool _adminTyping = false;
+  String _handledBy = 'bot';
+  bool _transferring = false;
   final _msgCtrl = TextEditingController();
   final _startCtrl = TextEditingController();
   bool _sending = false;
@@ -84,6 +86,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
       setState(() {
         _messages = data['messages'];
         _ticketStatus = data['status'];
+        _handledBy = data['handledBy'] ?? 'bot';
         _adminTyping = data['adminTyping'] == true;
       });
     } catch (_) {}
@@ -122,6 +125,20 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
     } finally {
       if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _transferToOperator() async {
+    if (_ticketId == null || _transferring) return;
+    setState(() => _transferring = true);
+    try {
+      await ApiService.transferChatToOperator(_ticketId!);
+      await _loadMessages();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    } finally {
+      if (mounted) setState(() => _transferring = false);
     }
   }
 
@@ -219,6 +236,20 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
                   },
                 ),
         ),
+        if (!isClosed && _handledBy != 'human')
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _transferring ? null : _transferToOperator,
+                icon: _transferring
+                    ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.support_agent, size: 16),
+                label: const Text('Transfer to Operator', style: TextStyle(fontSize: 13)),
+              ),
+            ),
+          ),
         if (!isClosed && _adminTyping)
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
