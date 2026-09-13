@@ -68,38 +68,42 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, lang, _) {
         return Scaffold(
           backgroundColor: AppColors.bg,
-          body: Column(
+          body: Stack(
             children: [
+              _pages[_tab],
               if (!_isLoggedIn)
-                SafeArea(
-                  bottom: false,
-                  child: Material(
-                    color: AppColors.primary,
-                    child: InkWell(
-                      onTap: () async {
-                        final loggedIn = await requireLogin(context);
-                        if (loggedIn) _checkLoginStatus();
-                      },
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        child: Row(
-                          children: [
-                            Icon(Icons.account_circle_outlined, color: Colors.white, size: 20),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Login to buy, sell & access your account',
-                                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                              ),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8, right: 12),
+                      child: Material(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(20),
+                        elevation: 3,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(20),
+                          onTap: () async {
+                            final loggedIn = await requireLogin(context);
+                            if (loggedIn) _checkLoginStatus();
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.account_circle_outlined, color: Colors.white, size: 16),
+                                SizedBox(width: 6),
+                                Text('Login', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                              ],
                             ),
-                            Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
-                          ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              Expanded(child: _pages[_tab]),
             ],
           ),
           bottomNavigationBar: NavigationBar(
