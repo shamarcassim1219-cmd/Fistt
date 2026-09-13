@@ -21,6 +21,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   bool _adminTyping = false;
   String _handledBy = 'bot';
   bool _transferring = false;
+  bool _closing = false;
   final _msgCtrl = TextEditingController();
   final _startCtrl = TextEditingController();
   bool _sending = false;
@@ -142,6 +143,34 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
     }
   }
 
+  Future<void> _closeChat() async {
+    if (_ticketId == null || _closing) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Close this chat?', style: TextStyle(color: Colors.white)),
+        content: const Text('You can start a new chat anytime.', style: TextStyle(color: AppColors.hint)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Close Chat')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _closing = true);
+    try {
+      await ApiService.closeLiveChat(_ticketId!);
+      await _loadMessages();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    } finally {
+      if (mounted) setState(() => _closing = false);
+    }
+  }
+
   void _startNewChat() {
     _pollTimer?.cancel();
     setState(() {
@@ -155,7 +184,20 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: Text(_ticketId != null ? 'Live Chat — Ticket #$_ticketId' : 'Live Chat with Admin')),
+      appBar: AppBar(
+        title: Text(_ticketId != null ? 'Live Chat — Ticket #$_ticketId' : 'Live Chat with Admin'),
+        actions: _ticketId != null && _ticketStatus == 'open'
+            ? [
+                IconButton(
+                  icon: _closing
+                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.close),
+                  tooltip: 'Close chat',
+                  onPressed: _closing ? null : _closeChat,
+                ),
+              ]
+            : null,
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _ticketId == null

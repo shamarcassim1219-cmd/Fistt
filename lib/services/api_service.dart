@@ -221,6 +221,14 @@ class ApiService {
     } catch (_) {}
   }
 
+  static Future<void> closeLiveChat(int ticketId) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/support-chat/$ticketId/close'),
+      headers: await _headers(),
+    );
+    await _handle(res);
+  }
+
   static Future<void> transferChatToOperator(int ticketId) async {
     final res = await http.post(
       Uri.parse('$baseUrl/user/support-chat/$ticketId/transfer'),
