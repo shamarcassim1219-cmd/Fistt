@@ -264,7 +264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.28 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.29 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -307,7 +307,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.28');
+      final result = await ApiService.checkForUpdate('1.0.29');
       if (!mounted) return;
       Navigator.pop(context);
 
@@ -363,29 +363,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogCtx) => StatefulBuilder(
-        builder: (dialogCtx, setDialogState) {
-          refreshDialog = setDialogState;
-          return AlertDialog(
-            backgroundColor: AppColors.surface,
-            title: const Text('Downloading Update', style: TextStyle(color: Colors.white)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LinearProgressIndicator(
-                  value: progress > 0 ? progress : null,
-                  color: AppColors.primary,
-                  backgroundColor: AppColors.border,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  progress > 0 ? '${(progress * 100).toStringAsFixed(0)}%' : 'Starting download...',
-                  style: const TextStyle(color: AppColors.hint, fontSize: 13),
-                ),
-              ],
-            ),
-          );
-        },
+      builder: (dialogCtx) => PopScope(
+        canPop: false,
+        child: StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            refreshDialog = setDialogState;
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              title: const Text('Downloading Update', style: TextStyle(color: Colors.white)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  LinearProgressIndicator(
+                    value: progress > 0 ? progress : null,
+                    color: AppColors.primary,
+                    backgroundColor: AppColors.border,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    progress > 0 ? '${(progress * 100).toStringAsFixed(0)}%' : 'Starting download...',
+                    style: const TextStyle(color: AppColors.hint, fontSize: 13),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Please keep the app open until the download completes.',
+                    style: TextStyle(color: AppColors.hint, fontSize: 11),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
 
