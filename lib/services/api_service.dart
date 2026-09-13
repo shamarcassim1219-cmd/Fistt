@@ -272,6 +272,23 @@ class ApiService {
     await _handle(res);
   }
 
+  static Future<void> requestSetPassword() async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/set-password/request'),
+      headers: await _headers(),
+    );
+    await _handle(res);
+  }
+
+  static Future<void> confirmSetPassword(String code, String newPassword) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/set-password/confirm'),
+      headers: await _headers(),
+      body: jsonEncode({'code': code, 'newPassword': newPassword}),
+    );
+    await _handle(res);
+  }
+
   static Future<void> requestEmailChange(String currentPassword, String newEmail) async {
     final res = await http.post(
       Uri.parse('$baseUrl/user/email/request-change'),
