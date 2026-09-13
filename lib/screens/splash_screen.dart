@@ -24,6 +24,7 @@ class _Particle {
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  late final AnimationController _glowController;
   late final List<_Particle> _particles;
 
   late final Animation<double> _iconScale;
@@ -67,6 +68,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _loaderFade = CurvedAnimation(parent: _controller, curve: const Interval(0.85, 1.0, curve: Curves.easeOut));
 
+    _glowController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat(reverse: true);
+
     _controller.forward();
     _decideNextScreen();
   }
@@ -74,6 +77,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void dispose() {
     _controller.dispose();
+    _glowController.dispose();
     super.dispose();
   }
 
@@ -81,7 +85,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (kIsWeb) {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        PageRouteBuilder(
+          pageBuilder: (_, animation, __) => const HomeScreen(),
+          transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
       );
       return;
     }
@@ -101,7 +109,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     }
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => next),
+      PageRouteBuilder(
+        pageBuilder: (_, animation, __) => next,
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
     );
   }
 
@@ -109,7 +123,29 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: Center(
+      body: Stack(
+        children: [
+          AnimatedBuilder(
+            animation: _glowController,
+            builder: (context, child) {
+              final glow = 0.08 + _glowController.value * 0.10;
+              return Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment.center,
+                      radius: 0.9,
+                      colors: [
+                        AppColors.primary.withOpacity(glow),
+                        AppColors.bg,
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          Center(
         child: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
@@ -136,20 +172,26 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           angle: _iconRotate.value,
                           child: Transform.scale(
                             scale: _iconScale.value,
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.15),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.4),
-                                    blurRadius: 30,
-                                    spreadRadius: 2,
+                            child: AnimatedBuilder(
+                              animation: _glowController,
+                              builder: (context, child) {
+                                final pulse = _glowController.value;
+                                return Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.15),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.primary.withOpacity(0.35 + pulse * 0.25),
+                                        blurRadius: 26 + pulse * 16,
+                                        spreadRadius: 1 + pulse * 3,
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: const Icon(Icons.sports_esports_rounded, size: 60, color: AppColors.primary),
+                                  child: const Icon(Icons.sports_esports_rounded, size: 60, color: AppColors.primary),
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -188,6 +230,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             );
           },
         ),
+      ),
+        ],
       ),
     );
   }
