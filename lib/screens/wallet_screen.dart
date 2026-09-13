@@ -46,11 +46,14 @@ class _WalletScreenState extends State<WalletScreen> {
     _load();
   }
 
-  Future<void> _loginAndLoad() async {
-    if (await requireLogin(context)) {
+  Future<bool> _ensureLoggedIn({String? reason}) async {
+    if (!_isGuest) return true;
+    final loggedIn = await requireLogin(context, reason: reason);
+    if (loggedIn) {
       setState(() => _isGuest = false);
       _load();
     }
+    return loggedIn;
   }
 
   @override
@@ -135,19 +138,46 @@ class _WalletScreenState extends State<WalletScreen> {
             width: double.infinity,
             height: double.infinity,
             child: _isGuest
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.account_balance_wallet_outlined, color: AppColors.hint, size: 48),
-                          const SizedBox(height: 12),
-                          Text(AppLocalizations.t('login_to_continue'), style: const TextStyle(color: Colors.white70, fontSize: 14), textAlign: TextAlign.center),
-                          const SizedBox(height: 16),
-                          ElevatedButton(onPressed: _loginAndLoad, child: Text(AppLocalizations.t('login'))),
-                        ],
-                      ),
+                ? SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(AppLocalizations.t('available_colon'), style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                              const SizedBox(height: 6),
+                              const Text('LKR --', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  if (await _ensureLoggedIn(reason: 'Login to top up your wallet')) _showTopUpSheet(context);
+                                },
+                                child: Text(AppLocalizations.t('top_up')),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () async {
+                                  if (await _ensureLoggedIn(reason: 'Login to withdraw funds')) _showWithdrawSheet(context, 0);
+                                },
+                                child: Text(AppLocalizations.t('withdraw')),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   )
                 : _loading

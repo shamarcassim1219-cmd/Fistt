@@ -183,7 +183,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
   }
 
   Future<void> _submit() async {
-    if (!await requireLogin(context)) return;
+    if (!await requireLogin(context, reason: 'Login to list your account for sale')) return;
     if (!mounted) return;
     if (!_formKey.currentState!.validate()) return;
     if (_selectedGame == null) {

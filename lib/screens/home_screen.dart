@@ -68,44 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, lang, _) {
         return Scaffold(
           backgroundColor: AppColors.bg,
-          body: Stack(
-            children: [
-              _pages[_tab],
-              if (!_isLoggedIn)
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8, right: 12),
-                      child: Material(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
-                        elevation: 3,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(20),
-                          onTap: () async {
-                            final loggedIn = await requireLogin(context);
-                            if (loggedIn) _checkLoginStatus();
-                          },
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.account_circle_outlined, color: Colors.white, size: 16),
-                                SizedBox(width: 6),
-                                Text('Login', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          body: _pages[_tab],
           bottomNavigationBar: NavigationBar(
             selectedIndex: _tab,
             onDestinationSelected: (i) => setState(() => _tab = i),

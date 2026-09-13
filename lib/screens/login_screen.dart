@@ -15,7 +15,8 @@ import '../services/google_web_button.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool isGate;
-  const LoginScreen({super.key, this.isGate = false});
+  final String? gateReason;
+  const LoginScreen({super.key, this.isGate = false, this.gateReason});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -291,7 +292,9 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            _isRegister ? AppLocalizations.t('sign_up_to_get_started') : AppLocalizations.t('login_to_continue'),
+                            (!_isRegister && widget.gateReason != null)
+                                ? widget.gateReason!
+                                : (_isRegister ? AppLocalizations.t('sign_up_to_get_started') : AppLocalizations.t('login_to_continue')),
                             style: const TextStyle(color: AppColors.hint, fontSize: 15),
                           ),
                         ],

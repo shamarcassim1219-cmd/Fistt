@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import '../services/auth_helper.dart';
 import '../widgets/report_dialog.dart';
 import 'seller_profile_screen.dart';
 
@@ -127,6 +128,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   Future<void> _placeBid() async {
+    if (!await requireLogin(context, reason: 'Login to place a bid')) return;
     final amount = double.tryParse(_bidCtrl.text.trim());
     if (amount == null || amount <= 0) {
       setState(() => _bidError = 'Enter a valid amount');
@@ -150,6 +152,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   Future<void> _confirmAndBuy(double price) async {
+    if (!await requireLogin(context, reason: 'Login to complete your purchase')) return;
     int pointsToUse = 0;
     final maxAffordablePoints = (price / 1.5).floor();
     final usablePoints = _myPoints > maxAffordablePoints ? maxAffordablePoints : _myPoints;
