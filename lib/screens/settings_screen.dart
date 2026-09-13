@@ -261,10 +261,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveChatScreen()));
               }),
+              _tile(Icons.contact_support_outlined, 'Contact Support', 'shamarcassim05@gmail.com  •  071 305 1219', () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: AppColors.surface,
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                  builder: (ctx) => SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Contact Support', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 16),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.email_outlined, color: AppColors.primary),
+                            title: const Text('shamarcassim05@gmail.com', style: TextStyle(color: Colors.white)),
+                            onTap: () async {
+                              final uri = Uri(scheme: 'mailto', path: 'shamarcassim05@gmail.com');
+                              if (await canLaunchUrl(uri)) await launchUrl(uri);
+                            },
+                          ),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.phone_outlined, color: AppColors.primary),
+                            title: const Text('071 305 1219', style: TextStyle(color: Colors.white)),
+                            onTap: () async {
+                              final uri = Uri(scheme: 'tel', path: '0713051219');
+                              if (await canLaunchUrl(uri)) await launchUrl(uri);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.31 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.32 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -307,7 +345,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.31');
+      final result = await ApiService.checkForUpdate('1.0.32');
       if (!mounted) return;
       Navigator.pop(context);
 

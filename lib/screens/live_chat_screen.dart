@@ -187,7 +187,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: Text(_ticketId != null ? 'Live Chat — Ticket #$_ticketId' : 'Live Chat with Admin'),
+        title: Text((_handledBy == 'human' && _ticketId != null) ? 'Help Center — Ticket #$_ticketId' : 'Help Center'),
         actions: _ticketId != null && _ticketStatus == 'open'
             ? [
                 IconButton(
