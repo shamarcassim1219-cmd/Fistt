@@ -302,7 +302,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.33 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.34 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -345,7 +345,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.33');
+      final result = await ApiService.checkForUpdate('1.0.34');
       if (!mounted) return;
       Navigator.pop(context);
 
@@ -387,79 +387,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _downloadAndInstallUpdate(String url) async {
-    if (kIsWeb) {
-      final uri = Uri.tryParse(url);
-      if (uri != null) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-      return;
-    }
-
-    double progress = 0;
-    void Function(void Function())? refreshDialog;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) => PopScope(
-        canPop: false,
-        child: StatefulBuilder(
-          builder: (dialogCtx, setDialogState) {
-            refreshDialog = setDialogState;
-            return AlertDialog(
-              backgroundColor: AppColors.surface,
-              title: const Text('Downloading Update', style: TextStyle(color: Colors.white)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  LinearProgressIndicator(
-                    value: progress > 0 ? progress : null,
-                    color: AppColors.primary,
-                    backgroundColor: AppColors.border,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    progress > 0 ? '${(progress * 100).toStringAsFixed(0)}%' : 'Starting download...',
-                    style: const TextStyle(color: AppColors.hint, fontSize: 13),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Please keep the app open until the download completes.',
-                    style: TextStyle(color: AppColors.hint, fontSize: 11),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            );
-          },
+    // Hand off to the system's browser/download manager instead of an in-app
+    // download. In-app downloads get interrupted by Android when the app is
+    // backgrounded (Home button), but the system download manager survives it.
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Downloading in background. Open it from your Notifications or Downloads folder once complete to install.'),
+          duration: Duration(seconds: 6),
         ),
-      ),
-    );
-
-    try {
-      final dir = await getTemporaryDirectory();
-      final filePath = '${dir.path}/app-release.apk';
-
-      await Dio().download(
-        url,
-        filePath,
-        onReceiveProgress: (received, total) {
-          if (total > 0) {
-            progress = received / total;
-            refreshDialog?.call(() {});
-          }
-        },
       );
-
-      if (mounted) Navigator.pop(context);
-      await OpenFilex.open(filePath);
-    } catch (e) {
-      if (mounted) Navigator.pop(context);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Download failed: ${e.toString().replaceFirst('Exception: ', '')}')),
-        );
-      }
     }
   }
 
