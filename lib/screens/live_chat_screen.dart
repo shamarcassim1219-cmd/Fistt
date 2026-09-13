@@ -20,6 +20,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   Timer? _typingDebounce;
   bool _adminTyping = false;
   String _handledBy = 'bot';
+  bool _botConfused = false;
   bool _transferring = false;
   bool _closing = false;
   final _msgCtrl = TextEditingController();
@@ -88,6 +89,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
         _messages = data['messages'];
         _ticketStatus = data['status'];
         _handledBy = data['handledBy'] ?? 'bot';
+        _botConfused = data['botConfused'] == true;
         _adminTyping = data['adminTyping'] == true;
       });
     } catch (_) {}
@@ -278,7 +280,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
                   },
                 ),
         ),
-        if (!isClosed && _handledBy != 'human')
+        if (!isClosed && _handledBy != 'human' && _botConfused)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: SizedBox(
