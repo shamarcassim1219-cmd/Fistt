@@ -255,13 +255,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _tile(Icons.help_outline, 'Help & FAQ', null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpFaqScreen()));
               }),
-              _tile(Icons.support_agent_outlined, 'Live Chat with Admin', null, () {
+              _tile(Icons.support_agent_outlined, 'Live Chat with Admin', null, () async {
+                if (!await requireLogin(context)) return;
+                if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveChatScreen()));
               }),
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.18 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.19 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -303,7 +305,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.18');
+      final result = await ApiService.checkForUpdate('1.0.19');
       if (!mounted) return;
       Navigator.pop(context);
 

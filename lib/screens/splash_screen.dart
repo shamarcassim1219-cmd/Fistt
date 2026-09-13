@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import 'login_screen.dart';
@@ -20,6 +21,15 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _decideNextScreen() async {
+    if (kIsWeb) {
+      // Web: go straight to Home instantly - no delay, no intro, guest browsing allowed.
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+      return;
+    }
+
     await Future.delayed(const Duration(seconds: 2));
     final prefs = await SharedPreferences.getInstance();
 
@@ -28,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
-    Widget next = const HomeScreen(); // Guest browsing allowed - login only required for protected actions
+    Widget next = isLoggedIn ? const HomeScreen() : const LoginScreen();
 
     if (!seenIntro) {
       next = IntroScreen(next: next);

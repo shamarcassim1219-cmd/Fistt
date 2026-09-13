@@ -13,6 +13,7 @@ import 'listing_detail_screen.dart';
 import 'notifications_screen.dart';
 import 'banned_screen.dart';
 import 'login_screen.dart';
+import '../services/auth_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _tab = 0;
+  bool _isLoggedIn = true;
 
   final List<Widget> _pages = const [
     _HomeTab(),
@@ -36,6 +38,13 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _showWelcomeIfPending());
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final loggedIn = prefs.getBool('is_logged_in') ?? false;
+    if (mounted) setState(() => _isLoggedIn = loggedIn);
   }
 
   Future<void> _showWelcomeIfPending() async {
@@ -59,7 +68,40 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, lang, _) {
         return Scaffold(
           backgroundColor: AppColors.bg,
-          body: _pages[_tab],
+          body: Column(
+            children: [
+              if (!_isLoggedIn)
+                SafeArea(
+                  bottom: false,
+                  child: Material(
+                    color: AppColors.primary,
+                    child: InkWell(
+                      onTap: () async {
+                        final loggedIn = await requireLogin(context);
+                        if (loggedIn) _checkLoginStatus();
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        child: Row(
+                          children: [
+                            Icon(Icons.account_circle_outlined, color: Colors.white, size: 20),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Login to buy, sell & access your account',
+                                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            Icon(Icons.arrow_forward_ios, color: Colors.white, size: 14),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              Expanded(child: _pages[_tab]),
+            ],
+          ),
           bottomNavigationBar: NavigationBar(
             selectedIndex: _tab,
             onDestinationSelected: (i) => setState(() => _tab = i),
