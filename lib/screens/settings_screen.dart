@@ -9,7 +9,6 @@ import 'login_screen.dart';
 import 'verification_screen.dart';
 import 'profile_management_screen.dart';
 import 'change_password_screen.dart';
-import 'set_password_screen.dart';
 import 'change_email_screen.dart';
 import 'wallet_bank_details_screen.dart';
 import 'my_listings_screen.dart';
@@ -213,11 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
               }),
-              _tile(Icons.password_outlined, 'Set Password (for Google accounts)', 'Add email/password login to your account', () async {
-                if (!await requireLogin(context)) return;
-                if (!context.mounted) return;
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const SetPasswordScreen()));
-              }),
+
               _tile(Icons.block_outlined, AppLocalizations.t('blocked_users'), null, () async {
                 if (!await requireLogin(context)) return;
                 if (!context.mounted) return;
@@ -269,7 +264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.24 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.25 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -311,7 +306,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.24');
+      final result = await ApiService.checkForUpdate('1.0.25');
       if (!mounted) return;
       Navigator.pop(context);
 
