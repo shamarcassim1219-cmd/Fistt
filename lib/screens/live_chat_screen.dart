@@ -22,6 +22,9 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   bool _hasLoadedOnce = false;
   final Set<int> _typewriterIndices = {};
   final Set<int> _finishedTypewriterIndices = {};
+  final Map<int, int> _typewriterProgress = {};
+  final ScrollController _scrollController = ScrollController();
+  final FocusNode _msgFocusNode = FocusNode();
   Timer? _pollTimer;
   Timer? _typingDebounce;
   bool _adminTyping = false;
@@ -41,6 +44,11 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
     super.initState();
     _checkActiveTicket();
     _msgCtrl.addListener(_onTextChanged);
+    _msgFocusNode.addListener(() {
+      if (_msgFocusNode.hasFocus) {
+        Future.delayed(const Duration(milliseconds: 250), _scrollToBottom);
+      }
+    });
   }
 
   @override
@@ -48,7 +56,18 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
     _pollTimer?.cancel();
     _typingDebounce?.cancel();
     _msgCtrl.removeListener(_onTextChanged);
+    _scrollController.dispose();
+    _msgFocusNode.dispose();
     super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   void _onTextChanged() {
@@ -110,6 +129,9 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
         }
         _hasLoadedOnce = true;
       });
+      if (newMessages.length > oldCount) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+      }
     } catch (_) {}
   }
 
@@ -315,6 +337,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
           child: _messages.isEmpty
               ? const Center(child: Text('Starting conversation...', style: TextStyle(color: AppColors.hint, fontSize: 12)))
               : ListView.builder(
+                  controller: _scrollController,
                   padding: const EdgeInsets.all(16),
                   itemCount: _messages.length,
                   itemBuilder: (context, i) {
@@ -351,7 +374,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
                                       ),
                                     );
                                   },
-                                  child: Image.network(imageUrl, width: 200, fit: BoxFit.cover),
+                                  child: Image.network(imageUrl, width: 130, fit: BoxFit.cover),
                                 ),
                               ),
                             if (hasText)
@@ -362,6 +385,8 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
                                         key: ValueKey('typewriter_$i'),
                                         text: m['content'] ?? '',
                                         style: const TextStyle(color: Colors.white, fontSize: 13),
+                                        initialProgress: _typewriterProgress[i] ?? 0,
+                                        onProgress: (chars) => _typewriterProgress[i] = chars,
                                         onComplete: () => _finishedTypewriterIndices.add(i),
                                       )
                                     : Text(m['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 13)),
@@ -450,6 +475,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
                       Expanded(
                         child: TextField(
                           controller: _msgCtrl,
+                          focusNode: _msgFocusNode,
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(hintText: _pendingImage != null ? 'Add a caption (optional)...' : 'Type a message...'),
                         ),
@@ -545,22 +571,36 @@ class _TypingBubbleState extends State<_TypingBubble> with SingleTickerProviderS
 class _TypewriterText extends StatefulWidget {
   final String text;
   final TextStyle style;
+  final int initialProgress;
+  final ValueChanged<int>? onProgress;
   final VoidCallback? onComplete;
 
-  const _TypewriterText({super.key, required this.text, required this.style, this.onComplete});
+  const _TypewriterText({
+    super.key,
+    required this.text,
+    required this.style,
+    this.initialProgress = 0,
+    this.onProgress,
+    this.onComplete,
+  });
 
   @override
   State<_TypewriterText> createState() => _TypewriterTextState();
 }
 
 class _TypewriterTextState extends State<_TypewriterText> {
-  int _visibleChars = 0;
+  late int _visibleChars;
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _startTyping();
+    _visibleChars = widget.initialProgress.clamp(0, widget.text.length);
+    if (_visibleChars >= widget.text.length) {
+      widget.onComplete?.call();
+    } else {
+      _startTyping();
+    }
   }
 
   void _startTyping() {
@@ -577,6 +617,7 @@ class _TypewriterTextState extends State<_TypewriterText> {
       setState(() {
         _visibleChars++;
       });
+      widget.onProgress?.call(_visibleChars);
       if (_visibleChars >= widget.text.length) {
         timer.cancel();
         widget.onComplete?.call();
