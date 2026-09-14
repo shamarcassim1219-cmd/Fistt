@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/secure_screen_mixin.dart';
@@ -144,6 +146,25 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
     }
   }
 
+  Future<void> _pickAndSendImage() async {
+    if (_ticketId == null || _sending) return;
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked == null) return;
+
+    setState(() => _sending = true);
+    try {
+      final url = await ApiService.uploadImage(File(picked.path));
+      await ApiService.sendLiveChatMessage(_ticketId!, '', imageUrl: url);
+      await _loadMessages();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
   Future<void> _transferToOperator() async {
     if (_ticketId == null || _transferring) return;
     setState(() => _transferring = true);
@@ -278,24 +299,52 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
                     final m = _messages[i];
                     final isAdmin = m['isAdmin'] == true;
                     final shouldAnimate = _typewriterIndices.contains(i);
+                    final imageUrl = m['imageUrl'] as String?;
+                    final hasText = (m['content'] ?? '').toString().trim().isNotEmpty;
                     return Align(
                       key: ValueKey('msg_$i'),
                       alignment: isAdmin ? Alignment.centerLeft : Alignment.centerRight,
                       child: Container(
                         margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: EdgeInsets.all(imageUrl != null && !hasText ? 4 : 10),
                         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
                         decoration: BoxDecoration(
                           color: isAdmin ? AppColors.fieldFill : AppColors.primary,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: shouldAnimate
-                            ? _TypewriterText(
-                                key: ValueKey('typewriter_$i'),
-                                text: m['content'] ?? '',
-                                style: const TextStyle(color: Colors.white, fontSize: 13),
-                              )
-                            : Text(m['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (imageUrl != null)
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (ctx) => Dialog(
+                                        backgroundColor: Colors.transparent,
+                                        child: InteractiveViewer(child: Image.network(imageUrl)),
+                                      ),
+                                    );
+                                  },
+                                  child: Image.network(imageUrl, width: 200, fit: BoxFit.cover),
+                                ),
+                              ),
+                            if (hasText)
+                              Padding(
+                                padding: EdgeInsets.only(top: imageUrl != null ? 6 : 0),
+                                child: shouldAnimate
+                                    ? _TypewriterText(
+                                        key: ValueKey('typewriter_$i'),
+                                        text: m['content'] ?? '',
+                                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                                      )
+                                    : Text(m['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                              ),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -345,6 +394,10 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
+                  IconButton(
+                    icon: const Icon(Icons.image_outlined, color: AppColors.hint),
+                    onPressed: _sending ? null : _pickAndSendImage,
+                  ),
                   Expanded(
                     child: TextField(
                       controller: _msgCtrl,

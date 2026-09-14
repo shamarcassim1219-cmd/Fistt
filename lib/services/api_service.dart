@@ -277,11 +277,11 @@ class ApiService {
     await _handle(res);
   }
 
-  static Future<void> sendLiveChatMessage(int ticketId, String content) async {
+  static Future<void> sendLiveChatMessage(int ticketId, String content, {String? imageUrl}) async {
     final res = await http.post(
       Uri.parse('$baseUrl/user/support-chat/$ticketId/reply'),
       headers: await _headers(),
-      body: jsonEncode({'content': content}),
+      body: jsonEncode({'content': content, if (imageUrl != null) 'imageUrl': imageUrl}),
     );
     await _handle(res);
   }
