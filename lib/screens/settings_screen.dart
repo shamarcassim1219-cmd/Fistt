@@ -77,6 +77,84 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showReportProblemSheet() {
+    final descCtrl = TextEditingController();
+    bool submitting = false;
+    String? errorMsg;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          Future<void> submit() async {
+            if (descCtrl.text.trim().isEmpty) {
+              setSheetState(() => errorMsg = 'Please describe the problem');
+              return;
+            }
+            setSheetState(() {
+              submitting = true;
+              errorMsg = null;
+            });
+            try {
+              await ApiService.reportProblem(descCtrl.text.trim());
+              if (!ctx.mounted) return;
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Thanks — we'll get back to you via email.")),
+              );
+            } catch (e) {
+              setSheetState(() {
+                submitting = false;
+                errorMsg = e.toString().replaceFirst('Exception: ', '');
+              });
+            }
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20, right: 20, top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Report a Problem', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                const Text("Describe the issue and we'll follow up by email.", style: TextStyle(color: AppColors.hint, fontSize: 12)),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: descCtrl,
+                  maxLines: 5,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(hintText: 'What went wrong?'),
+                ),
+                if (errorMsg != null) ...[
+                  const SizedBox(height: 8),
+                  Text(errorMsg!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+                ],
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: submitting ? null : submit,
+                    child: submitting
+                        ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                        : const Text('Submit'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   void _confirmLogout() {
     showDialog(
       context: context,
@@ -268,48 +346,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveChatScreen()));
               }),
-              _tile(Icons.contact_support_outlined, 'Contact Support', 'shamarcassim05@gmail.com  •  071 305 1219', () {
-                showModalBottomSheet(
-                  context: context,
-                  backgroundColor: AppColors.surface,
-                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                  builder: (ctx) => SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Contact Support', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 16),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.email_outlined, color: AppColors.primary),
-                            title: const Text('shamarcassim05@gmail.com', style: TextStyle(color: Colors.white)),
-                            onTap: () async {
-                              final uri = Uri(scheme: 'mailto', path: 'shamarcassim05@gmail.com');
-                              if (await canLaunchUrl(uri)) await launchUrl(uri);
-                            },
-                          ),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.phone_outlined, color: AppColors.primary),
-                            title: const Text('071 305 1219', style: TextStyle(color: Colors.white)),
-                            onTap: () async {
-                              final uri = Uri(scheme: 'tel', path: '0713051219');
-                              if (await canLaunchUrl(uri)) await launchUrl(uri);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
+              _tile(Icons.report_problem_outlined, 'Report a Problem', 'Tell us what went wrong', () async {
+                if (!await requireLogin(context, reason: 'Login to report a problem')) return;
+                if (!context.mounted) return;
+                _showReportProblemSheet();
               }),
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.40 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.41 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -360,7 +405,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.40');
+      final result = await ApiService.checkForUpdate('1.0.41');
       if (!mounted) return;
       Navigator.pop(context);
 

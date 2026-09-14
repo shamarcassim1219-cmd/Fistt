@@ -194,6 +194,15 @@ class ApiService {
     return await _handle(res);
   }
 
+  static Future<void> reportProblem(String description) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/user/report-problem'),
+      headers: await _headers(),
+      body: jsonEncode({'description': description}),
+    );
+    await _handle(res);
+  }
+
   static Future<void> updateProfile(String displayName, String phone, {String? profilePhotoUrl}) async {
     final res = await http.put(
       Uri.parse('$baseUrl/user/me'),
