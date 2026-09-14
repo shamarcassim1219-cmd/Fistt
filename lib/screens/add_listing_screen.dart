@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -35,7 +36,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
   final _vaultPasswordCtrl = TextEditingController();
   final _vaultRecoveryCtrl = TextEditingController();
 
-  final List<File> _screenshots = [];
+  final List<XFile> _screenshots = [];
   bool _submitting = false;
   bool _allowBidding = false;
   String? _error;
@@ -136,7 +137,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
       if (picked.isEmpty) return;
       if (!mounted) return;
       setState(() {
-        _screenshots.addAll(picked.map((x) => File(x.path)));
+        _screenshots.addAll(picked);
         if (_screenshots.length > 6) {
           _screenshots.removeRange(6, _screenshots.length);
         }
@@ -508,7 +509,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.file(_screenshots[i], width: double.infinity, height: double.infinity, fit: BoxFit.cover),
+                            child: kIsWeb
+                                ? Image.network(_screenshots[i].path, width: double.infinity, height: double.infinity, fit: BoxFit.cover)
+                                : Image.file(File(_screenshots[i].path), width: double.infinity, height: double.infinity, fit: BoxFit.cover),
                           ),
                           Positioned(
                             top: 2, right: 2,

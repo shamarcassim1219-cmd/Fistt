@@ -17,7 +17,7 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
   final _phoneCtrl = TextEditingController();
   String _email = '';
   String? _photoUrl;
-  File? _pickedPhoto;
+  XFile? _pickedPhoto;
   bool _profileLocked = false;
   bool _loading = true;
   bool _saving = false;
@@ -54,7 +54,7 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
     final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (picked == null) return;
     setState(() {
-      _pickedPhoto = File(picked.path);
+      _pickedPhoto = picked;
       _uploadingPhoto = true;
     });
     try {

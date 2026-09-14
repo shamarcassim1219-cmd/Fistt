@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'device_service.dart';
 import '../main.dart';
@@ -161,12 +162,13 @@ class ApiService {
   }
 
   // ---------- UPLOAD ----------
-  static Future<String> uploadImage(File file) async {
+  static Future<String> uploadImage(XFile file) async {
     final token = await getToken();
     final uri = Uri.parse('$baseUrl/upload');
     final request = http.MultipartRequest('POST', uri);
     if (token != null) request.headers['Authorization'] = 'Bearer $token';
-    request.files.add(await http.MultipartFile.fromPath('file', file.path));
+    final bytes = await file.readAsBytes();
+    request.files.add(http.MultipartFile.fromBytes('file', bytes, filename: file.name));
 
     final streamedRes = await request.send();
     final resBody = await streamedRes.stream.bytesToString();

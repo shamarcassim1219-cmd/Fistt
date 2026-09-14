@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:async';
@@ -305,7 +306,7 @@ class _WalletScreenState extends State<WalletScreen> {
   void _showTopUpSheet(BuildContext context) {
     final amountCtrl = TextEditingController();
     final referenceCtrl = TextEditingController();
-    File? slipFile;
+    XFile? slipFile;
     bool submitting = false;
     bool loadingBankDetails = true;
     Map<String, dynamic>? bankDetails;
@@ -384,7 +385,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       final picker = ImagePicker();
                       final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
                       if (picked != null) {
-                        setModalState(() => slipFile = File(picked.path));
+                        setModalState(() => slipFile = picked);
                       }
                     },
                     child: Container(
@@ -394,7 +395,9 @@ class _WalletScreenState extends State<WalletScreen> {
                       child: slipFile != null
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: Image.file(slipFile!, fit: BoxFit.cover, width: double.infinity, height: double.infinity),
+                              child: kIsWeb
+                                  ? Image.network(slipFile!.path, fit: BoxFit.cover, width: double.infinity, height: double.infinity)
+                                  : Image.file(File(slipFile!.path), fit: BoxFit.cover, width: double.infinity, height: double.infinity),
                             )
                           : Column(
                               mainAxisAlignment: MainAxisAlignment.center,

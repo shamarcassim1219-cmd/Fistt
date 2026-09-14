@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../main.dart';
@@ -29,7 +30,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   bool _transferring = false;
   bool _closing = false;
   final _msgCtrl = TextEditingController();
-  File? _pendingImage;
+  XFile? _pendingImage;
   final _startCtrl = TextEditingController();
   bool _sending = false;
   bool _starting = false;
@@ -160,7 +161,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (picked == null) return;
-    setState(() => _pendingImage = File(picked.path));
+    setState(() => _pendingImage = picked);
   }
 
   Future<void> _transferToOperator() async {
@@ -402,7 +403,9 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(10),
-                            child: Image.file(_pendingImage!, height: 80, width: 80, fit: BoxFit.cover),
+                            child: kIsWeb
+                                ? Image.network(_pendingImage!.path, height: 80, width: 80, fit: BoxFit.cover)
+                                : Image.file(File(_pendingImage!.path), height: 80, width: 80, fit: BoxFit.cover),
                           ),
                           Positioned(
                             top: -8,

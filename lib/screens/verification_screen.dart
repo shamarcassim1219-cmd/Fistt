@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/foundation.dart' show listEquals, kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:async';
@@ -31,9 +31,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
   String? _selectedDistrict;
 
   String _selectedDocType = 'nic';
-  File? _frontImage;
-  File? _backImage;
-  File? _selfieImage;
+  XFile? _frontImage;
+  XFile? _backImage;
+  XFile? _selfieImage;
   bool _submitting = false;
   String? _error;
 
@@ -111,10 +111,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
     );
     if (picked == null) return;
 
-    final newFile = File(picked.path);
+    final newFile = picked;
     final newBytes = await newFile.readAsBytes();
 
-    final otherImages = <File?>[
+    final otherImages = <XFile?>[
       if (slot != 'front') _frontImage,
       if (slot != 'back') _backImage,
       if (slot != 'selfie') _selfieImage,
@@ -522,7 +522,7 @@ class _DocTypeOption extends StatelessWidget {
 }
 
 class _UploadBox extends StatelessWidget {
-  final File? image;
+  final XFile? image;
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -540,7 +540,9 @@ class _UploadBox extends StatelessWidget {
         child: image != null
             ? ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.file(image!, fit: BoxFit.cover, width: double.infinity, height: double.infinity),
+                child: kIsWeb
+                    ? Image.network(image!.path, fit: BoxFit.cover, width: double.infinity, height: double.infinity)
+                    : Image.file(File(image!.path), fit: BoxFit.cover, width: double.infinity, height: double.infinity),
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
