@@ -354,7 +354,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.42 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.43 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -405,7 +405,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.42');
+      final result = await ApiService.checkForUpdate('1.0.43');
       if (!mounted) return;
       Navigator.pop(context);
 
@@ -479,7 +479,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'This download continues even if you switch apps.',
+                      "Please don't close or swipe away the app while the update downloads.",
                       style: TextStyle(color: AppColors.hint, fontSize: 11),
                       textAlign: TextAlign.center,
                     ),
