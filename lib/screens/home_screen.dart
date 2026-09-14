@@ -52,13 +52,26 @@ class _HomeScreenState extends State<HomeScreen> {
     final name = prefs.getString('pending_welcome_name');
     if (name == null || name.isEmpty) return;
     final isNew = prefs.getBool('pending_welcome_is_new') ?? false;
+    final viaGoogle = prefs.getBool('pending_welcome_via_google') ?? false;
     await prefs.remove('pending_welcome_name');
     await prefs.remove('pending_welcome_is_new');
+    await prefs.remove('pending_welcome_via_google');
     if (!mounted) return;
     final message = isNew ? 'Welcome, $name!' : 'Welcome back, $name!';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
     );
+    if (isNew && viaGoogle) {
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('A password has been sent to your Gmail — you can use it to log in with email & password too.'),
+            duration: Duration(seconds: 5),
+          ),
+        );
+      });
+    }
   }
 
   @override

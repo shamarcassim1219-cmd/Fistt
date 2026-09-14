@@ -84,6 +84,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       if (signedInName != null && signedInName.isNotEmpty) {
         await prefs.setString('pending_welcome_name', signedInName);
         await prefs.setBool('pending_welcome_is_new', signInData['isNewUser'] == true);
+        await prefs.setBool('pending_welcome_via_google', signInData['isNewUser'] == true);
       }
 
       if (!mounted) return;
@@ -174,6 +175,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       if (signedInName != null && signedInName.isNotEmpty) {
         await prefs.setString('pending_welcome_name', signedInName);
         await prefs.setBool('pending_welcome_is_new', signInData['isNewUser'] == true);
+        await prefs.setBool('pending_welcome_via_google', signInData['isNewUser'] == true);
       }
 
       if (!mounted) return;
