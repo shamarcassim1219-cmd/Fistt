@@ -20,6 +20,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   List<dynamic> _messages = [];
   bool _hasLoadedOnce = false;
   final Set<int> _typewriterIndices = {};
+  final Set<int> _finishedTypewriterIndices = {};
   Timer? _pollTimer;
   Timer? _typingDebounce;
   bool _adminTyping = false;
