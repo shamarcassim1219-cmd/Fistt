@@ -35,11 +35,19 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   Map<String, dynamic>? _profile;
+  bool _isLoggedIn = false;
 
   @override
   void initState() {
     super.initState();
+    _checkLoginStatus();
     _loadProfile();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final loggedIn = prefs.getBool('is_logged_in') ?? false;
+    if (mounted) setState(() => _isLoggedIn = loggedIn);
   }
 
   Future<void> _loadProfile() async {
@@ -301,7 +309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.39 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.40 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -316,7 +324,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: SizedBox(
                   width: double.infinity,
-                  child: OutlinedButton.icon(onPressed: _confirmLogout, icon: const Icon(Icons.logout), label: Text(AppLocalizations.t('logout'))),
+                  child: _isLoggedIn
+                      ? OutlinedButton.icon(onPressed: _confirmLogout, icon: const Icon(Icons.logout), label: Text(AppLocalizations.t('logout')))
+                      : ElevatedButton.icon(
+                          onPressed: () async {
+                            if (await requireLogin(context)) _checkLoginStatus();
+                          },
+                          icon: const Icon(Icons.login),
+                          label: Text(AppLocalizations.t('login')),
+                        ),
                 ),
               ),
               const SizedBox(height: 30),
@@ -344,7 +360,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.39');
+      final result = await ApiService.checkForUpdate('1.0.40');
       if (!mounted) return;
       Navigator.pop(context);
 
