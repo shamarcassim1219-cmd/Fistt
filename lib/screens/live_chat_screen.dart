@@ -28,6 +28,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   bool _transferring = false;
   bool _closing = false;
   final _msgCtrl = TextEditingController();
+  File? _pendingImage;
   final _startCtrl = TextEditingController();
   bool _sending = false;
   bool _starting = false;
@@ -131,12 +132,19 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   }
 
   Future<void> _sendMessage() async {
-    if (_msgCtrl.text.trim().isEmpty || _ticketId == null) return;
-    setState(() => _sending = true);
     final text = _msgCtrl.text.trim();
+    if (text.isEmpty && _pendingImage == null) return;
+    if (_ticketId == null) return;
+    setState(() => _sending = true);
     _msgCtrl.clear();
+    final imageToSend = _pendingImage;
+    setState(() => _pendingImage = null);
     try {
-      await ApiService.sendLiveChatMessage(_ticketId!, text);
+      String? imageUrl;
+      if (imageToSend != null) {
+        imageUrl = await ApiService.uploadImage(imageToSend);
+      }
+      await ApiService.sendLiveChatMessage(_ticketId!, text, imageUrl: imageUrl);
       await _loadMessages();
     } catch (e) {
       if (!mounted) return;
@@ -146,23 +154,12 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
     }
   }
 
-  Future<void> _pickAndSendImage() async {
-    if (_ticketId == null || _sending) return;
+  Future<void> _pickImage() async {
+    if (_sending) return;
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (picked == null) return;
-
-    setState(() => _sending = true);
-    try {
-      final url = await ApiService.uploadImage(File(picked.path));
-      await ApiService.sendLiveChatMessage(_ticketId!, '', imageUrl: url);
-      await _loadMessages();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
+    setState(() => _pendingImage = File(picked.path));
   }
 
   Future<void> _transferToOperator() async {
@@ -392,24 +389,50 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.image_outlined, color: AppColors.hint),
-                    onPressed: _sending ? null : _pickAndSendImage,
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _msgCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(hintText: 'Type a message...'),
+                  if (_pendingImage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Image.file(_pendingImage!, height: 80, width: 80, fit: BoxFit.cover),
+                          ),
+                          Positioned(
+                            top: -8,
+                            right: -8,
+                            child: IconButton(
+                              icon: const Icon(Icons.cancel, color: Colors.redAccent, size: 20),
+                              onPressed: () => setState(() => _pendingImage = null),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: _sending
-                        ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.send, color: AppColors.primary),
-                    onPressed: _sending ? null : _sendMessage,
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.image_outlined, color: AppColors.hint),
+                        onPressed: _sending ? null : _pickImage,
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: _msgCtrl,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(hintText: _pendingImage != null ? 'Add a caption (optional)...' : 'Type a message...'),
+                        ),
+                      ),
+                      IconButton(
+                        icon: _sending
+                            ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.send, color: AppColors.primary),
+                        onPressed: _sending ? null : _sendMessage,
+                      ),
+                    ],
                   ),
                 ],
               ),
