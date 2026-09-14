@@ -5,8 +5,9 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.0.36+37",
+      "version": "1.0.37+38",
       "dependencies": [
+        "background_downloader",
         "cupertino_icons",
         "device_info_plus",
         "dio",
@@ -1232,6 +1233,20 @@
       "dependencies": [
         "collection",
         "meta"
+      ]
+    },
+    {
+      "name": "background_downloader",
+      "version": "8.9.5",
+      "dependencies": [
+        "async",
+        "collection",
+        "flutter",
+        "http",
+        "logging",
+        "mime",
+        "path",
+        "path_provider"
       ]
     }
   ],

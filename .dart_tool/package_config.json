@@ -26,6 +26,12 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "background_downloader",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/background_downloader-8.9.5",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
       "name": "boolean_selector",
       "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/boolean_selector-2.1.2",
       "packageUri": "lib/",

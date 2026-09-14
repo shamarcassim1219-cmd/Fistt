@@ -23,8 +23,7 @@ import 'legal_screen.dart';
 import 'help_faq_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:background_downloader/background_downloader.dart';
 import 'package:open_filex/open_filex.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -302,7 +301,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.37 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.38 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -345,7 +344,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.37');
+      final result = await ApiService.checkForUpdate('1.0.38');
       if (!mounted) return;
       Navigator.pop(context);
 
@@ -387,19 +386,92 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _downloadAndInstallUpdate(String url) async {
-    // Hand off to the system's browser/download manager instead of an in-app
-    // download. In-app downloads get interrupted by Android when the app is
-    // backgrounded (Home button), but the system download manager survives it.
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (launched && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Downloading in background. Open it from your Notifications or Downloads folder once complete to install.'),
-          duration: Duration(seconds: 6),
+    double progress = 0;
+    void Function(void Function())? refreshDialog;
+    bool failed = false;
+    String? failMsg;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => PopScope(
+        canPop: false,
+        child: StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            refreshDialog = setDialogState;
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              title: const Text('Downloading Update', style: TextStyle(color: Colors.white)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!failed) ...[
+                    LinearProgressIndicator(
+                      value: progress > 0 ? progress : null,
+                      color: AppColors.primary,
+                      backgroundColor: AppColors.border,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      progress > 0 ? '${(progress * 100).toStringAsFixed(0)}%' : 'Starting download...',
+                      style: const TextStyle(color: AppColors.hint, fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'This download continues even if you switch apps.',
+                      style: TextStyle(color: AppColors.hint, fontSize: 11),
+                      textAlign: TextAlign.center,
+                    ),
+                  ] else ...[
+                    const Icon(Icons.error_outline, color: Colors.redAccent, size: 32),
+                    const SizedBox(height: 8),
+                    Text(failMsg ?? 'Download failed', style: const TextStyle(color: Colors.redAccent, fontSize: 13), textAlign: TextAlign.center),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogCtx),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
         ),
+      ),
+    );
+
+    try {
+      final task = DownloadTask(
+        url: url,
+        filename: 'app-release.apk',
+        baseDirectory: BaseDirectory.applicationSupport,
+        updates: Updates.statusAndProgress,
+        allowPause: false,
       );
+
+      final result = await FileDownloader().download(
+        task,
+        onProgress: (p) {
+          if (p >= 0 && p <= 1) {
+            progress = p;
+            refreshDialog?.call(() {});
+          }
+        },
+      );
+
+      if (result.status == TaskStatus.complete) {
+        final filePath = await task.filePath();
+        if (mounted) Navigator.pop(context);
+        await OpenFilex.open(filePath);
+      } else {
+        failed = true;
+        failMsg = 'Download ${result.status.name}. Please try again.';
+        refreshDialog?.call(() {});
+      }
+    } catch (e) {
+      failed = true;
+      failMsg = e.toString().replaceFirst('Exception: ', '');
+      refreshDialog?.call(() {});
     }
   }
 
