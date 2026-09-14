@@ -136,7 +136,32 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   Future<void> _sendMessage() async {
     final text = _msgCtrl.text.trim();
     if (text.isEmpty && _pendingImage == null) return;
-    if (_ticketId == null) return;
+
+    if (_ticketId == null) {
+      if (text.isEmpty) {
+        setState(() => _error = 'Please describe your issue to start the conversation');
+        return;
+      }
+      setState(() {
+        _sending = true;
+        _error = null;
+      });
+      _msgCtrl.clear();
+      try {
+        final ticketId = await ApiService.startLiveChat(text);
+        if (!mounted) return;
+        setState(() => _ticketId = ticketId);
+        await _loadMessages();
+        _startPolling();
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      } finally {
+        if (mounted) setState(() => _sending = false);
+      }
+      return;
+    }
+
     setState(() => _sending = true);
     _msgCtrl.clear();
     final imageToSend = _pendingImage;
@@ -235,9 +260,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _ticketId == null
-              ? _buildStartForm()
-              : _buildChat(),
+          : _buildChat(),
     );
   }
 
