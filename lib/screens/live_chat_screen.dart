@@ -337,6 +337,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
                                         key: ValueKey('typewriter_$i'),
                                         text: m['content'] ?? '',
                                         style: const TextStyle(color: Colors.white, fontSize: 13),
+                                        onComplete: () => _finishedTypewriterIndices.add(i),
                                       )
                                     : Text(m['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 13)),
                               ),
@@ -517,8 +518,9 @@ class _TypingBubbleState extends State<_TypingBubble> with SingleTickerProviderS
 class _TypewriterText extends StatefulWidget {
   final String text;
   final TextStyle style;
+  final VoidCallback? onComplete;
 
-  const _TypewriterText({super.key, required this.text, required this.style});
+  const _TypewriterText({super.key, required this.text, required this.style, this.onComplete});
 
   @override
   State<_TypewriterText> createState() => _TypewriterTextState();
@@ -550,6 +552,7 @@ class _TypewriterTextState extends State<_TypewriterText> {
       });
       if (_visibleChars >= widget.text.length) {
         timer.cancel();
+        widget.onComplete?.call();
       }
     });
   }
