@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
@@ -72,6 +73,38 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       });
     }
+    if (kIsWeb) {
+      Future.delayed(const Duration(milliseconds: 900), _showDownloadAppPrompt);
+    }
+  }
+
+  void _showDownloadAppPrompt() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Get the App', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Get a faster, smoother experience with the MYGame Marketplace Android app.',
+          style: TextStyle(color: AppColors.hint, fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Not now')),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              launchUrl(
+                Uri.parse('https://buysellgame.store/downloads/app-release.apk'),
+                mode: LaunchMode.externalApplication,
+                webOnlyWindowName: '_blank',
+              );
+            },
+            child: const Text('Download'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
