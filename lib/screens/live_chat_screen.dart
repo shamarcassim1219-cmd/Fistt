@@ -16,6 +16,8 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   int? _ticketId;
   String _ticketStatus = 'open';
   List<dynamic> _messages = [];
+  bool _hasLoadedOnce = false;
+  final Set<int> _typewriterIndices = {};
   Timer? _pollTimer;
   Timer? _typingDebounce;
   bool _adminTyping = false;
@@ -85,12 +87,23 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
     try {
       final data = await ApiService.getLiveChatMessages(_ticketId!);
       if (!mounted) return;
+      final oldCount = _messages.length;
+      final newMessages = data['messages'] as List<dynamic>;
       setState(() {
-        _messages = data['messages'];
+        _messages = newMessages;
         _ticketStatus = data['status'];
         _handledBy = data['handledBy'] ?? 'bot';
         _botConfused = data['botConfused'] == true;
         _adminTyping = data['adminTyping'] == true;
+
+        if (_hasLoadedOnce && newMessages.length > oldCount) {
+          for (int i = oldCount; i < newMessages.length; i++) {
+            if (newMessages[i]['isAdmin'] == true) {
+              _typewriterIndices.add(i);
+            }
+          }
+        }
+        _hasLoadedOnce = true;
       });
     } catch (_) {}
   }
@@ -264,7 +277,9 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
                   itemBuilder: (context, i) {
                     final m = _messages[i];
                     final isAdmin = m['isAdmin'] == true;
+                    final shouldAnimate = _typewriterIndices.contains(i);
                     return Align(
+                      key: ValueKey('msg_$i'),
                       alignment: isAdmin ? Alignment.centerLeft : Alignment.centerRight,
                       child: Container(
                         margin: const EdgeInsets.symmetric(vertical: 4),
@@ -274,7 +289,13 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
                           color: isAdmin ? AppColors.fieldFill : AppColors.primary,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(m['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                        child: shouldAnimate
+                            ? _TypewriterText(
+                                key: ValueKey('typewriter_$i'),
+                                text: m['content'] ?? '',
+                                style: const TextStyle(color: Colors.white, fontSize: 13),
+                              )
+                            : Text(m['content'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 13)),
                       ),
                     );
                   },
@@ -414,5 +435,58 @@ class _TypingBubbleState extends State<_TypingBubble> with SingleTickerProviderS
         decoration: const BoxDecoration(color: AppColors.hint, shape: BoxShape.circle),
       ),
     );
+  }
+}
+
+class _TypewriterText extends StatefulWidget {
+  final String text;
+  final TextStyle style;
+
+  const _TypewriterText({super.key, required this.text, required this.style});
+
+  @override
+  State<_TypewriterText> createState() => _TypewriterTextState();
+}
+
+class _TypewriterTextState extends State<_TypewriterText> {
+  int _visibleChars = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTyping();
+  }
+
+  void _startTyping() {
+    // Scale speed with message length so long replies don't take forever,
+    // but cap it so short replies still feel natural.
+    final totalMs = (widget.text.length * 12).clamp(300, 2000);
+    final perCharMs = (totalMs / (widget.text.length == 0 ? 1 : widget.text.length)).clamp(6, 40).round();
+
+    _timer = Timer.periodic(Duration(milliseconds: perCharMs), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        _visibleChars++;
+      });
+      if (_visibleChars >= widget.text.length) {
+        timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = widget.text.substring(0, _visibleChars.clamp(0, widget.text.length));
+    return Text(shown, style: widget.style);
   }
 }
