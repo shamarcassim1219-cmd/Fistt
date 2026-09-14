@@ -294,12 +294,12 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
               ),
             ),
           ),
-        if (!isClosed && _adminTyping)
+        if (!isClosed && (_adminTyping || (_sending && _handledBy != 'human')))
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text('Typing...', style: TextStyle(color: AppColors.hint, fontSize: 12, fontStyle: FontStyle.italic)),
+              child: _TypingBubble(),
             ),
           ),
         if (isClosed)
@@ -342,6 +342,77 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
             ),
           ),
       ],
+    );
+  }
+}
+
+class _TypingBubble extends StatefulWidget {
+  const _TypingBubble();
+
+  @override
+  State<_TypingBubble> createState() => _TypingBubbleState();
+}
+
+class _TypingBubbleState extends State<_TypingBubble> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double _dotOffset(double t, double delay) {
+    final local = ((t - delay) % 1.0 + 1.0) % 1.0;
+    if (local < 0.5) {
+      return -6 * (local / 0.5);
+    } else {
+      return -6 * (1 - (local - 0.5) / 0.5);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final t = _controller.value;
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _dot(_dotOffset(t, 0.0)),
+              const SizedBox(width: 4),
+              _dot(_dotOffset(t, 0.15)),
+              const SizedBox(width: 4),
+              _dot(_dotOffset(t, 0.3)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _dot(double offsetY) {
+    return Transform.translate(
+      offset: Offset(0, offsetY),
+      child: Container(
+        width: 7,
+        height: 7,
+        decoration: const BoxDecoration(color: AppColors.hint, shape: BoxShape.circle),
+      ),
     );
   }
 }
