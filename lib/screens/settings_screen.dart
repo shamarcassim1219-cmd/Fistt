@@ -122,7 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Report a Problem', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(AppLocalizations.t('report_a_problem'), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 6),
                 const Text("Describe the issue and we'll follow up by email.", style: TextStyle(color: AppColors.hint, fontSize: 12)),
                 const SizedBox(height: 16),
@@ -330,23 +330,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
 
               _SectionHeader('Privacy & Data'),
-              _tile(Icons.description_outlined, 'Terms & Conditions', null, () {
+              _tile(Icons.description_outlined, AppLocalizations.t('terms_and_conditions'), null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen(type: 'terms')));
               }),
-              _tile(Icons.policy_outlined, 'Privacy Policy', null, () {
+              _tile(Icons.policy_outlined, AppLocalizations.t('privacy_policy'), null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen(type: 'privacy')));
               }),
 
               _SectionHeader(AppLocalizations.t('support')),
-              _tile(Icons.help_outline, 'Help & FAQ', null, () {
+              _tile(Icons.help_outline, AppLocalizations.t('help_and_faq'), null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpFaqScreen()));
               }),
-              _tile(Icons.support_agent_outlined, 'Help Center', null, () async {
+              _tile(Icons.support_agent_outlined, AppLocalizations.t('help_center'), null, () async {
                 if (!await requireLogin(context, reason: 'Login to start a chat with support')) return;
                 if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveChatScreen()));
               }),
-              _tile(Icons.report_problem_outlined, 'Report a Problem', 'Tell us what went wrong', () async {
+              _tile(Icons.report_problem_outlined, AppLocalizations.t('report_a_problem'), AppLocalizations.t('tell_us_what_went_wrong'), () async {
                 if (!await requireLogin(context, reason: 'Login to report a problem')) return;
                 if (!context.mounted) return;
                 _showReportProblemSheet();
@@ -354,7 +354,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.50 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.51 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -405,7 +405,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.50');
+      final result = await ApiService.checkForUpdate('1.0.51');
       if (!mounted) return;
       Navigator.pop(context);
 

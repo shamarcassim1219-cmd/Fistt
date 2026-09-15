@@ -23,6 +23,12 @@ class AppLocalizations {
   static final Map<String, Map<String, String>> _translations = {
     'app_name': {'English': 'MYGame Marketplace', 'Sinhala': 'MYGame වෙළඳපොළ', 'Tamil': 'MYGame சந்தை'},
     'login': {'English': 'Login', 'Sinhala': 'පිවිසෙන්න', 'Tamil': 'உள்நுழைய'},
+    'help_and_faq': {'English': 'Help & FAQ', 'Sinhala': 'උදව් සහ නිතර අසන පැන', 'Tamil': 'உதவி மற்றும் அடிக்கடி கேட்கப்படும் கேள்விகள்'},
+    'help_center': {'English': 'Help Center', 'Sinhala': 'උදව් මධ්‍යස්ථානය', 'Tamil': 'உதவி மையம்'},
+    'report_a_problem': {'English': 'Report a Problem', 'Sinhala': 'ගැටලුවක් වාර්තා කරන්න', 'Tamil': 'சிக்கலைப் புகாரளிக்கவும்'},
+    'tell_us_what_went_wrong': {'English': 'Tell us what went wrong', 'Sinhala': 'මොකද වුණේ කියලා අපිට කියන්න', 'Tamil': 'என்ன தவறு நடந்தது என்று எங்களிடம் கூறுங்கள்'},
+    'terms_and_conditions': {'English': 'Terms & Conditions', 'Sinhala': 'නියම සහ කොන්දේසි', 'Tamil': 'விதிமுறைகள் மற்றும் நிபந்தனைகள்'},
+    'privacy_policy': {'English': 'Privacy Policy', 'Sinhala': 'රහස්‍යතා ප්‍රතිපත්තිය', 'Tamil': 'தனியுரிமைக் கொள்கை'},
     'sign_up': {'English': 'Sign Up', 'Sinhala': 'ලියාපදිංචි වන්න', 'Tamil': 'பதிவு செய்யவும்'},
     'logout': {'English': 'Logout', 'Sinhala': 'ඉවත් වන්න', 'Tamil': 'வெளியேறு'},
     'email': {'English': 'Email', 'Sinhala': 'විද්‍යුත් තැපෑල', 'Tamil': 'மின்னஞ்சல்'},
