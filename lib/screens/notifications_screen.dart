@@ -159,10 +159,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               final n = _notifications[i];
                               return ListTile(
                                 onTap: () => _handleTap(n),
-                                leading: CircleAvatar(
-                                  backgroundColor: AppColors.primary.withOpacity(0.15),
-                                  child: Icon(_iconFor(n['type'] ?? ''), color: AppColors.primary, size: 20),
-                                ),
+                                leading: (n['imageUrl'] != null && n['imageUrl'].toString().isNotEmpty)
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(24),
+                                        child: Image.network(
+                                          n['imageUrl'],
+                                          width: 44, height: 44, fit: BoxFit.cover,
+                                          errorBuilder: (c, e, s) => CircleAvatar(
+                                            backgroundColor: AppColors.primary.withOpacity(0.15),
+                                            child: Icon(_iconFor(n['type'] ?? ''), color: AppColors.primary, size: 20),
+                                          ),
+                                        ),
+                                      )
+                                    : CircleAvatar(
+                                        backgroundColor: AppColors.primary.withOpacity(0.15),
+                                        child: Icon(_iconFor(n['type'] ?? ''), color: AppColors.primary, size: 20),
+                                      ),
                                 title: Text(n['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                                 subtitle: Text(n['body'] ?? '', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
                                 trailing: Text(_timeAgo(n['createdAt']), style: const TextStyle(color: AppColors.hint, fontSize: 10)),
