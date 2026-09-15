@@ -643,7 +643,7 @@ class _PromotionsTabState extends State<_PromotionsTab> {
                                   itemBuilder: (context, i) {
                                     final p = _promotions[i];
                                     return InkWell(
-                                      onTap: p['linkUrl'] != null ? () => _openLink(p['linkUrl']) : null,
+                                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PromotionDetailScreen(promotion: p))),
                                       borderRadius: BorderRadius.circular(16),
                                       child: Container(
                                         margin: const EdgeInsets.only(bottom: 16),
@@ -692,6 +692,74 @@ class _PromotionsTabState extends State<_PromotionsTab> {
           ),
         );
       },
+    );
+  }
+}
+
+class PromotionDetailScreen extends StatelessWidget {
+  final Map<String, dynamic> promotion;
+  const PromotionDetailScreen({super.key, required this.promotion});
+
+  Future<void> _openLink(BuildContext context, String? url) async {
+    if (url == null || url.isEmpty) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    try {
+      await launchUrl(uri, mode: LaunchMode.inAppWebView);
+    } catch (_) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLink = (promotion['linkUrl'] ?? '').toString().isNotEmpty;
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      appBar: AppBar(title: const Text('Promotion')),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Image.network(
+                promotion['imageUrl'] ?? '',
+                fit: BoxFit.cover,
+                errorBuilder: (ctx, err, stack) => Container(
+                  color: AppColors.fieldFill,
+                  child: const Icon(Icons.image_outlined, color: AppColors.hint, size: 60),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(promotion['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  if ((promotion['description'] ?? '').toString().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Text(promotion['description'], style: const TextStyle(color: AppColors.hint, fontSize: 15, height: 1.5)),
+                  ],
+                  if (hasLink) ...[
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _openLink(context, promotion['linkUrl']),
+                        icon: const Icon(Icons.open_in_new, size: 18),
+                        label: const Text('View More'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
