@@ -39,6 +39,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _showWelcomeIfPending());
+    if (kIsWeb) {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) _showDownloadAppPrompt();
+      });
+    }
     _checkLoginStatus();
   }
 
@@ -72,9 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       });
-    }
-    if (kIsWeb) {
-      Future.delayed(const Duration(milliseconds: 900), _showDownloadAppPrompt);
     }
   }
 
