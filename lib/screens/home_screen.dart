@@ -716,7 +716,7 @@ class PromotionDetailScreen extends StatelessWidget {
     final hasLink = (promotion['linkUrl'] ?? '').toString().isNotEmpty;
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Promotion')),
+      appBar: AppBar(title: const Text('Event')),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

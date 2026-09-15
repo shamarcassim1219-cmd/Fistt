@@ -227,7 +227,7 @@ class AppLocalizations {
     'account_stats': {'English': 'Account Stats', 'Sinhala': 'ගිණුම් සංඛ්‍යාලේඛන', 'Tamil': 'கணக்கு புள்ளிவிவரங்கள்'},
     'stats_hint': {'English': 'Add key details buyers care about — tap a suggestion or add your own.', 'Sinhala': 'ගැනුම්කරුවන් සැලකිලිමත් වන ප්‍රධාන විස්තර එක් කරන්න — යෝජනාවක් ස්පර්ශ කරන්න හෝ ඔබේම එකතු කරන්න.', 'Tamil': 'வாங்குபவர்கள் கவனிக்கும் முக்கிய விவரங்களைச் சேர்க்கவும் — பரிந்துரையைத் தட்டவும் அல்லது உங்கள் சொந்தத்தைச் சேர்க்கவும்.'},
     'custom_stat': {'English': 'Custom Stat', 'Sinhala': 'අභිරුචි සංඛ්‍යාව', 'Tamil': 'தனிப்பயன் புள்ளிவிவரம்'},
-    'promotions_tab': {'English': 'Promotions', 'Sinhala': 'ප්‍රවර්ධන', 'Tamil': 'விளம்பரங்கள்'},
+    'promotions_tab': {'English': 'Events', 'Sinhala': 'සිදුවීම්', 'Tamil': 'நிகழ்வுகள்'},
     'no_promotions': {'English': 'No promotions right now.\nCheck back later for deals and offers.', 'Sinhala': 'දැනට ප්‍රවර්ධන නැත.\nගනුදෙනු සහ දීමනා සඳහා පසුව පරීක්ෂා කරන්න.', 'Tamil': 'இப்போது விளம்பரங்கள் இல்லை.\nஒப்பந்தங்கள் மற்றும் சலுகைகளுக்கு பின்னர் சரிபார்க்கவும்.'},
 
     'seller_profile': {'English': 'Seller Profile', 'Sinhala': 'විකුණන්නාගේ පැතිකඩ', 'Tamil': 'விற்பனையாளர் சுயவிவரம்'},
