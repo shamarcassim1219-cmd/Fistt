@@ -600,7 +600,10 @@ class _PromotionsTabState extends State<_PromotionsTab> {
   Future<void> _openLink(String? url) async {
     if (url == null || url.isEmpty) return;
     final uri = Uri.tryParse(url);
-    if (uri != null && await canLaunchUrl(uri)) {
+    if (uri == null) return;
+    try {
+      await launchUrl(uri, mode: LaunchMode.inAppWebView);
+    } catch (_) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
