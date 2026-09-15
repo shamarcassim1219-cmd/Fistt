@@ -240,7 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
               _tile(
                 Icons.verified_outlined,
-                'Verification Center',
+                AppLocalizations.t('verification_center'),
                 null,
                 () async {
                   if (!await requireLogin(context, reason: 'Login to verify your account')) return;
@@ -269,7 +269,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()));
               }),
-              _tile(Icons.bookmark_border, 'Saved / Wishlist Accounts', null, () async {
+              _tile(Icons.bookmark_border, AppLocalizations.t('saved_wishlist_accounts'), null, () async {
                 if (!await requireLogin(context, reason: 'Login to view your saved accounts')) return;
                 if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen()));
@@ -354,7 +354,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.51 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.52 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -405,7 +405,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.51');
+      final result = await ApiService.checkForUpdate('1.0.52');
       if (!mounted) return;
       Navigator.pop(context);
 
