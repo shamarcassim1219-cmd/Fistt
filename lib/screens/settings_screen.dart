@@ -286,7 +286,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }),
 
               _SectionHeader(AppLocalizations.t('security')),
-              _tile(Icons.email_outlined, 'Change Email', null, () async {
+              _tile(Icons.email_outlined, AppLocalizations.t('change_email'), null, () async {
                 if (!await requireLogin(context, reason: 'Login to change your email')) return;
                 if (!context.mounted) return;
                 final changed = await Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangeEmailScreen()));
@@ -354,7 +354,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.52 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.53 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -405,7 +405,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.52');
+      final result = await ApiService.checkForUpdate('1.0.53');
       if (!mounted) return;
       Navigator.pop(context);
 

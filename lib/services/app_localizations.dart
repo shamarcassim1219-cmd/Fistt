@@ -31,6 +31,7 @@ class AppLocalizations {
     'privacy_policy': {'English': 'Privacy Policy', 'Sinhala': 'රහස්‍යතා ප්‍රතිපත්තිය', 'Tamil': 'தனியுரிமைக் கொள்கை'},
     'verification_center': {'English': 'Verification Center', 'Sinhala': 'තහවුරු කිරීමේ මධ්‍යස්ථානය', 'Tamil': 'சரிபார்ப்பு மையம்'},
     'saved_wishlist_accounts': {'English': 'Saved / Wishlist Accounts', 'Sinhala': 'සුරැකි / කැමති ගිණුම්', 'Tamil': 'சேமிக்கப்பட்ட / விருப்பப் கணக்குகள்'},
+    'change_email': {'English': 'Change Email', 'Sinhala': 'විද්‍යුත් තැපෑල වෙනස් කරන්න', 'Tamil': 'மின்னஞ்சலை மாற்றவும்'},
     'sign_up': {'English': 'Sign Up', 'Sinhala': 'ලියාපදිංචි වන්න', 'Tamil': 'பதிவு செய்யவும்'},
     'logout': {'English': 'Logout', 'Sinhala': 'ඉවත් වන්න', 'Tamil': 'வெளியேறு'},
     'email': {'English': 'Email', 'Sinhala': 'විද්‍යුත් තැපෑල', 'Tamil': 'மின்னஞ்சல்'},
