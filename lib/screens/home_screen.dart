@@ -475,6 +475,7 @@ class _HomeTabState extends State<_HomeTab> {
                                 final allowBidding = l['allowBidding'] == true;
                                 final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
                                 final displayPrice = highestBid ?? (l['price'] as num).toDouble();
+                                final saleType = l['saleType'] ?? 'full';
                                 final isBoosted = l['boosted'] == true;
                                 final sellerName = l['sellerDisplayName'] ?? '';
                                 return Container(
@@ -543,8 +544,14 @@ class _HomeTabState extends State<_HomeTab> {
                                           ],
                                         ),
                                         const SizedBox(height: 2),
-                                        Text('${l['game'] ?? ''} · LKR ${displayPrice.toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
-                                            style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                                        Text(
+                                          saleType == 'rental'
+                                              ? '${l['game'] ?? ''} · Rental · LKR ${(l['rentalPricePerUnit'] as num? ?? displayPrice).toStringAsFixed(0)}/${l['rentalUnit'] ?? 'day'}'
+                                              : saleType == 'installment'
+                                                  ? '${l['game'] ?? ''} · Installment · LKR ${displayPrice.toStringAsFixed(0)} total'
+                                                  : '${l['game'] ?? ''} · LKR ${displayPrice.toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
+                                          style: const TextStyle(color: AppColors.hint, fontSize: 12),
+                                        ),
                                       ],
                                     ),
                                     trailing: allowBidding
