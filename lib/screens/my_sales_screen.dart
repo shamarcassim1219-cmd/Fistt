@@ -60,6 +60,8 @@ class _MySalesScreenState extends State<MySalesScreen> {
                             itemBuilder: (context, i) {
                               final o = _orders[i];
                               final status = o['status'];
+                              final rental = o['rental'] as Map<String, dynamic>?;
+                              final installment = o['installment'] as Map<String, dynamic>?;
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 10),
                                 decoration: BoxDecoration(
@@ -67,21 +69,59 @@ class _MySalesScreenState extends State<MySalesScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: AppColors.border),
                                 ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.all(12),
-                                  onTap: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => SaleDetailScreen(order: Map<String, dynamic>.from(o))),
-                                    );
-                                    _load();
-                                  },
-                                  title: Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                  subtitle: Text(
-                                    'Sale: LKR ${(o['price'] as num).toStringAsFixed(2)} · You get: LKR ${(o['sellerPayout'] as num).toStringAsFixed(2)}',
-                                    style: const TextStyle(color: AppColors.hint, fontSize: 12),
-                                  ),
-                                  trailing: _StatusBadge(status: status),
+                                child: Column(
+                                  children: [
+                                    ListTile(
+                                      contentPadding: const EdgeInsets.all(12),
+                                      onTap: () async {
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (_) => SaleDetailScreen(order: Map<String, dynamic>.from(o))),
+                                        );
+                                        _load();
+                                      },
+                                      title: Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                      subtitle: Text(
+                                        'Sale: LKR ${(o['price'] as num).toStringAsFixed(2)} · You get: LKR ${(o['sellerPayout'] as num).toStringAsFixed(2)}',
+                                        style: const TextStyle(color: AppColors.hint, fontSize: 12),
+                                      ),
+                                      trailing: _StatusBadge(status: status),
+                                    ),
+                                    if (rental != null)
+                                      Container(
+                                        width: double.infinity,
+                                        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: rental['expired'] == true ? Colors.redAccent.withOpacity(0.1) : AppColors.primary.withOpacity(0.08),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          rental['expired'] == true
+                                              ? 'Rental ended — remind buyer to return / change password'
+                                              : 'Buyer rented for ${rental['quantity']} ${rental['unit']}(s) · ${rental['daysRemaining']} day(s) remaining',
+                                          style: TextStyle(
+                                            color: rental['expired'] == true ? Colors.redAccent : Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    if (installment != null)
+                                      Container(
+                                        width: double.infinity,
+                                        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary.withOpacity(0.08),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          'Installments: LKR ${(installment['paidAmount'] as num).toStringAsFixed(2)} paid of LKR ${(installment['totalAmount'] as num).toStringAsFixed(2)} · LKR ${(installment['remainingAmount'] as num).toStringAsFixed(2)} remaining',
+                                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               );
                             },

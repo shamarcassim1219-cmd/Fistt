@@ -228,7 +228,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
         title: _titleCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         inGameUID: _uidCtrl.text.trim(),
-        price: double.parse(_priceCtrl.text.trim()),
+        price: _saleType == 'rental' ? double.parse(_rentalPriceCtrl.text.trim()) : double.parse(_priceCtrl.text.trim()),
         screenshots: screenshotUrls,
         stats: stats,
         vaultPlatform: _selectedPlatform,
@@ -415,17 +415,23 @@ class _AddListingScreenState extends State<AddListingScreen> {
                     validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _priceCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(labelText: '${AppLocalizations.t('price')} (LKR)', prefixText: 'LKR '),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Required';
-                      if (double.tryParse(v.trim()) == null) return 'Enter a valid number';
-                      return null;
-                    },
-                  ),
+                  if (_saleType != 'rental')
+                    TextFormField(
+                      controller: _priceCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: _saleType == 'installment'
+                            ? 'Total Price (LKR)'
+                            : '${AppLocalizations.t('price')} (LKR)',
+                        prefixText: 'LKR ',
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Required';
+                        if (double.tryParse(v.trim()) == null) return 'Enter a valid number';
+                        return null;
+                      },
+                    ),
 
                   if (_selectedGame != null) ...[
                     const SizedBox(height: 20),
