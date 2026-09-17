@@ -281,5 +281,53 @@ class AppLocalizations {
     'message': {'English': 'Message', 'Sinhala': 'පණිවිඩය', 'Tamil': 'செய்தி'},
     'send_to_admin': {'English': 'Send to Admin', 'Sinhala': 'පරිපාලකට යවන්න', 'Tamil': 'நிர்வாகிக்கு அனுப்பு'},
     'report_notice': {'English': 'Send a message directly to our admin team. We typically respond within 24 hours.', 'Sinhala': 'අපගේ පරිපාලක කණ්ඩායමට කෙලින්ම පණිවිඩයක් යවන්න. අපි සාමාන්‍යයෙන් පැය 24ක් ඇතුළත ප්‍රතිචාර දක්වමු.', 'Tamil': 'எங்கள் நிர்வாக குழுவிற்கு நேரடியாக ஒரு செய்தியை அனுப்பவும். நாங்கள் பொதுவாக 24 மணி நேரத்திற்குள் பதிலளிக்கிறோம்.'},
+
+    // ---- Rental & Installment ----
+    'rent_this_account': {'English': 'Rent this account', 'Sinhala': 'මෙම ගිණුම කුලියට ගන්න', 'Tamil': 'இந்தக் கணக்கை வாடகைக்கு எடுக்கவும்'},
+    'login_to_rent': {'English': 'Login to rent this account', 'Sinhala': 'මෙම ගිණුම කුලියට ගැනීමට පිවිසෙන්න', 'Tamil': 'இந்தக் கணக்கை வாடகைக்கு எடுக்க உள்நுழையவும்'},
+    'total_colon': {'English': 'Total:', 'Sinhala': 'මුළු එකතුව:', 'Tamil': 'மொத்தம்:'},
+    'pay_in_installments_title': {'English': 'Pay in Installments', 'Sinhala': 'වාරික වශයෙන් ගෙවන්න', 'Tamil': 'தவணைகளில் செலுத்துங்கள்'},
+    'login_to_start_installment': {'English': 'Login to start an installment plan', 'Sinhala': 'වාරික සැලැස්මක් ආරම්භ කිරීමට පිවිසෙන්න', 'Tamil': 'தவணைத் திட்டத்தைத் தொடங்க உள்நுழையவும்'},
+    'total_price_colon': {'English': 'Total price:', 'Sinhala': 'මුළු මිල:', 'Tamil': 'மொத்த விலை:'},
+    'split_into': {'English': 'Split into', 'Sinhala': 'වෙන් කර ඇත්තේ', 'Tamil': 'பிரிக்கப்பட்டது'},
+    'installments_suffix': {'English': 'installments', 'Sinhala': 'වාරික', 'Tamil': 'தவணைகள்'},
+    'first_installment_paid_now': {'English': 'First installment (paid now):', 'Sinhala': 'පළමු වාරිකය (දැන් ගෙවේ):', 'Tamil': 'முதல் தவணை (இப்போது செலுத்தப்பட்டது):'},
+    'rent_dash': {'English': 'Rent —', 'Sinhala': 'කුලියට —', 'Tamil': 'வாடகை —'},
+    'pay_in_prefix': {'English': 'Pay in', 'Sinhala': 'ගෙවන්න', 'Tamil': 'செலுத்துங்கள்'},
+    'attach_photo_optional': {'English': 'Attach photo (optional)', 'Sinhala': 'ඡායාරූපයක් අමුණන්න (විකල්ප)', 'Tamil': 'புகைப்படத்தை இணைக்கவும் (விருப்பத்தேர்வு)'},
+    'change_photo': {'English': 'Change photo', 'Sinhala': 'ඡායාරූපය වෙනස් කරන්න', 'Tamil': 'புகைப்படத்தை மாற்றவும்'},
+    'installment_schedule': {'English': 'Installment Schedule', 'Sinhala': 'වාරික කාලසටහන', 'Tamil': 'தவணை அட்டவணை'},
+    'no_installment_data': {'English': 'No installment data yet.', 'Sinhala': 'තවම වාරික දත්ත නොමැත.', 'Tamil': 'இன்னும் தவணை தரவு இல்லை.'},
+    'pay_now': {'English': 'Pay Now', 'Sinhala': 'දැන් ගෙවන්න', 'Tamil': 'இப்போது செலுத்துங்கள்'},
+    'installment_hash': {'English': 'Installment #', 'Sinhala': 'වාරිකය #', 'Tamil': 'தவணை #'},
+    'remaining_colon': {'English': 'Remaining:', 'Sinhala': 'ඉතිරි:', 'Tamil': 'மீதமுள்ளது:'},
+    'overdue': {'English': 'Overdue', 'Sinhala': 'කල් ඉකුත් වී ඇත', 'Tamil': 'தாமதமானது'},
+    'due_today': {'English': 'Due today', 'Sinhala': 'අද ගෙවිය යුතුයි', 'Tamil': 'இன்று செலுத்த வேண்டும்'},
+    'due_in_prefix': {'English': 'Due in', 'Sinhala': 'ගෙවීමට ඉතිරි', 'Tamil': 'செலுத்த வேண்டிய நாட்கள்'},
+    'days_suffix': {'English': 'day(s)', 'Sinhala': 'දින', 'Tamil': 'நாள்(கள்)'},
+    'rental_ended_remind': {'English': 'Rental ended — remind buyer to return / change password', 'Sinhala': 'කුලිය අවසන් විය — මුරපදය වෙනස් කරන ලෙස ගැනුම්කරුට මතක් කරන්න', 'Tamil': 'வாடகை முடிந்தது — கடவுச்சொல்லை மாற்ற வாங்குபவருக்கு நினைவூட்டவும்'},
+    'buyer_rented_for': {'English': 'Buyer rented for', 'Sinhala': 'ගැනුම්කරු කුලියට ගෙන ඇත්තේ', 'Tamil': 'வாங்குபவர் வாடகைக்கு எடுத்தார்'},
+    'days_remaining_suffix': {'English': 'day(s) remaining', 'Sinhala': 'දින ඉතිරිය', 'Tamil': 'நாள்(கள்) மீதமுள்ளன'},
+    'installments_colon': {'English': 'Installments:', 'Sinhala': 'වාරික:', 'Tamil': 'தவணைகள்:'},
+    'paid_of': {'English': 'paid of', 'Sinhala': 'ගෙවා ඇත', 'Tamil': 'செலுத்தப்பட்டது'},
+    'remaining_suffix': {'English': 'remaining', 'Sinhala': 'ඉතිරියි', 'Tamil': 'மீதமுள்ளது'},
+    'installment_payment_label': {'English': 'Installment Payment', 'Sinhala': 'වාරික ගෙවීම', 'Tamil': 'தவணை செலுத்துதல்'},
+
+    // ---- Deposit Methods / Top-up ----
+    'select_deposit_method': {'English': 'Select Deposit Method', 'Sinhala': 'තැන්පතු ක්‍රමය තෝරන්න', 'Tamil': 'வைப்பு முறையைத் தேர்ந்தெடுக்கவும்'},
+    'no_deposit_methods': {'English': 'No deposit methods available yet. Please contact support.', 'Sinhala': 'තවම තැන්පතු ක්‍රම නොමැත. කරුණාකර සහාය අමතන්න.', 'Tamil': 'இன்னும் வைப்பு முறைகள் இல்லை. ஆதரவை தொடர்பு கொள்ளவும்.'},
+    'account_name_colon': {'English': 'Account Name:', 'Sinhala': 'ගිණුම් නාමය:', 'Tamil': 'கணக்கு பெயர்:'},
+    'account_wallet_number_colon': {'English': 'Account / Wallet Number:', 'Sinhala': 'ගිණුම් / පසුම්බි අංකය:', 'Tamil': 'கணக்கு / பணப்பை எண்:'},
+    'branch_colon': {'English': 'Branch:', 'Sinhala': 'ශාඛාව:', 'Tamil': 'கிளை:'},
+    'transaction_reference_number': {'English': 'Transaction / Reference Number', 'Sinhala': 'ගනුදෙනු / යොමු අංකය', 'Tamil': 'பரிவர்த்தனை / குறிப்பு எண்'},
+
+    // ---- Withdrawal ----
+    'withdrawal_min_fee_note': {'English': 'Minimum withdrawal: LKR 500. A LKR 30 bank transfer fee applies and is deducted from your wallet in addition to the withdrawal amount.', 'Sinhala': 'අවම මුදල් ආපසු ගැනීම: රු. 500. රු. 30ක බැංකු මාරු ගාස්තුවක් අදාළ වන අතර එය ආපසු ගැනීමේ මුදලට අමතරව ඔබේ පසුම්බියෙන් අඩු කෙරේ.', 'Tamil': 'குறைந்தபட்ச திரும்பப்பெறல்: ரூ. 500. ரூ. 30 வங்கி பரிமாற்றக் கட்டணம் பொருந்தும், இது திரும்பப் பெறும் தொகைக்கு கூடுதலாக உங்கள் பணப்பையில் இருந்து கழிக்கப்படும்.'},
+    'insufficient_balance': {'English': 'Insufficient balance.', 'Sinhala': 'ප්‍රමාණවත් ශේෂයක් නැත.', 'Tamil': 'போதுமான இருப்பு இல்லை.'},
+    'you_need_at_least': {'English': 'You need at least', 'Sinhala': 'ඔබට අවම වශයෙන් අවශ්‍යයි', 'Tamil': 'உங்களுக்கு குறைந்தது தேவை'},
+    'to_withdraw_current_balance': {'English': 'to withdraw. Your current balance is', 'Sinhala': 'ආපසු ගැනීමට. ඔබේ වත්මන් ශේෂය', 'Tamil': 'திரும்பப் பெற. உங்கள் தற்போதைய இருப்பு'},
+
+    // ---- Account ID ----
+    'account_id_copied': {'English': 'Account ID copied', 'Sinhala': 'ගිණුම් හැඳුනුම්පත පිටපත් කරන ලදී', 'Tamil': 'கணக்கு அடையாள எண் நகலெடுக்கப்பட்டது'},
   };
 }
