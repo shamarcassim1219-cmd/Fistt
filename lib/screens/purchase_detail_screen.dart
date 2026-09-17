@@ -19,11 +19,48 @@ class PurchaseDetailScreen extends StatefulWidget {
 class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with SecureScreenMixin {
   late Map<String, dynamic> _order;
   bool _notifying = false;
+  List<dynamic>? _installments;
+  bool _loadingInstallments = false;
+  int? _payingId;
+
+  Future<void> _loadInstallments() async {
+    setState(() => _loadingInstallments = true);
+    try {
+      final data = await ApiService.getInstallments(_order['id']);
+      if (!mounted) return;
+      setState(() {
+        _installments = data['payments'];
+        _loadingInstallments = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingInstallments = false);
+    }
+  }
+
+  Future<void> _payInstallment(int paymentId) async {
+    setState(() => _payingId = paymentId);
+    try {
+      await ApiService.payInstallment(paymentId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Installment paid successfully')),
+      );
+      await _loadInstallments();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _payingId = null);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _order = widget.order;
+    if (_order['installment'] != null) _loadInstallments();
   }
 
   bool get _deadlinePassed {
@@ -180,6 +217,67 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
                   ],
                 ),
               ),
+              if (_order['installment'] != null) ...[
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Installment Schedule', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                      const SizedBox(height: 10),
+                      if (_loadingInstallments)
+                        const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(color: AppColors.primary)))
+                      else if (_installments == null || _installments!.isEmpty)
+                        const Text('No installment data yet.', style: TextStyle(color: AppColors.hint, fontSize: 12))
+                      else
+                        ..._installments!.map((p) {
+                          final isPaid = p['status'] == 'paid';
+                          final isOverdue = p['status'] == 'overdue';
+                          final amount = (p['amount'] as num).toStringAsFixed(2);
+                          String dateLabel = '';
+                          try {
+                            final d = DateTime.parse(p['dueDate'] ?? p['due_date']).toLocal();
+                            dateLabel = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+                          } catch (_) {}
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isPaid ? Icons.check_circle : (isOverdue ? Icons.error_outline : Icons.schedule),
+                                  color: isPaid ? Colors.greenAccent : (isOverdue ? Colors.redAccent : Colors.orangeAccent),
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Installment #${p['installmentNumber'] ?? p['installment_number']} — LKR $amount${dateLabel.isNotEmpty ? ' · $dateLabel' : ''}',
+                                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                                  ),
+                                ),
+                                if (!isPaid)
+                                  SizedBox(
+                                    height: 32,
+                                    child: ElevatedButton(
+                                      onPressed: _payingId == p['id'] ? null : () => _payInstallment(p['id']),
+                                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
+                                      child: _payingId == p['id']
+                                          ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                                          : const Text('Pay Now', style: TextStyle(fontSize: 12)),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        }),
+                    ],
+                  ),
+                ),
+              ],
+
 
               if (!adminReviewed && status != 'disputed') ...[
                 const SizedBox(height: 16),
