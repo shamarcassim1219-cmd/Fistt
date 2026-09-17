@@ -567,12 +567,29 @@ class _WalletScreenState extends State<WalletScreen> {
                 'The amount will be deducted from your wallet immediately and refunded if the request is rejected.',
                 style: TextStyle(fontSize: 12, color: AppColors.hint),
               ),
+              if (balance < minWithdrawal + withdrawalFee) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
+                  ),
+                  child: Text(
+                    'Insufficient balance. You need at least LKR ${(minWithdrawal + withdrawalFee).toStringAsFixed(2)} '
+                    '(LKR 500 minimum + LKR 30 fee) to withdraw. Your current balance is LKR ${balance.toStringAsFixed(2)}.',
+                    style: const TextStyle(fontSize: 12, color: Colors.redAccent, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: submitting ? null : () async {
+                  onPressed: (submitting || balance < minWithdrawal + withdrawalFee) ? null : () async {
                     final amount = double.tryParse(amountCtrl.text.trim());
                     if (amount == null || amount <= 0) {
                       ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Please enter a valid amount')));
