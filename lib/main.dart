@@ -5,11 +5,14 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'firebase_options.dart';
 import 'services/api_service.dart';
 import 'services/app_localizations.dart';
 import 'screens/splash_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'services/app_version_service.dart';
+import 'screens/force_update_screen.dart';
 
 class AppColors {
   static const bg = Color(0xFF0B0B10);
@@ -68,6 +71,8 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
   bool _biometricEnabled = false;
   bool _unlocking = false;
   DateTime? _pausedAt;
+  AppVersionInfo? _forceUpdateInfo;
+  bool _versionCheckDone = false;
 
   @override
   void initState() {
@@ -76,6 +81,9 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
     if (!kIsWeb) {
       _setupFcm();
       _loadBiometricSetting();
+      _checkAppVersion();
+    } else {
+      _versionCheckDone = true;
     }
   }
 
@@ -83,6 +91,35 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  Future<void> _checkAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentBuild =
+          int.tryParse(packageInfo.buildNumber) ?? 0;
+
+      final info = await AppVersionService.checkVersion();
+
+      if (!mounted) return;
+
+      if (info != null && currentBuild < info.minimumVersionCode) {
+        setState(() {
+          _forceUpdateInfo = info;
+          _versionCheckDone = true;
+        });
+      } else {
+        setState(() {
+          _versionCheckDone = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _versionCheckDone = true;
+        });
+      }
+    }
   }
 
   Future<void> _loadBiometricSetting() async {
@@ -280,7 +317,11 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
         ),
       ),
       themeMode: ThemeMode.dark,
-      home: Stack(
+      home: !_versionCheckDone
+          ? const SplashScreen()
+          : _forceUpdateInfo != null
+              ? ForceUpdateScreen(info: _forceUpdateInfo!)
+              : Stack(
         children: [
           const SplashScreen(),
           if (_isLocked)
