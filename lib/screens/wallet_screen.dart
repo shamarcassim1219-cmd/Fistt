@@ -528,6 +528,8 @@ class _WalletScreenState extends State<WalletScreen> {
   void _showWithdrawSheet(BuildContext context, double balance) {
     final amountCtrl = TextEditingController();
     bool submitting = false;
+    const withdrawalFee = 30.0;
+    const minWithdrawal = 500.0;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -549,7 +551,17 @@ class _WalletScreenState extends State<WalletScreen> {
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(labelText: AppLocalizations.t('amount_lkr')),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(8)),
+                child: const Text(
+                  'Minimum withdrawal: LKR 500. A LKR 30 bank transfer fee applies and is deducted from your wallet in addition to the withdrawal amount.',
+                  style: TextStyle(fontSize: 12, color: AppColors.hint),
+                ),
+              ),
+              const SizedBox(height: 8),
               const Text(
                 'Make sure your bank details are saved in Settings → Wallet & Bank Details before withdrawing. '
                 'The amount will be deducted from your wallet immediately and refunded if the request is rejected.',
@@ -566,8 +578,12 @@ class _WalletScreenState extends State<WalletScreen> {
                       ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Please enter a valid amount')));
                       return;
                     }
-                    if (amount > balance) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Amount exceeds your available balance')));
+                    if (amount < minWithdrawal) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Minimum withdrawal amount is LKR 500')));
+                      return;
+                    }
+                    if (amount + withdrawalFee > balance) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Amount + LKR 30 fee (LKR ${(amount + withdrawalFee).toStringAsFixed(2)}) exceeds your available balance')));
                       return;
                     }
                     setModalState(() => submitting = true);
@@ -606,6 +622,7 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 }
+
 
 class _TransactionTile extends StatelessWidget {
   final int? id;
