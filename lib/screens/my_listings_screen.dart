@@ -142,6 +142,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                               final allowBidding = l['allowBidding'] == true;
                               final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
                               final isBoosted = l['boosted'] == true;
+                              final saleType = l['saleType'] ?? 'full';
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 10),
                                 decoration: BoxDecoration(
@@ -175,7 +176,11 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
                                         ],
                                       ),
                                       subtitle: Text(
-                                        '${l['game'] ?? ''} · LKR ${(highestBid ?? l['price']).toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
+                                        saleType == 'rental'
+                                            ? '${l['game'] ?? ''} · Rental · LKR ${(l['rentalPricePerUnit'] as num? ?? l['price']).toStringAsFixed(0)}/${l['rentalUnit'] ?? 'day'}'
+                                            : saleType == 'installment'
+                                                ? '${l['game'] ?? ''} · Installment · LKR ${(l['price'] as num).toStringAsFixed(0)} total'
+                                                : '${l['game'] ?? ''} · LKR ${(highestBid ?? l['price']).toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
                                         style: const TextStyle(color: AppColors.hint, fontSize: 12),
                                       ),
                                       trailing: _StatusChip(status: status),
