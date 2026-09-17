@@ -224,7 +224,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 final code = 'MG-U${user!['id'].toString().padLeft(6, '0')}';
                                 Clipboard.setData(ClipboardData(text: code));
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Account ID copied')),
+                                  SnackBar(content: Text(AppLocalizations.t('account_id_copied'))),
                                 );
                               },
                               child: Row(
@@ -377,7 +377,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.69 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.70 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -428,7 +428,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.69');
+      final result = await ApiService.checkForUpdate('1.0.70');
       if (!mounted) return;
       Navigator.pop(context);
 

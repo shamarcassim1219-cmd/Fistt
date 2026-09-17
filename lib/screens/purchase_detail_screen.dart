@@ -129,7 +129,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
                     }
                   },
                   icon: const Icon(Icons.attach_file, size: 16),
-                  label: Text(pickedPhoto == null ? 'Attach photo (optional)' : 'Change photo'),
+                  label: Text(pickedPhoto == null ? AppLocalizations.t('attach_photo_optional') : AppLocalizations.t('change_photo')),
                 ),
               ],
             ),
@@ -226,12 +226,12 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Installment Schedule', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text(AppLocalizations.t('installment_schedule'), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
                       const SizedBox(height: 10),
                       if (_loadingInstallments)
                         const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(color: AppColors.primary)))
                       else if (_installments == null || _installments!.isEmpty)
-                        const Text('No installment data yet.', style: TextStyle(color: AppColors.hint, fontSize: 12))
+                        Text(AppLocalizations.t('no_installment_data'), style: const TextStyle(color: AppColors.hint, fontSize: 12))
                       else
                         ..._installments!.map((p) {
                           final isPaid = p['status'] == 'paid';
@@ -254,7 +254,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Installment #${p['installmentNumber'] ?? p['installment_number']} — LKR $amount${dateLabel.isNotEmpty ? ' · $dateLabel' : ''}',
+                                    "${AppLocalizations.t('installment_hash')}${p['installmentNumber'] ?? p['installment_number']} — LKR $amount${dateLabel.isNotEmpty ? ' · $dateLabel' : ''}",
                                     style: const TextStyle(color: Colors.white, fontSize: 12),
                                   ),
                                 ),
@@ -266,7 +266,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
                                       style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
                                       child: _payingId == p['id']
                                           ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                                          : const Text('Pay Now', style: TextStyle(fontSize: 12)),
+                                          : Text(AppLocalizations.t('pay_now'), style: const TextStyle(fontSize: 12)),
                                     ),
                                   ),
                               ],

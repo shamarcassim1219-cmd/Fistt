@@ -68,10 +68,10 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen> {
                                   final due = DateTime.parse(installment['nextDueDate']).toLocal();
                                   final daysLeft = due.difference(DateTime.now()).inDays;
                                   nextDueLabel = daysLeft < 0
-                                      ? 'Overdue'
+                                      ? AppLocalizations.t('overdue')
                                       : daysLeft == 0
-                                          ? 'Due today'
-                                          : 'Due in $daysLeft day${daysLeft == 1 ? '' : 's'}';
+                                          ? AppLocalizations.t('due_today')
+                                          : "${AppLocalizations.t('due_in_prefix')} $daysLeft ${AppLocalizations.t('days_suffix')}";
                                 } catch (_) {}
                               }
                               return Container(
@@ -117,7 +117,7 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen> {
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
-                                              'Remaining: LKR ${(installment['remainingAmount'] as num).toStringAsFixed(2)}',
+                                              "${AppLocalizations.t('remaining_colon')} LKR ${(installment['remainingAmount'] as num).toStringAsFixed(2)}",
                                               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                             ),
                                             if (nextDueLabel != null)

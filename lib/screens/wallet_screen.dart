@@ -352,12 +352,12 @@ class _WalletScreenState extends State<WalletScreen> {
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
                       child: const Text(
-                        'No deposit methods available yet. Please contact support.',
+                        AppLocalizations.t('no_deposit_methods'),
                         style: TextStyle(color: AppColors.hint, fontSize: 13),
                       ),
                     )
                   else ...[
-                    Text('Select Deposit Method', style: const TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text(AppLocalizations.t('select_deposit_method'), style: const TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -401,14 +401,14 @@ class _WalletScreenState extends State<WalletScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (selectedMethod!['accountName'] != null && selectedMethod!['accountName'].toString().isNotEmpty)
-                              Text('Account Name: ${selectedMethod!['accountName']}', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                              Text("${AppLocalizations.t('account_name_colon')} ${selectedMethod!['accountName']}", style: const TextStyle(color: Colors.white, fontSize: 13)),
                             if (selectedMethod!['accountNumber'] != null && selectedMethod!['accountNumber'].toString().isNotEmpty) ...[
                               const SizedBox(height: 4),
-                              Text('Account / Wallet Number: ${selectedMethod!['accountNumber']}', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                              Text("${AppLocalizations.t('account_wallet_number_colon')} ${selectedMethod!['accountNumber']}", style: const TextStyle(color: Colors.white, fontSize: 13)),
                             ],
                             if (selectedMethod!['branch'] != null && selectedMethod!['branch'].toString().isNotEmpty) ...[
                               const SizedBox(height: 4),
-                              Text('Branch: ${selectedMethod!['branch']}', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                              Text("${AppLocalizations.t('branch_colon')} ${selectedMethod!['branch']}", style: const TextStyle(color: Colors.white, fontSize: 13)),
                             ],
                             if (selectedMethod!['extraInfo'] != null && selectedMethod!['extraInfo'].toString().isNotEmpty) ...[
                               const SizedBox(height: 4),
@@ -430,7 +430,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   TextField(
                     controller: referenceCtrl,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(labelText: 'Transaction / Reference Number'),
+                    decoration: InputDecoration(labelText: AppLocalizations.t('transaction_reference_number')),
                   ),
                   const SizedBox(height: 12),
                   Text(AppLocalizations.t('upload_bank_slip'), style: const TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
@@ -557,7 +557,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(8)),
                 child: const Text(
-                  'Minimum withdrawal: LKR 500. A LKR 30 bank transfer fee applies and is deducted from your wallet in addition to the withdrawal amount.',
+                  AppLocalizations.t('withdrawal_min_fee_note'),
                   style: TextStyle(fontSize: 12, color: AppColors.hint),
                 ),
               ),
@@ -578,8 +578,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
                   ),
                   child: Text(
-                    'Insufficient balance. You need at least LKR ${(minWithdrawal + withdrawalFee).toStringAsFixed(2)} '
-                    '(LKR 500 minimum + LKR 30 fee) to withdraw. Your current balance is LKR ${balance.toStringAsFixed(2)}.',
+                    "${AppLocalizations.t('insufficient_balance')} ${AppLocalizations.t('you_need_at_least')} LKR ${(minWithdrawal + withdrawalFee).toStringAsFixed(2)} (LKR 500 minimum + LKR 30 fee) ${AppLocalizations.t('to_withdraw_current_balance')} LKR ${balance.toStringAsFixed(2)}.",
                     style: const TextStyle(fontSize: 12, color: Colors.redAccent, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -661,7 +660,7 @@ class _TransactionTile extends StatelessWidget {
       case 'bid_hold': return {'label': 'Bid Held', 'icon': Icons.gavel_outlined};
       case 'bid_refund': return {'label': 'Bid Refunded', 'icon': Icons.replay_outlined};
       case 'installment_payment': return {'label': 'Installment Payment', 'icon': Icons.calendar_month_outlined};
-      default: return {'label': type, 'icon': Icons.receipt_long};
+      case 'installment_payment': return {'label': AppLocalizations.t('installment_payment_label'), 'icon': Icons.calendar_month_outlined};
     }
   }
 

@@ -98,8 +98,8 @@ class _MySalesScreenState extends State<MySalesScreen> {
                                         ),
                                         child: Text(
                                           rental['expired'] == true
-                                              ? 'Rental ended — remind buyer to return / change password'
-                                              : 'Buyer rented for ${rental['quantity']} ${rental['unit']}(s) · ${rental['daysRemaining']} day(s) remaining',
+                                              ? AppLocalizations.t('rental_ended_remind')
+                                              : "${AppLocalizations.t('buyer_rented_for')} ${rental['quantity']} ${rental['unit']}(s) · ${rental['daysRemaining']} ${AppLocalizations.t('days_remaining_suffix')}",
                                           style: TextStyle(
                                             color: rental['expired'] == true ? Colors.redAccent : Colors.white,
                                             fontSize: 12,
@@ -117,7 +117,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
                                           borderRadius: BorderRadius.circular(10),
                                         ),
                                         child: Text(
-                                          'Installments: LKR ${(installment['paidAmount'] as num).toStringAsFixed(2)} paid of LKR ${(installment['totalAmount'] as num).toStringAsFixed(2)} · LKR ${(installment['remainingAmount'] as num).toStringAsFixed(2)} remaining',
+                                          "${AppLocalizations.t('installments_colon')} LKR ${(installment['paidAmount'] as num).toStringAsFixed(2)} ${AppLocalizations.t('paid_of')} LKR ${(installment['totalAmount'] as num).toStringAsFixed(2)} · LKR ${(installment['remainingAmount'] as num).toStringAsFixed(2)} ${AppLocalizations.t('remaining_suffix')}",
                                           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                         ),
                                       ),

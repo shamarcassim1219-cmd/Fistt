@@ -255,7 +255,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
 
   Future<void> _confirmAndRent(double pricePerUnit, String unit) async {
-    if (!await requireLogin(context, reason: 'Login to rent this account')) return;
+    if (!await requireLogin(context, reason: AppLocalizations.t('login_to_rent'))) return;
     int quantity = 1;
 
     final confirmed = await showDialog<bool>(
@@ -265,7 +265,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
           final total = pricePerUnit * quantity;
           return AlertDialog(
             backgroundColor: AppColors.surface,
-            title: const Text('Rent this account', style: TextStyle(color: Colors.white)),
+            title: Text(AppLocalizations.t('rent_this_account'), style: const TextStyle(color: Colors.white)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,7 +286,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                   ],
                 ),
                 const Divider(color: AppColors.border, height: 16),
-                Text('Total: LKR ${total.toStringAsFixed(2)}', style: const TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+                Text("${AppLocalizations.t('total_colon')} LKR ${total.toStringAsFixed(2)}", style: const TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.bold)),
               ],
             ),
             actions: [
@@ -318,22 +318,22 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   Future<void> _confirmAndBuyInstallment(double totalPrice, int installmentCount, String frequency) async {
-    if (!await requireLogin(context, reason: 'Login to start an installment plan')) return;
+    if (!await requireLogin(context, reason: AppLocalizations.t('login_to_start_installment'))) return;
     final firstAmount = totalPrice / installmentCount;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Pay in Installments', style: TextStyle(color: Colors.white)),
+        title: Text(AppLocalizations.t('pay_in_installments_title'), style: const TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Total price: LKR ${totalPrice.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 13)),
-            Text('Split into $installmentCount $frequency installments', style: const TextStyle(color: AppColors.hint, fontSize: 13)),
+            Text("${AppLocalizations.t('total_price_colon')} LKR ${totalPrice.toStringAsFixed(2)}", style: const TextStyle(color: AppColors.hint, fontSize: 13)),
+            Text("${AppLocalizations.t('split_into')} $installmentCount $frequency ${AppLocalizations.t('installments_suffix')}", style: const TextStyle(color: AppColors.hint, fontSize: 13)),
             const SizedBox(height: 12),
-            Text('First installment (paid now): LKR ${firstAmount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+            Text("${AppLocalizations.t('first_installment_paid_now')} LKR ${firstAmount.toStringAsFixed(2)}", style: const TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.bold)),
           ],
         ),
         actions: [
@@ -680,7 +680,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               onPressed: _buying ? null : () => _confirmAndRent((l['rentalPricePerUnit'] as num).toDouble(), l['rentalUnit'] ?? 'day'),
               child: _buying
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                  : Text('Rent — LKR ${(l['rentalPricePerUnit'] as num).toStringAsFixed(2)} / ${l['rentalUnit'] ?? 'day'}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  : Text("${AppLocalizations.t('rent_dash')} LKR ${(l['rentalPricePerUnit'] as num).toStringAsFixed(2)} / ${l['rentalUnit'] ?? 'day'}", style: const TextStyle(fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -696,7 +696,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                 (l['installmentCount'] as num).toInt(),
                 l['installmentFrequency'] ?? 'weekly',
               ),
-              child: Text('Pay in ${(l['installmentCount'] as num).toInt()} Installments', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+              child: Text("${AppLocalizations.t('pay_in_prefix')} ${(l['installmentCount'] as num).toInt()} ${AppLocalizations.t('installments_suffix')}", style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
             ),
           ),
         ],
