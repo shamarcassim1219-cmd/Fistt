@@ -280,7 +280,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
                     ),
                     Text('$quantity $unit${quantity > 1 ? 's' : ''}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     IconButton(
-                      onPressed: () => setDialogState(() => quantity++),
+                      onPressed: quantity < 30 ? () => setDialogState(() => quantity++) : null,
                       icon: const Icon(Icons.add_circle_outline, color: Colors.white),
                     ),
                   ],
