@@ -310,8 +310,9 @@ class _WalletScreenState extends State<WalletScreen> {
     final referenceCtrl = TextEditingController();
     XFile? slipFile;
     bool submitting = false;
-    bool loadingBankDetails = true;
-    Map<String, dynamic>? bankDetails;
+    bool loadingMethods = true;
+    List<dynamic> methods = [];
+    Map<String, dynamic>? selectedMethod;
     String? sheetError;
 
     showModalBottomSheet(
@@ -320,16 +321,16 @@ class _WalletScreenState extends State<WalletScreen> {
       backgroundColor: AppColors.surface,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
-          if (loadingBankDetails) {
-            ApiService.getAdminBankDetails().then((data) {
+          if (loadingMethods) {
+            ApiService.getDepositMethods().then((data) {
               setModalState(() {
-                bankDetails = data;
-                loadingBankDetails = false;
+                methods = data;
+                loadingMethods = false;
               });
             }).catchError((e) {
               setModalState(() {
                 sheetError = e.toString().replaceFirst('Exception: ', '');
-                loadingBankDetails = false;
+                loadingMethods = false;
               });
             });
           }
@@ -343,28 +344,80 @@ class _WalletScreenState extends State<WalletScreen> {
                 children: [
                   Text(AppLocalizations.t('top_up_wallet'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                   const SizedBox(height: 16),
-                  if (loadingBankDetails)
+                  if (loadingMethods)
                     const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(color: AppColors.primary)))
-                  else if (bankDetails != null) ...[
-                    Text(AppLocalizations.t('deposit_to_account'), style: const TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
+                  else if (methods.isEmpty)
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Bank: ${bankDetails!['bankName']}', style: const TextStyle(color: Colors.white, fontSize: 13)),
-                          const SizedBox(height: 4),
-                          Text('Account Name: ${bankDetails!['accountName']}', style: const TextStyle(color: Colors.white, fontSize: 13)),
-                          const SizedBox(height: 4),
-                          Text('Account Number: ${bankDetails!['accountNumber']}', style: const TextStyle(color: Colors.white, fontSize: 13)),
-                          const SizedBox(height: 4),
-                          Text('Branch: ${bankDetails!['branch']}', style: const TextStyle(color: Colors.white, fontSize: 13)),
-                        ],
+                      child: const Text(
+                        'No deposit methods available yet. Please contact support.',
+                        style: TextStyle(color: AppColors.hint, fontSize: 13),
                       ),
+                    )
+                  else ...[
+                    Text('Select Deposit Method', style: const TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: methods.map<Widget>((m) {
+                        final selected = selectedMethod != null && selectedMethod!['id'] == m['id'];
+                        return InkWell(
+                          onTap: () => setModalState(() => selectedMethod = m),
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: selected ? AppColors.primary.withOpacity(0.15) : AppColors.fieldFill,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: selected ? AppColors.primary : AppColors.border, width: selected ? 1.5 : 1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: AppColors.surface,
+                                  backgroundImage: m['iconUrl'] != null ? NetworkImage(m['iconUrl']) : null,
+                                  child: m['iconUrl'] == null ? const Icon(Icons.account_balance, size: 14, color: AppColors.hint) : null,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(m['displayName'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
+                    if (selectedMethod != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (selectedMethod!['accountName'] != null && selectedMethod!['accountName'].toString().isNotEmpty)
+                              Text('Account Name: ${selectedMethod!['accountName']}', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                            if (selectedMethod!['accountNumber'] != null && selectedMethod!['accountNumber'].toString().isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text('Account / Wallet Number: ${selectedMethod!['accountNumber']}', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                            ],
+                            if (selectedMethod!['branch'] != null && selectedMethod!['branch'].toString().isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text('Branch: ${selectedMethod!['branch']}', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                            ],
+                            if (selectedMethod!['extraInfo'] != null && selectedMethod!['extraInfo'].toString().isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text('${selectedMethod!['extraInfo']}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                   ],
                   TextField(
@@ -377,7 +430,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   TextField(
                     controller: referenceCtrl,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(labelText: 'Bank Transfer Reference Number'),
+                    decoration: const InputDecoration(labelText: 'Transaction / Reference Number'),
                   ),
                   const SizedBox(height: 12),
                   Text(AppLocalizations.t('upload_bank_slip'), style: const TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
@@ -420,19 +473,23 @@ class _WalletScreenState extends State<WalletScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: submitting ? null : () async {
+                      onPressed: submitting || methods.isEmpty ? null : () async {
                         final amount = double.tryParse(amountCtrl.text.trim());
                         final referenceNumber = referenceCtrl.text.trim();
+                        if (selectedMethod == null) {
+                          setModalState(() => sheetError = 'Please select a deposit method');
+                          return;
+                        }
                         if (amount == null || amount <= 0) {
                           setModalState(() => sheetError = 'Enter a valid amount');
                           return;
                         }
                         if (referenceNumber.isEmpty) {
-                          setModalState(() => sheetError = 'Enter the bank transfer reference number');
+                          setModalState(() => sheetError = 'Enter the transaction reference number');
                           return;
                         }
                         if (slipFile == null) {
-                          setModalState(() => sheetError = 'Please upload your bank slip');
+                          setModalState(() => sheetError = 'Please upload your payment slip');
                           return;
                         }
                         setModalState(() {
@@ -466,6 +523,7 @@ class _WalletScreenState extends State<WalletScreen> {
       ),
     );
   }
+
 
   void _showWithdrawSheet(BuildContext context, double balance) {
     final amountCtrl = TextEditingController();

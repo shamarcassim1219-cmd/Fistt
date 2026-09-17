@@ -711,6 +711,12 @@ class ApiService {
     return await _handle(res);
   }
 
+  static Future<List<dynamic>> getDepositMethods() async {
+    final res = await http.get(Uri.parse('$baseUrl/wallet/deposit-methods'), headers: await _headers());
+    final data = await _handle(res);
+    return data['methods'];
+  }
+
   static Future<List<dynamic>> getTransactions() async {
     final res = await http.get(Uri.parse('$baseUrl/wallet/transactions'), headers: await _headers());
     final data = await _handle(res);
