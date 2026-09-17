@@ -403,6 +403,11 @@ class ApiService {
     required String vaultPassword,
     String vaultRecoveryCodes = '',
     bool allowBidding = false,
+    String saleType = 'full',
+    String? rentalUnit,
+    double? rentalPricePerUnit,
+    int? installmentCount,
+    String? installmentFrequency,
   }) async {
     final res = await http.post(
       Uri.parse('$baseUrl/listings'),
@@ -420,6 +425,11 @@ class ApiService {
         'vaultPassword': vaultPassword,
         'vaultRecoveryCodes': vaultRecoveryCodes,
         'allowBidding': allowBidding,
+        'saleType': saleType,
+        'rentalUnit': rentalUnit,
+        'rentalPricePerUnit': rentalPricePerUnit,
+        'installmentCount': installmentCount,
+        'installmentFrequency': installmentFrequency,
       }),
     );
     final data = await _handle(res);

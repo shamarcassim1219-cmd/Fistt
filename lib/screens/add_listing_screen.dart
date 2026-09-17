@@ -39,6 +39,11 @@ class _AddListingScreenState extends State<AddListingScreen> {
   final List<XFile> _screenshots = [];
   bool _submitting = false;
   bool _allowBidding = false;
+  String _saleType = 'full';
+  String? _rentalUnit;
+  final _rentalPriceCtrl = TextEditingController();
+  final _installmentCountCtrl = TextEditingController();
+  String? _installmentFrequency;
   String? _error;
 
   bool _loadingVerification = true;
@@ -174,6 +179,11 @@ class _AddListingScreenState extends State<AddListingScreen> {
       setState(() {
         _screenshots.clear();
         _allowBidding = false;
+        _saleType = 'full';
+        _rentalUnit = null;
+        _rentalPriceCtrl.clear();
+        _installmentCountCtrl.clear();
+        _installmentFrequency = null;
         _selectedGame = null;
         _selectedPlatform = 'Google';
         _statControllers.clear();
@@ -226,6 +236,11 @@ class _AddListingScreenState extends State<AddListingScreen> {
         vaultPassword: _vaultPasswordCtrl.text.trim(),
         vaultRecoveryCodes: _vaultRecoveryCtrl.text.trim(),
         allowBidding: _allowBidding,
+        saleType: _saleType,
+        rentalUnit: _saleType == 'rental' ? _rentalUnit : null,
+        rentalPricePerUnit: _saleType == 'rental' && _rentalPriceCtrl.text.trim().isNotEmpty ? double.tryParse(_rentalPriceCtrl.text.trim()) : null,
+        installmentCount: _saleType == 'installment' && _installmentCountCtrl.text.trim().isNotEmpty ? int.tryParse(_installmentCountCtrl.text.trim()) : null,
+        installmentFrequency: _saleType == 'installment' ? _installmentFrequency : null,
       );
 
       if (!mounted) return;
@@ -481,6 +496,105 @@ class _AddListingScreenState extends State<AddListingScreen> {
                       ),
                     ),
                   ),
+
+                  const SizedBox(height: 20),
+                  const Text('Sale Type', style: TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ChoiceChip(
+                          label: const Text('Full Sale'),
+                          selected: _saleType == 'full',
+                          onSelected: (_) => setState(() => _saleType = 'full'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ChoiceChip(
+                          label: const Text('Rental'),
+                          selected: _saleType == 'rental',
+                          onSelected: (_) => setState(() => _saleType = 'rental'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ChoiceChip(
+                          label: const Text('Installment'),
+                          selected: _saleType == 'installment',
+                          onSelected: (_) => setState(() => _saleType = 'installment'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_saleType == 'rental') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _rentalUnit,
+                            decoration: const InputDecoration(labelText: 'Rental Unit'),
+                            dropdownColor: AppColors.surface,
+                            items: const [
+                              DropdownMenuItem(value: 'hour', child: Text('Per Hour', style: TextStyle(color: Colors.white))),
+                              DropdownMenuItem(value: 'day', child: Text('Per Day', style: TextStyle(color: Colors.white))),
+                              DropdownMenuItem(value: 'week', child: Text('Per Week', style: TextStyle(color: Colors.white))),
+                              DropdownMenuItem(value: 'month', child: Text('Per Month', style: TextStyle(color: Colors.white))),
+                            ],
+                            onChanged: (v) => setState(() => _rentalUnit = v),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            controller: _rentalPriceCtrl,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration(labelText: 'Price per unit (LKR)'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Buyer picks how many units to rent for. After time expires, you\'ll get a reminder to change the account password.',
+                      style: TextStyle(color: AppColors.hint, fontSize: 11),
+                    ),
+                  ],
+                  if (_saleType == 'installment') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _installmentCountCtrl,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration(labelText: 'Number of installments'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _installmentFrequency,
+                            decoration: const InputDecoration(labelText: 'Frequency'),
+                            dropdownColor: AppColors.surface,
+                            items: const [
+                              DropdownMenuItem(value: 'weekly', child: Text('Weekly', style: TextStyle(color: Colors.white))),
+                              DropdownMenuItem(value: 'monthly', child: Text('Monthly', style: TextStyle(color: Colors.white))),
+                            ],
+                            onChanged: (v) => setState(() => _installmentFrequency = v),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'The price above is the total price, split across these installments. You decide when to share credentials.',
+                      style: TextStyle(color: AppColors.hint, fontSize: 11),
+                    ),
+                  ],
 
                   const SizedBox(height: 20),
                   _SectionLabel(AppLocalizations.t('screenshots_max6')),
