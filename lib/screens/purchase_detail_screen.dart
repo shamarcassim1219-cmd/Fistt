@@ -31,6 +31,15 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
     return DateTime.now().isAfter(deadline);
   }
 
+  // NEW: dispute is only allowed within 24 hours of purchase
+  bool get _withinDisputeWindow {
+    final createdStr = _order['createdAt'];
+    if (createdStr == null) return true; // fallback: allow if no timestamp
+    final createdAt = DateTime.parse(createdStr).toLocal();
+    final deadline = createdAt.add(const Duration(hours: 24));
+    return DateTime.now().isBefore(deadline);
+  }
+
   Future<void> _notifyAdmin() async {
     setState(() => _notifying = true);
     try {
@@ -209,7 +218,8 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
                 ),
               ],
 
-              if (status == 'escrow_held') ...[
+              // UPDATED: dispute button only shows while still within the 24-hour window
+              if (status == 'escrow_held' && _withinDisputeWindow) ...[
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
