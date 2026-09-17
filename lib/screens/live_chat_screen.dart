@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/secure_screen_mixin.dart';
+import '../services/socket_service.dart';
 
 class LiveChatScreen extends StatefulWidget {
   const LiveChatScreen({super.key});
@@ -55,6 +56,10 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   void dispose() {
     _pollTimer?.cancel();
     _typingDebounce?.cancel();
+    if (_ticketId != null) {
+      SocketService.leaveRoom('support_$_ticketId');
+      SocketService.off('new_support_message');
+    }
     _msgCtrl.removeListener(_onTextChanged);
     _scrollController.dispose();
     _msgFocusNode.dispose();
@@ -103,7 +108,16 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
 
   void _startPolling() {
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _loadMessages());
+    _pollTimer = Timer.periodic(const Duration(seconds: 20), (_) => _loadMessages());
+    _connectSocketForTicket();
+  }
+
+  Future<void> _connectSocketForTicket() async {
+    if (_ticketId == null) return;
+    await SocketService.connect();
+    final room = 'support_$_ticketId';
+    SocketService.joinRoom(room);
+    SocketService.on('new_support_message', (_) => _loadMessages());
   }
 
   Future<void> _loadMessages() async {
@@ -255,6 +269,10 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
 
   void _startNewChat() {
     _pollTimer?.cancel();
+    if (_ticketId != null) {
+      SocketService.leaveRoom('support_$_ticketId');
+      SocketService.off('new_support_message');
+    }
     setState(() {
       _ticketId = null;
       _messages = [];

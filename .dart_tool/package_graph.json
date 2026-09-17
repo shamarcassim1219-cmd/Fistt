@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.0.69+70",
+      "version": "1.0.74+75",
       "dependencies": [
         "background_downloader",
         "cupertino_icons",
@@ -30,6 +30,7 @@
         "path_provider",
         "shared_preferences",
         "smooth_page_indicator",
+        "socket_io_client",
         "url_launcher"
       ],
       "devDependencies": [
@@ -317,6 +318,15 @@
       "version": "1.2.1",
       "dependencies": [
         "flutter"
+      ]
+    },
+    {
+      "name": "socket_io_client",
+      "version": "2.0.3+1",
+      "dependencies": [
+        "js",
+        "logging",
+        "socket_io_common"
       ]
     },
     {
@@ -961,6 +971,13 @@
       ]
     },
     {
+      "name": "socket_io_common",
+      "version": "2.0.3",
+      "dependencies": [
+        "logging"
+      ]
+    },
+    {
       "name": "crypto",
       "version": "3.0.7",
       "dependencies": [
@@ -1246,6 +1263,13 @@
       "version": "7.0.2",
       "dependencies": [
         "collection",
+        "meta"
+      ]
+    },
+    {
+      "name": "js",
+      "version": "0.6.7",
+      "dependencies": [
         "meta"
       ]
     }

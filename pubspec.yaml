@@ -1,7 +1,7 @@
 name: mygame_app
 description: MYGame Marketplace - Buy & Sell Game Accounts Safely
 publish_to: 'none'
-version: 1.0.74+75
+version: 1.0.72+73
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -12,6 +12,7 @@ dependencies:
   cupertino_icons: ^1.0.6
 
   google_fonts: ^6.1.0
+  socket_io_client: ^2.0.3+1
   smooth_page_indicator: ^1.1.0
   local_auth: ^2.1.7
   flutter_localizations:

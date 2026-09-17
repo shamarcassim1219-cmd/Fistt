@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/secure_screen_mixin.dart';
 import '../main.dart';
 import '../services/api_service.dart';
+import '../services/socket_service.dart';
 
 class AdminChatScreen extends StatefulWidget {
   final int orderId;
@@ -20,18 +21,23 @@ class _AdminChatScreenState extends State<AdminChatScreen> with SecureScreenMixi
   final _msgCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
   bool _sending = false;
-  Timer? _pollTimer;
+  Timer? _fallbackPollTimer;
+  String? _roomName;
 
   @override
   void initState() {
     super.initState();
     _init();
-    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _loadMessages(silent: true));
+    _fallbackPollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _loadMessages(silent: true));
   }
 
   @override
   void dispose() {
-    _pollTimer?.cancel();
+    _fallbackPollTimer?.cancel();
+    if (_roomName != null) {
+      SocketService.leaveRoom(_roomName!);
+      SocketService.off('new_message');
+    }
     _scrollCtrl.dispose();
     _msgCtrl.dispose();
     super.dispose();
@@ -42,6 +48,11 @@ class _AdminChatScreenState extends State<AdminChatScreen> with SecureScreenMixi
       final convId = await ApiService.getMyAdminConversation(widget.orderId);
       _conversationId = convId;
       await _loadMessages();
+
+      await SocketService.connect();
+      _roomName = 'conversation_$convId';
+      SocketService.joinRoom(_roomName!);
+      SocketService.on('new_message', _onNewMessage);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -49,6 +60,17 @@ class _AdminChatScreenState extends State<AdminChatScreen> with SecureScreenMixi
         _loading = false;
       });
     }
+  }
+
+  void _onNewMessage(dynamic data) {
+    if (!mounted) return;
+    final incoming = Map<String, dynamic>.from(data);
+    final alreadyExists = _messages.any((m) => m['id'] == incoming['id']);
+    if (alreadyExists) return;
+    setState(() {
+      _messages = [..._messages, incoming];
+    });
+    _scrollToBottom();
   }
 
   Future<void> _loadMessages({bool silent = false}) async {
@@ -92,7 +114,6 @@ class _AdminChatScreenState extends State<AdminChatScreen> with SecureScreenMixi
     try {
       await ApiService.sendMyAdminMessage(_conversationId!, text);
       _msgCtrl.clear();
-      await _loadMessages();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

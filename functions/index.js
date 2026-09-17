@@ -369,3 +369,15 @@ exports.confirmTopUp = functions.https.onCall(async (data, context) => {
   await batch.commit();
   return { success: true };
 });
+
+exports.getAppVersion = functions.https.onRequest((req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+
+  res.json({
+    latestVersion: "1.0.72",
+    latestVersionCode: 73,
+    minimumVersion: "1.0.72",
+    minimumVersionCode: 73,
+    apkUrl: "https://buysellgame.store/downloads/app-release.apk"
+  });
+});
