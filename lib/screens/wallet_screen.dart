@@ -290,9 +290,11 @@ class _WalletScreenState extends State<WalletScreen> {
                               )
                             else
                               ..._transactions.map((tx) => _TransactionTile(
+                                    id: tx['id'],
                                     type: tx['type'] ?? 'unknown',
                                     amount: (tx['amount'] as num?)?.toDouble() ?? 0,
                                     status: tx['status'] ?? 'pending',
+                                    createdAt: tx['createdAt'],
                                   )),
                           ],
                         ),
@@ -548,11 +550,13 @@ class _WalletScreenState extends State<WalletScreen> {
 }
 
 class _TransactionTile extends StatelessWidget {
+  final int? id;
   final String type;
   final double amount;
   final String status;
+  final String? createdAt;
 
-  const _TransactionTile({required this.type, required this.amount, required this.status});
+  const _TransactionTile({this.id, required this.type, required this.amount, required this.status, this.createdAt});
 
   Map<String, dynamic> get _display {
     switch (type) {
@@ -564,6 +568,7 @@ class _TransactionTile extends StatelessWidget {
       case 'purchase_hold': return {'label': 'Purchase (Escrow)', 'icon': Icons.lock_clock_outlined};
       case 'bid_hold': return {'label': 'Bid Held', 'icon': Icons.gavel_outlined};
       case 'bid_refund': return {'label': 'Bid Refunded', 'icon': Icons.replay_outlined};
+      case 'installment_payment': return {'label': 'Installment Payment', 'icon': Icons.calendar_month_outlined};
       default: return {'label': type, 'icon': Icons.receipt_long};
     }
   }
@@ -576,18 +581,68 @@ class _TransactionTile extends StatelessWidget {
     }
   }
 
+  String get _txCode {
+    if (id == null) return 'MG-000000';
+    return 'MG-${id.toString().padLeft(6, '0')}';
+  }
+
+  void _showDetails(BuildContext context) {
+    final d = _display;
+    String dateStr = '';
+    if (createdAt != null) {
+      try {
+        final dt = DateTime.parse(createdAt!).toLocal();
+        dateStr = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      } catch (_) {}
+    }
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(d['label'] as String, style: const TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _detailRow('Transaction ID', _txCode),
+            _detailRow('Amount', 'LKR ${amount.toStringAsFixed(2)}'),
+            _detailRow('Status', status),
+            if (dateStr.isNotEmpty) _detailRow('Date', dateStr),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: AppColors.hint, fontSize: 13)),
+          Text(value, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final d = _display;
     final positive = amount >= 0;
     final color = positive ? Colors.greenAccent : Colors.redAccent;
     return ListTile(
+      onTap: () => _showDetails(context),
       leading: CircleAvatar(
         backgroundColor: color.withOpacity(0.15),
         child: Icon(d['icon'] as IconData, color: color, size: 20),
       ),
       title: Text(d['label'] as String, style: const TextStyle(color: Colors.white)),
-      subtitle: Text(status, style: TextStyle(color: _statusColor(), fontSize: 12)),
+      subtitle: Text('$_txCode · $status', style: TextStyle(color: _statusColor(), fontSize: 12)),
       trailing: Text('${positive ? '+' : ''} LKR ${amount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, color: color)),
     );
   }

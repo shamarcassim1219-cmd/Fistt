@@ -61,6 +61,19 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen> {
                               final o = _orders[i];
                               final screenshots = (o['screenshots'] as List?) ?? [];
                               final status = o['status'];
+                              final installment = o['installment'] as Map<String, dynamic>?;
+                              String? nextDueLabel;
+                              if (installment != null && installment['nextDueDate'] != null) {
+                                try {
+                                  final due = DateTime.parse(installment['nextDueDate']).toLocal();
+                                  final daysLeft = due.difference(DateTime.now()).inDays;
+                                  nextDueLabel = daysLeft < 0
+                                      ? 'Overdue'
+                                      : daysLeft == 0
+                                          ? 'Due today'
+                                          : 'Due in $daysLeft day${daysLeft == 1 ? '' : 's'}';
+                                } catch (_) {}
+                              }
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 10),
                                 decoration: BoxDecoration(
@@ -68,24 +81,58 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: AppColors.border),
                                 ),
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.all(12),
-                                  onTap: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => PurchaseDetailScreen(order: Map<String, dynamic>.from(o))),
-                                    );
-                                    _load();
-                                  },
-                                  leading: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: screenshots.isNotEmpty
-                                        ? Image.network(screenshots[0], width: 50, height: 50, fit: BoxFit.cover)
-                                        : Container(width: 50, height: 50, color: AppColors.fieldFill, child: const Icon(Icons.image_outlined, color: AppColors.hint)),
-                                  ),
-                                  title: Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                  subtitle: Text('LKR ${(o['price'] as num).toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
-                                  trailing: _StatusBadge(status: status),
+                                child: Column(
+                                  children: [
+                                    ListTile(
+                                      contentPadding: const EdgeInsets.all(12),
+                                      onTap: () async {
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (_) => PurchaseDetailScreen(order: Map<String, dynamic>.from(o))),
+                                        );
+                                        _load();
+                                      },
+                                      leading: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: screenshots.isNotEmpty
+                                            ? Image.network(screenshots[0], width: 50, height: 50, fit: BoxFit.cover)
+                                            : Container(width: 50, height: 50, color: AppColors.fieldFill, child: const Icon(Icons.image_outlined, color: AppColors.hint)),
+                                      ),
+                                      title: Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                      subtitle: Text('LKR ${(o['price'] as num).toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                                      trailing: _StatusBadge(status: status),
+                                    ),
+                                    if (installment != null)
+                                      Container(
+                                        width: double.infinity,
+                                        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: (installment['overdueCount'] as num? ?? 0) > 0
+                                              ? Colors.redAccent.withOpacity(0.1)
+                                              : AppColors.primary.withOpacity(0.08),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              'Remaining: LKR ${(installment['remainingAmount'] as num).toStringAsFixed(2)}',
+                                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                            ),
+                                            if (nextDueLabel != null)
+                                              Text(
+                                                nextDueLabel,
+                                                style: TextStyle(
+                                                  color: (installment['overdueCount'] as num? ?? 0) > 0 ? Colors.redAccent : AppColors.primary,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               );
                             },
