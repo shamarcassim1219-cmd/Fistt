@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/secure_screen_mixin.dart';
 import '../main.dart';
 import '../services/api_service.dart';
@@ -31,10 +33,9 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
     return DateTime.now().isAfter(deadline);
   }
 
-  // NEW: dispute is only allowed within 24 hours of purchase
   bool get _withinDisputeWindow {
     final createdStr = _order['createdAt'];
-    if (createdStr == null) return true; // fallback: allow if no timestamp
+    if (createdStr == null) return true;
     final createdAt = DateTime.parse(createdStr).toLocal();
     final deadline = createdAt.add(const Duration(hours: 24));
     return DateTime.now().isBefore(deadline);
@@ -57,17 +58,44 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
   void _showDisputeDialog() {
     final reasonCtrl = TextEditingController();
     bool sending = false;
+    XFile? pickedPhoto;
+
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           backgroundColor: AppColors.surface,
           title: Text(AppLocalizations.t('raise_dispute'), style: const TextStyle(color: Colors.white)),
-          content: TextField(
-            controller: reasonCtrl,
-            maxLines: 4,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(hintText: 'Describe the issue with this account...'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: reasonCtrl,
+                  maxLines: 4,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(hintText: 'Describe the issue with this account...'),
+                ),
+                const SizedBox(height: 12),
+                if (pickedPhoto != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(File(pickedPhoto!.path), height: 120, fit: BoxFit.cover, width: double.infinity),
+                  ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70);
+                    if (picked != null) {
+                      setDialogState(() => pickedPhoto = picked);
+                    }
+                  },
+                  icon: const Icon(Icons.attach_file, size: 16),
+                  label: Text(pickedPhoto == null ? 'Attach photo (optional)' : 'Change photo'),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.t('cancel'))),
@@ -76,7 +104,11 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
                 if (reasonCtrl.text.trim().isEmpty) return;
                 setDialogState(() => sending = true);
                 try {
-                  await ApiService.raiseDispute(_order['id'], reasonCtrl.text.trim());
+                  String? photoUrl;
+                  if (pickedPhoto != null) {
+                    photoUrl = await ApiService.uploadImage(pickedPhoto!);
+                  }
+                  await ApiService.raiseDispute(_order['id'], reasonCtrl.text.trim(), photoUrl: photoUrl);
                   if (!ctx.mounted) return;
                   Navigator.pop(ctx);
                   if (!mounted) return;
@@ -218,7 +250,6 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
                 ),
               ],
 
-              // UPDATED: dispute button only shows while still within the 24-hour window
               if (status == 'escrow_held' && _withinDisputeWindow) ...[
                 const SizedBox(height: 12),
                 SizedBox(

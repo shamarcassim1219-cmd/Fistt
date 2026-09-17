@@ -253,6 +253,114 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     }
   }
 
+
+  Future<void> _confirmAndRent(double pricePerUnit, String unit) async {
+    if (!await requireLogin(context, reason: 'Login to rent this account')) return;
+    int quantity = 1;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final total = pricePerUnit * quantity;
+          return AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: const Text('Rent this account', style: TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('LKR ${pricePerUnit.toStringAsFixed(2)} per $unit', style: const TextStyle(color: AppColors.hint, fontSize: 13)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: quantity > 1 ? () => setDialogState(() => quantity--) : null,
+                      icon: const Icon(Icons.remove_circle_outline, color: Colors.white),
+                    ),
+                    Text('$quantity $unit${quantity > 1 ? 's' : ''}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      onPressed: () => setDialogState(() => quantity++),
+                      icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+                    ),
+                  ],
+                ),
+                const Divider(color: AppColors.border, height: 16),
+                Text('Total: LKR ${total.toStringAsFixed(2)}', style: const TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.t('cancel'))),
+              ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.t('confirm_pay'))),
+            ],
+          );
+        },
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _buying = true);
+    try {
+      await ApiService.createOrder(widget.listingId, purchaseType: 'rental', rentalQuantity: quantity);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rental confirmed! Admin is verifying — check My Purchases.')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _buying = false);
+    }
+  }
+
+  Future<void> _confirmAndBuyInstallment(double totalPrice, int installmentCount, String frequency) async {
+    if (!await requireLogin(context, reason: 'Login to start an installment plan')) return;
+    final firstAmount = totalPrice / installmentCount;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Pay in Installments', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Total price: LKR ${totalPrice.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 13)),
+            Text('Split into $installmentCount $frequency installments', style: const TextStyle(color: AppColors.hint, fontSize: 13)),
+            const SizedBox(height: 12),
+            Text('First installment (paid now): LKR ${firstAmount.toStringAsFixed(2)}', style: const TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.t('cancel'))),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.t('confirm_pay'))),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _buying = true);
+    try {
+      await ApiService.createOrder(widget.listingId, purchaseType: 'installment');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('First installment paid! Admin is verifying — check My Purchases.')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _buying = false);
+    }
+  }
   void _showMakeOfferSheet(double currentPrice) {
     final offerCtrl = TextEditingController();
     bool sending = false;
@@ -368,8 +476,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
     final isOwnListing = _myUserId != null && _myUserId == l['sellerId'];
 
-    final canBuyNow = l['status'] == 'active' && !isOwnListing && (!allowBidding || biddingEnded || biddingNotStarted);
-    final canMakeOffer = l['status'] == 'active' && !isOwnListing;
+    final saleType = l['saleType'] ?? 'full';
+    final canBuyNow = l['status'] == 'active' && !isOwnListing && saleType != 'rental' && (!allowBidding || biddingEnded || biddingNotStarted);
+    final canRent = l['status'] == 'active' && !isOwnListing && saleType == 'rental';
+    final canInstallment = l['status'] == 'active' && !isOwnListing && saleType == 'installment';
+    final canMakeOffer = l['status'] == 'active' && !isOwnListing && saleType == 'full';
     final canBid = allowBidding && !isOwnListing && (biddingActive || biddingNotStarted);
 
     return ListView(
@@ -556,6 +667,36 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               child: _buying
                   ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
                   : Text('${AppLocalizations.t('buy_now')} — LKR ${currentPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+
+        if (canRent) ...[
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: _buying ? null : () => _confirmAndRent((l['rentalPricePerUnit'] as num).toDouble(), l['rentalUnit'] ?? 'day'),
+              child: _buying
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  : Text('Rent — LKR ${(l['rentalPricePerUnit'] as num).toStringAsFixed(2)} / ${l['rentalUnit'] ?? 'day'}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+
+        if (canInstallment) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: OutlinedButton(
+              onPressed: _buying ? null : () => _confirmAndBuyInstallment(
+                basePrice,
+                (l['installmentCount'] as num).toInt(),
+                l['installmentFrequency'] ?? 'weekly',
+              ),
+              child: Text('Pay in ${(l['installmentCount'] as num).toInt()} Installments', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
             ),
           ),
         ],

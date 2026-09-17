@@ -456,13 +456,28 @@ class ApiService {
   }
 
   // ---------- ORDERS ----------
-  static Future<Map<String, dynamic>> createOrder(int listingId, {int pointsToUse = 0}) async {
+  static Future<Map<String, dynamic>> createOrder(int listingId, {int pointsToUse = 0, String purchaseType = 'full', int? rentalQuantity}) async {
     final res = await http.post(
       Uri.parse('$baseUrl/orders'),
       headers: await _headers(),
-      body: jsonEncode({'listingId': listingId, 'pointsToUse': pointsToUse}),
+      body: jsonEncode({
+        'listingId': listingId,
+        'pointsToUse': pointsToUse,
+        'purchaseType': purchaseType,
+        'rentalQuantity': rentalQuantity,
+      }),
     );
     return await _handle(res);
+  }
+
+  static Future<Map<String, dynamic>> getInstallments(int orderId) async {
+    final res = await http.get(Uri.parse('$baseUrl/orders/$orderId/installments'), headers: await _headers());
+    return await _handle(res);
+  }
+
+  static Future<void> payInstallment(int paymentId) async {
+    final res = await http.post(Uri.parse('$baseUrl/orders/installments/$paymentId/pay'), headers: await _headers());
+    await _handle(res);
   }
 
   static Future<int> getReferralPoints() async {
@@ -487,15 +502,15 @@ class ApiService {
     final res = await http.get(Uri.parse('$baseUrl/orders/$orderId/vault'), headers: await _headers());
     return await _handle(res);
   }
-
-  static Future<void> raiseDispute(int orderId, String reason) async {
+  static Future<void> raiseDispute(int orderId, String reason, {String? photoUrl}) async {
     final res = await http.post(
       Uri.parse('$baseUrl/orders/$orderId/dispute'),
       headers: await _headers(),
-      body: jsonEncode({'reason': reason}),
+      body: jsonEncode({'reason': reason, 'photoUrl': photoUrl}),
     );
     await _handle(res);
   }
+
 
   static Future<void> notifyAdminOverdue(int orderId) async {
     final res = await http.post(Uri.parse('$baseUrl/orders/$orderId/notify-admin'), headers: await _headers());
