@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../main.dart';
@@ -216,6 +217,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
                           const SizedBox(height: 4),
                           _VerifiedBadgeChip(status: user?['verifiedStatus'] ?? 'not_verified'),
+                          const SizedBox(height: 6),
+                          if (user?['id'] != null)
+                            InkWell(
+                              onTap: () {
+                                final code = 'MG-U${user!['id'].toString().padLeft(6, '0')}';
+                                Clipboard.setData(ClipboardData(text: code));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Account ID copied')),
+                                );
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'ID: MG-U${user!['id'].toString().padLeft(6, '0')}',
+                                    style: const TextStyle(color: AppColors.hint, fontSize: 11),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.copy, size: 12, color: AppColors.hint),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -354,7 +377,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.63 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '1.0.64 — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -405,7 +428,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.63');
+      final result = await ApiService.checkForUpdate('1.0.64');
       if (!mounted) return;
       Navigator.pop(context);
 
