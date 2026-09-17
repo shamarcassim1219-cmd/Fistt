@@ -588,7 +588,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: (submitting || balance < minWithdrawal + withdrawalFee) ? null : () async {
+                  onPressed: submitting ? null : () async {
                     final amount = double.tryParse(amountCtrl.text.trim());
                     if (amount == null || amount <= 0) {
                       ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Please enter a valid amount')));

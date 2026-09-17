@@ -261,13 +261,18 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
                                 if (!isPaid)
                                   SizedBox(
                                     height: 32,
-                                    child: ElevatedButton(
-                                      onPressed: _payingId == p['id'] ? null : () => _payInstallment(p['id']),
-                                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
-                                      child: _payingId == p['id']
-                                          ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                                          : Text(AppLocalizations.t('pay_now'), style: const TextStyle(fontSize: 12)),
-                                    ),
+                                    child: !adminReviewed
+                                        ? const Padding(
+                                            padding: EdgeInsets.symmetric(horizontal: 4),
+                                            child: Text('Awaiting admin approval', style: TextStyle(color: AppColors.hint, fontSize: 11)),
+                                          )
+                                        : ElevatedButton(
+                                            onPressed: _payingId == p['id'] ? null : () => _payInstallment(p['id']),
+                                            style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
+                                            child: _payingId == p['id']
+                                                ? const SizedBox(height: 14, width: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                                                : Text(AppLocalizations.t('pay_now'), style: const TextStyle(fontSize: 12)),
+                                          ),
                                   ),
                               ],
                             ),
