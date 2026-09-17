@@ -13,11 +13,13 @@ class ForceUpdateScreen extends StatelessWidget {
   Future<void> _update() async {
     final uri = Uri.parse(info.apkUrl);
 
-    if (await canLaunchUrl(uri)) {
+    try {
       await launchUrl(
         uri,
         mode: LaunchMode.externalApplication,
       );
+    } catch (_) {
+      // Ignore launch errors.
     }
   }
 
