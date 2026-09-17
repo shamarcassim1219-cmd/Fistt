@@ -351,7 +351,7 @@ class _WalletScreenState extends State<WalletScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
-                      child: const Text(
+                      child: Text(
                         AppLocalizations.t('no_deposit_methods'),
                         style: TextStyle(color: AppColors.hint, fontSize: 13),
                       ),
@@ -556,7 +556,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(8)),
-                child: const Text(
+                child: Text(
                   AppLocalizations.t('withdrawal_min_fee_note'),
                   style: TextStyle(fontSize: 12, color: AppColors.hint),
                 ),
@@ -651,16 +651,29 @@ class _TransactionTile extends StatelessWidget {
 
   Map<String, dynamic> get _display {
     switch (type) {
-      case 'topup': return {'label': 'Wallet Top-Up', 'icon': Icons.add_circle_outline};
-      case 'withdrawal': return {'label': 'Withdrawal', 'icon': Icons.arrow_circle_up_outlined};
-      case 'sale_release': return {'label': 'Account Sale', 'icon': Icons.sell_outlined};
-      case 'commission': return {'label': 'Platform Commission', 'icon': Icons.percent};
-      case 'referral_bonus': return {'label': 'Referral Bonus', 'icon': Icons.card_giftcard};
-      case 'purchase_hold': return {'label': 'Purchase (Escrow)', 'icon': Icons.lock_clock_outlined};
-      case 'bid_hold': return {'label': 'Bid Held', 'icon': Icons.gavel_outlined};
-      case 'bid_refund': return {'label': 'Bid Refunded', 'icon': Icons.replay_outlined};
-      case 'installment_payment': return {'label': 'Installment Payment', 'icon': Icons.calendar_month_outlined};
-      case 'installment_payment': return {'label': AppLocalizations.t('installment_payment_label'), 'icon': Icons.calendar_month_outlined};
+      case 'topup':
+        return {'label': 'Wallet Top-Up', 'icon': Icons.add_circle_outline};
+      case 'withdrawal':
+        return {'label': 'Withdrawal', 'icon': Icons.arrow_circle_up_outlined};
+      case 'sale_release':
+        return {'label': 'Account Sale', 'icon': Icons.sell_outlined};
+      case 'commission':
+        return {'label': 'Platform Commission', 'icon': Icons.percent};
+      case 'referral_bonus':
+        return {'label': 'Referral Bonus', 'icon': Icons.card_giftcard};
+      case 'purchase_hold':
+        return {'label': 'Purchase (Escrow)', 'icon': Icons.lock_clock_outlined};
+      case 'bid_hold':
+        return {'label': 'Bid Held', 'icon': Icons.gavel_outlined};
+      case 'bid_refund':
+        return {'label': 'Bid Refunded', 'icon': Icons.replay_outlined};
+      case 'installment_payment':
+        return {
+          'label': AppLocalizations.t('installment_payment_label'),
+          'icon': Icons.calendar_month_outlined
+        };
+      default:
+        return {'label': type, 'icon': Icons.receipt_long_outlined};
     }
   }
 
