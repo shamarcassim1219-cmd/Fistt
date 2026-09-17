@@ -14,61 +14,37 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _Particle {
-  final double angle;
-  final double distance;
-  final double size;
-  final double delay;
-  _Particle({required this.angle, required this.distance, required this.size, required this.delay});
-}
-
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final AnimationController _glowController;
-  late final List<_Particle> _particles;
 
-  late final Animation<double> _iconScale;
-  late final Animation<double> _iconFade;
-  late final Animation<double> _iconRotate;
-  late final Animation<double> _titleFade;
-  late final Animation<Offset> _titleSlide;
-  late final Animation<double> _subtitleFade;
-  late final Animation<Offset> _subtitleSlide;
-  late final Animation<double> _loaderFade;
+  late final Animation<double> _logoFade;
+  late final Animation<double> _logoScale;
+  late final Animation<double> _bgFade;
+  late final Animation<double> _characterFade;
+  late final Animation<Offset> _characterSlide;
+  late final Animation<double> _progress;
+  late final Animation<double> _readyFade;
 
   @override
   void initState() {
     super.initState();
 
-    final rand = Random();
-    _particles = List.generate(28, (i) {
-      return _Particle(
-        angle: rand.nextDouble() * 2 * pi,
-        distance: 90 + rand.nextDouble() * 70,
-        size: 2 + rand.nextDouble() * 3,
-        delay: rand.nextDouble() * 0.3,
-      );
-    });
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2800));
 
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2200));
+    _logoFade = CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.2, curve: Curves.easeOut));
+    _logoScale = Tween<double>(begin: 0.6, end: 1.0)
+        .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.25, curve: Curves.easeOutBack)));
 
-    _iconScale = Tween<double>(begin: 0.3, end: 1.0)
-        .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.35, 0.65, curve: Curves.elasticOut)));
-    _iconFade = CurvedAnimation(parent: _controller, curve: const Interval(0.35, 0.55, curve: Curves.easeOut));
-    _iconRotate = Tween<double>(begin: -0.5, end: 0.0)
-        .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.35, 0.65, curve: Curves.easeOutBack)));
+    _bgFade = CurvedAnimation(parent: _controller, curve: const Interval(0.15, 0.5, curve: Curves.easeOut));
 
-    _titleFade = CurvedAnimation(parent: _controller, curve: const Interval(0.55, 0.8, curve: Curves.easeOut));
-    _titleSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.55, 0.8, curve: Curves.easeOut)));
+    _characterFade = CurvedAnimation(parent: _controller, curve: const Interval(0.45, 0.75, curve: Curves.easeOut));
+    _characterSlide = Tween<Offset>(begin: const Offset(0, 0.25), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.45, 0.8, curve: Curves.easeOutCubic)));
 
-    _subtitleFade = CurvedAnimation(parent: _controller, curve: const Interval(0.65, 0.9, curve: Curves.easeOut));
-    _subtitleSlide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.65, 0.9, curve: Curves.easeOut)));
+    _progress = Tween<double>(begin: 0.0, end: 1.0)
+        .animate(CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.95, curve: Curves.easeInOut)));
 
-    _loaderFade = CurvedAnimation(parent: _controller, curve: const Interval(0.85, 1.0, curve: Curves.easeOut));
-
-    _glowController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat(reverse: true);
+    _readyFade = CurvedAnimation(parent: _controller, curve: const Interval(0.88, 1.0, curve: Curves.easeOut));
 
     _controller.forward();
     _decideNextScreen();
@@ -77,7 +53,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void dispose() {
     _controller.dispose();
-    _glowController.dispose();
     super.dispose();
   }
 
@@ -94,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       return;
     }
 
-    await Future.delayed(const Duration(milliseconds: 2400));
+    await Future.delayed(const Duration(milliseconds: 3000));
     final prefs = await SharedPreferences.getInstance();
 
     final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
@@ -121,161 +96,194 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: Stack(
-        children: [
-          AnimatedBuilder(
-            animation: _glowController,
-            builder: (context, child) {
-              final glow = 0.08 + _glowController.value * 0.10;
-              return Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: Alignment.center,
-                      radius: 0.9,
-                      colors: [
-                        AppColors.primary.withOpacity(glow),
-                        AppColors.bg,
-                      ],
+      backgroundColor: const Color(0xFF160B2E),
+      body: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              // ---- Sunset gradient + sun + palm silhouettes ----
+              Opacity(
+                opacity: _bgFade.value,
+                child: CustomPaint(
+                  size: Size(size.width, size.height),
+                  painter: _MiamiBackgroundPainter(),
+                ),
+              ),
+
+              // ---- Character slot (add assets/images/splash_character.png) ----
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: FadeTransition(
+                  opacity: _characterFade,
+                  child: SlideTransition(
+                    position: _characterSlide,
+                    child: SizedBox(
+                      height: size.height * 0.55,
+                      width: size.width,
+                      child: Image.asset(
+                        'assets/images/splash_character.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                      ),
                     ),
                   ),
                 ),
-              );
-            },
-          ),
-          Center(
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 260,
-                  height: 260,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CustomPaint(
-                        size: const Size(260, 260),
-                        painter: _ParticlePainter(
-                          particles: _particles,
-                          progress: _controller.value,
-                          color: AppColors.primary,
+              ),
+
+              // ---- Logo + title ----
+              Padding(
+                padding: const EdgeInsets.only(top: 70),
+                child: Column(
+                  children: [
+                    FadeTransition(
+                      opacity: _logoFade,
+                      child: ScaleTransition(
+                        scale: _logoScale,
+                        child: Column(
+                          children: [
+                            const Icon(Icons.sports_esports_rounded, size: 56, color: Colors.white),
+                            const SizedBox(height: 8),
+                            RichText(
+                              text: const TextSpan(
+                                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                                children: [
+                                  TextSpan(text: 'My', style: TextStyle(color: Colors.white)),
+                                  TextSpan(text: 'Game', style: TextStyle(color: Color(0xFFFF4D9D))),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            const Text('PLAY · TRADE · LEVEL UP',
+                                style: TextStyle(fontSize: 10, color: Colors.white70, letterSpacing: 2)),
+                          ],
                         ),
                       ),
-                      Opacity(
-                        opacity: _iconFade.value,
-                        child: Transform.rotate(
-                          angle: _iconRotate.value,
-                          child: Transform.scale(
-                            scale: _iconScale.value,
-                            child: AnimatedBuilder(
-                              animation: _glowController,
-                              builder: (context, child) {
-                                final pulse = _glowController.value;
-                                return Container(
-                                  padding: const EdgeInsets.all(24),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.15),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.primary.withOpacity(0.35 + pulse * 0.25),
-                                        blurRadius: 26 + pulse * 16,
-                                        spreadRadius: 1 + pulse * 3,
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Icon(Icons.sports_esports_rounded, size: 60, color: AppColors.primary),
-                                );
-                              },
+                    ),
+                  ],
+                ),
+              ),
+
+              // ---- Progress bar + status text ----
+              Positioned(
+                left: 32,
+                right: 32,
+                bottom: 40,
+                child: Column(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        height: 5,
+                        color: Colors.white.withOpacity(0.15),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: FractionallySizedBox(
+                            widthFactor: _progress.value,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(colors: [Color(0xFFFF4D9D), Color(0xFF6C4CF1)]),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 12),
+                    _readyFade.value > 0.5
+                        ? FadeTransition(
+                            opacity: _readyFade,
+                            child: const Text('Welcome to MyGame ❤',
+                                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                          )
+                        : const Text('Loading...', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                FadeTransition(
-                  opacity: _titleFade,
-                  child: SlideTransition(
-                    position: _titleSlide,
-                    child: const Text('MYGame Marketplace',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                FadeTransition(
-                  opacity: _subtitleFade,
-                  child: SlideTransition(
-                    position: _subtitleSlide,
-                    child: const Text('Buy & Sell Game Accounts Safely',
-                        style: TextStyle(fontSize: 14, color: AppColors.hint)),
-                  ),
-                ),
-                const SizedBox(height: 40),
-                Opacity(
-                  opacity: _loaderFade.value,
-                  child: const SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(color: AppColors.primary, strokeWidth: 2.5),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class _ParticlePainter extends CustomPainter {
-  final List<_Particle> particles;
-  final double progress;
-  final Color color;
-
-  _ParticlePainter({required this.particles, required this.progress, required this.color});
-
+class _MiamiBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
+    final rect = Offset.zero & size;
 
-    for (final p in particles) {
-      final start = p.delay * 0.3;
-      final end = 0.5 + p.delay * 0.1;
-      double t = ((progress - start) / (end - start)).clamp(0.0, 1.0);
-      final eased = 1 - pow(1 - t, 3).toDouble();
+    // Sunset gradient sky
+    final skyPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF2E1052), Color(0xFF7A2C6B), Color(0xFFE85D5D), Color(0xFFFFA45B)],
+        stops: [0.0, 0.45, 0.75, 1.0],
+      ).createShader(rect);
+    canvas.drawRect(rect, skyPaint);
 
-      final startOffset = Offset(cos(p.angle), sin(p.angle)) * p.distance;
-      final pos = Offset.lerp(center + startOffset, center, eased)!;
+    // Glowing sun
+    final sunCenter = Offset(size.width / 2, size.height * 0.34);
+    final sunPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [const Color(0xFFFFD36E).withOpacity(0.9), const Color(0xFFFF7A5C).withOpacity(0.0)],
+      ).createShader(Rect.fromCircle(center: sunCenter, radius: 120));
+    canvas.drawCircle(sunCenter, 120, sunPaint);
+    canvas.drawCircle(sunCenter, 55, Paint()..color = const Color(0xFFFFE29A));
 
-      double opacity;
-      if (progress < start) {
-        opacity = 0;
-      } else if (progress < end) {
-        opacity = (1 - t) * (t < 0.15 ? t / 0.15 : 1.0);
-      } else {
-        opacity = 0;
-      }
-      opacity = opacity.clamp(0.0, 1.0);
+    // Sun horizontal stripes (retro synthwave look)
+    final stripePaint = Paint()..color = const Color(0xFF2E1052).withOpacity(0.5);
+    for (int i = 0; i < 6; i++) {
+      final y = sunCenter.dy - 5 + i * 9.0;
+      canvas.drawRect(Rect.fromLTWH(sunCenter.dx - 55, y, 110, 3), stripePaint);
+    }
 
-      if (opacity <= 0) continue;
+    // Palm tree silhouettes (simple shapes)
+    _drawPalm(canvas, Offset(size.width * 0.12, size.height * 0.62), size.height * 0.28, flip: false);
+    _drawPalm(canvas, Offset(size.width * 0.9, size.height * 0.58), size.height * 0.32, flip: true);
+  }
 
-      final paint = Paint()
-        ..color = color.withOpacity(opacity * 0.8)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(pos, p.size, paint);
+  void _drawPalm(Canvas canvas, Offset base, double height, {required bool flip}) {
+    final paint = Paint()..color = Colors.black.withOpacity(0.55);
+    final trunkPath = Path();
+    final dir = flip ? -1 : 1;
+    trunkPath.moveTo(base.dx, base.dy);
+    trunkPath.quadraticBezierTo(base.dx + dir * height * 0.15, base.dy - height * 0.5, base.dx + dir * height * 0.05, base.dy - height);
+    canvas.drawPath(
+      trunkPath,
+      paint
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = height * 0.06,
+    );
+
+    final topCenter = Offset(base.dx + dir * height * 0.05, base.dy - height);
+    for (int i = 0; i < 6; i++) {
+      final angle = (-pi / 2) + (i - 2.5) * 0.35 * dir;
+      final frondEnd = topCenter + Offset(cos(angle), sin(angle)) * height * 0.35;
+      final frondPath = Path()
+        ..moveTo(topCenter.dx, topCenter.dy)
+        ..quadraticBezierTo(
+          topCenter.dx + (frondEnd.dx - topCenter.dx) * 0.5,
+          topCenter.dy + (frondEnd.dy - topCenter.dy) * 0.3,
+          frondEnd.dx,
+          frondEnd.dy,
+        );
+      canvas.drawPath(
+        frondPath,
+        Paint()
+          ..color = Colors.black.withOpacity(0.55)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = height * 0.035
+          ..strokeCap = StrokeCap.round,
+      );
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ParticlePainter oldDelegate) => oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _MiamiBackgroundPainter oldDelegate) => false;
 }

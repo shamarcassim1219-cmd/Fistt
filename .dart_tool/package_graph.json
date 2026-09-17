@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.0.46+47",
+      "version": "1.0.66+67",
       "dependencies": [
         "background_downloader",
         "cupertino_icons",
