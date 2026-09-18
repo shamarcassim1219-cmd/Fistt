@@ -79,9 +79,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     Widget next = isLoggedIn ? const HomeScreen() : const LoginScreen();
 
-    if (!seenIntro) {
-      next = IntroScreen(next: next);
-    }
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
