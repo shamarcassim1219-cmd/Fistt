@@ -81,9 +81,22 @@ class _MySalesScreenState extends State<MySalesScreen> {
                                         _load();
                                       },
                                       title: Text(o['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                      subtitle: Text(
-                                        'Sale: LKR ${(o['price'] as num).toStringAsFixed(2)} · You get: LKR ${(o['sellerPayout'] as num).toStringAsFixed(2)}',
-                                        style: const TextStyle(color: AppColors.hint, fontSize: 12),
+                                      subtitle: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Sale: LKR ${(o['price'] as num).toStringAsFixed(2)} · You get: LKR ${(o['sellerPayout'] as num).toStringAsFixed(2)}',
+                                            style: const TextStyle(color: AppColors.hint, fontSize: 12),
+                                          ),
+                                          if ((rental != null || installment != null) && o['createdAt'] != null)
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 2),
+                                              child: Text(
+                                                'Given on: ${DateTime.parse(o['createdAt']).toLocal().toString().substring(0, 16)}',
+                                                style: const TextStyle(color: AppColors.hint, fontSize: 11),
+                                              ),
+                                            ),
+                                        ],
                                       ),
                                       trailing: _StatusBadge(status: status),
                                     ),
