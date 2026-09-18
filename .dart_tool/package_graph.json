@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.0.74+75",
+      "version": "1.0.78+79",
       "dependencies": [
         "background_downloader",
         "cupertino_icons",
@@ -971,6 +971,13 @@
       ]
     },
     {
+      "name": "js",
+      "version": "0.6.7",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
       "name": "socket_io_common",
       "version": "2.0.3",
       "dependencies": [
@@ -1263,13 +1270,6 @@
       "version": "7.0.2",
       "dependencies": [
         "collection",
-        "meta"
-      ]
-    },
-    {
-      "name": "js",
-      "version": "0.6.7",
-      "dependencies": [
         "meta"
       ]
     }

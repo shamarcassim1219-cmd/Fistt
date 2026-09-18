@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/auth_helper.dart';
@@ -37,12 +38,21 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   Map<String, dynamic>? _profile;
   bool _isLoggedIn = false;
+  String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
     _checkLoginStatus();
     _loadProfile();
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (mounted) setState(() => _appVersion = info.version);
+    } catch (_) {}
   }
 
   Future<void> _checkLoginStatus() async {
@@ -377,7 +387,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               _SectionHeader('About'),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '1.0.76 — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, 'App Version', '\$_appVersion — Tap to check for updates', _checkForUpdate),
               if (kIsWeb)
                 _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
                   launchUrl(
@@ -428,7 +438,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      final result = await ApiService.checkForUpdate('1.0.76');
+      final result = await ApiService.checkForUpdate(_appVersion);
       if (!mounted) return;
       Navigator.pop(context);
 
