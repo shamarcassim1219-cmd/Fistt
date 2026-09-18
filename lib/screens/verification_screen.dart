@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import '../services/api_service.dart';
@@ -218,8 +220,35 @@ class _VerificationScreenState extends State<VerificationScreen> {
             );
           }
         },
-      )
-      ..loadRequest(Uri.parse(verifyUrl));
+      );
+
+    if (!kIsWeb && _webViewController!.platform is AndroidWebViewController) {
+      final androidController =
+          _webViewController!.platform as AndroidWebViewController;
+
+      androidController.setOnPlatformPermissionRequest(
+        (request) {
+          request.grant();
+        },
+      );
+
+      androidController.setOnShowFileSelector(
+        (params) async {
+          final result = await FilePicker.pickFiles(
+            type: FileType.image,
+            allowMultiple: false,
+          );
+
+          if (result == null || result.files.single.path == null) {
+            return <String>[];
+          }
+
+          return <String>[result.files.single.path!];
+        },
+      );
+    }
+
+    _webViewController!.loadRequest(Uri.parse(verifyUrl));
 
     return Stack(
       children: [
