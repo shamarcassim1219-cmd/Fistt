@@ -29,8 +29,8 @@ jobs:
 
       - name: Fix Android Gradle Plugin version
         run: |
-          sed -i -E 's/(id "com\.android\.application" version ")[^"]*(")/\18.1.1\2/' android/settings.gradle
-          sed -i -E "s/(id 'com\.android\.application' version ')[^']*(')/\18.1.1\2/" android/settings.gradle
+          sed -i -E 's/(id "com\.android\.application" version ")[^"]*(")/\18.1.1\2/' android/settings.gradle.kts
+          sed -i -E "s/(id 'com\.android\.application' version ')[^']*(')/\18.1.1\2/" android/settings.gradle.kts
 
       - name: Install dependencies
         run: flutter pub get
@@ -48,23 +48,23 @@ jobs:
 
       - name: Fix applicationId
         run: |
-          sed -i 's/applicationId = "com.mygame.app.mygame_app"/applicationId = "com.mygame.app"/' android/app/build.gradle
-          sed -i 's/applicationId "com.mygame.app.mygame_app"/applicationId "com.mygame.app"/' android/app/build.gradle
+          sed -i 's/applicationId = "com.mygame.app.mygame_app"/applicationId = "com.mygame.app"/' android/app/build.gradle.kts
+          sed -i 's/applicationId "com.mygame.app.mygame_app"/applicationId "com.mygame.app"/' android/app/build.gradle.kts
 
       - name: Bump minSdkVersion to 23
-        run: sed -i 's/flutter.minSdkVersion/23/' android/app/build.gradle
+        run: sed -i 's/flutter.minSdkVersion/23/' android/app/build.gradle.kts
 
       - name: Bump compileSdk to 36
-        run: sed -i 's/flutter.compileSdkVersion/36/' android/app/build.gradle
+        run: sed -i 's/flutter.compileSdkVersion/36/' android/app/build.gradle.kts
 
       - name: Bump Kotlin plugin version
-        run: sed -i -E 's/(id "org\.jetbrains\.kotlin\.android" version ")[^"]*(")/\11.9.24\2/' android/settings.gradle
+        run: sed -i -E 's/(id "org\.jetbrains\.kotlin\.android" version ")[^"]*(")/\11.9.24\2/' android/settings.gradle.kts
 
       - name: Add Firebase Google Services plugin settings
-        run: sed -i '/id "dev.flutter.flutter-plugin-loader"/a\    id "com.google.gms.google-services" version "4.4.2" apply false' android/settings.gradle
+        run: sed -i '/id "dev.flutter.flutter-plugin-loader"/a\    id "com.google.gms.google-services" version "4.4.2" apply false' android/settings.gradle.kts
 
       - name: Add Firebase Google Services plugin app
-        run: sed -i '/id "dev.flutter.flutter-gradle-plugin"/a\    id "com.google.gms.google-services"' android/app/build.gradle
+        run: sed -i '/id "dev.flutter.flutter-gradle-plugin"/a\    id "com.google.gms.google-services"' android/app/build.gradle.kts
 
       - name: Ensure INTERNET permission
         run: |
@@ -119,10 +119,10 @@ jobs:
         run: keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep "SHA1:"
 
       - name: Print signing config
-        run: cat android/app/build.gradle | grep -A 15 "signingConfigs\|buildTypes"
+        run: cat android/app/build.gradle.kts | grep -A 15 "signingConfigs\|buildTypes"
 
       - name: Print applicationId
-        run: grep -n "applicationId" android/app/build.gradle
+        run: grep -n "applicationId" android/app/build.gradle.kts
 
       - name: Print restored google-services.json oauth_client
         run: python3 -c "import json; d=json.load(open('android/app/google-services.json')); [print(c['client_info']['android_client_info']['package_name'], c['oauth_client']) for c in d['client']]"
