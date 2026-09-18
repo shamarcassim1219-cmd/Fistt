@@ -39,7 +39,12 @@ const AndroidNotificationChannel _channel = AndroidNotificationChannel(
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await AppLocalizations.loadSavedLanguage();
+  try {
+    await AppLocalizations.loadSavedLanguage();
+  } catch (e, st) {
+    debugPrint('STARTUP_LANGUAGE_ERROR: $e');
+    debugPrintStack(stackTrace: st);
+  }
 
   if (!kIsWeb) {
     try {
@@ -80,7 +85,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     if (!kIsWeb) {
       _setupFcm();
-      // _loadBiometricSetting();
+      _loadBiometricSetting();
       _checkAppVersion();
     } else {
       _versionCheckDone = true;
