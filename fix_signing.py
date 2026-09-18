@@ -1,22 +1,25 @@
-content = open('android/app/build.gradle').read()
+from pathlib import Path
+
+path = Path("android/app/build.gradle.kts")
+content = path.read_text()
 
 content = content.replace(
-    'signingConfig = signingConfigs.debug',
-    'signingConfig = signingConfigs.release'
+    "signingConfig = signingConfigs.getByName(\"debug\")",
+    "signingConfig = signingConfigs.getByName(\"release\")"
 )
 
-insert_block = '''    signingConfigs {
-        release {
-            storeFile file(System.getProperty("user.home") + "/.android/debug.keystore")
-            storePassword "android"
-            keyAlias "androiddebugkey"
-            keyPassword "android"
+if "signingConfigs.create(\"release\")" not in content:
+    block = '''    signingConfigs {
+        create("release") {
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
     }
 
-    '''
+'''
+    content = content.replace("    buildTypes {", block + "    buildTypes {", 1)
 
-content = content.replace('    buildTypes {', insert_block + 'buildTypes {', 1)
-
-open('android/app/build.gradle', 'w').write(content)
-print("Signing config patched")
+path.write_text(content)
+print("Signing config patched for Kotlin DSL")
