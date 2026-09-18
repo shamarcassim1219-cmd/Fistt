@@ -96,8 +96,8 @@ jobs:
 
       - name: Switch MainActivity to FlutterFragmentActivity for biometric prompt support
         run: |
-          KOTLIN_FILE=$(find android/app/src/main/kotlin -name "MainActivity.kt")
-          if [ -n "$KOTLIN_FILE" ]; then
+          KOTLIN_FILE=$(find android/app/src/main/kotlin -name "MainActivity.kt" -print -quit)
+          if [ -n "$KOTLIN_FILE" ] && [ -f "$KOTLIN_FILE" ]; then
             sed -i 's/import io.flutter.embedding.android.FlutterActivity/import io.flutter.embedding.android.FlutterFragmentActivity/' "$KOTLIN_FILE"
             sed -i 's/class MainActivity: FlutterActivity/class MainActivity: FlutterFragmentActivity/' "$KOTLIN_FILE"
             sed -i 's/class MainActivity : FlutterActivity/class MainActivity : FlutterFragmentActivity/' "$KOTLIN_FILE"
