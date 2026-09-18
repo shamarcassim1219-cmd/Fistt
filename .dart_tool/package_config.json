@@ -9,7 +9,7 @@
     },
     {
       "name": "archive",
-      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/archive-4.2.0",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/archive-4.3.0",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -27,7 +27,7 @@
     },
     {
       "name": "background_downloader",
-      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/background_downloader-8.9.5",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/background_downloader-9.5.4",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
@@ -99,9 +99,9 @@
     },
     {
       "name": "device_info_plus",
-      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/device_info_plus-10.1.2",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/device_info_plus-11.3.0",
       "packageUri": "lib/",
-      "languageVersion": "3.3"
+      "languageVersion": "3.4"
     },
     {
       "name": "device_info_plus_platform_interface",
@@ -138,6 +138,12 @@
       "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/file-7.0.1",
       "packageUri": "lib/",
       "languageVersion": "3.0"
+    },
+    {
+      "name": "file_picker",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/file_picker-11.0.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
     },
     {
       "name": "file_selector_linux",
@@ -243,9 +249,9 @@
     },
     {
       "name": "flutter_plugin_android_lifecycle",
-      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.17",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.35",
       "packageUri": "lib/",
-      "languageVersion": "2.19"
+      "languageVersion": "3.10"
     },
     {
       "name": "flutter_test",
@@ -327,7 +333,7 @@
     },
     {
       "name": "image",
-      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/image-4.9.2",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/image-4.10.1",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
