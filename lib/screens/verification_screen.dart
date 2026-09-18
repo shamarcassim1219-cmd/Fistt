@@ -19,6 +19,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   String? _statusLoadError;
   String? _authToken;
   bool _webViewLoading = true;
+  WebViewController? _webViewController;
 
   @override
   void initState() {
@@ -62,7 +63,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
       backgroundColor: AppColors.bg,
       appBar: AppBar(title: const Text('Get Verified')),
       body: _loadingStatus
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary))
           : SafeArea(child: _buildBody()),
     );
   }
@@ -75,11 +77,18 @@ class _VerificationScreenState extends State<VerificationScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+              const Icon(Icons.error_outline,
+                  color: Colors.redAccent, size: 48),
               const SizedBox(height: 16),
-              const Text('Failed to load verification status', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text('Failed to load verification status',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Text(_statusLoadError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12), textAlign: TextAlign.center),
+              Text(_statusLoadError!,
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                  textAlign: TextAlign.center),
               const SizedBox(height: 20),
               OutlinedButton(
                 onPressed: () {
@@ -99,7 +108,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
         icon: Icons.hourglass_top_outlined,
         color: Colors.orangeAccent,
         title: 'Verification Pending',
-        message: 'Your ${_docTypeLabel(_documentType)} verification is under review. '
+        message:
+            'Your ${_docTypeLabel(_documentType)} verification is under review. '
             'This usually takes 1-2 business days.',
       );
     }
@@ -109,13 +119,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
         icon: Icons.verified,
         color: AppColors.primary,
         title: 'Verified Seller',
-        message: 'Your account is verified. You now have the blue checkmark badge.',
+        message:
+            'Your account is verified. You now have the blue checkmark badge.',
       );
     }
 
     if (_authToken == null) {
       return const Center(
-        child: Text('Please log in again to continue', style: TextStyle(color: Colors.redAccent)),
+        child: Text('Please log in again to continue',
+            style: TextStyle(color: Colors.redAccent)),
       );
     }
 
@@ -128,9 +140,14 @@ class _VerificationScreenState extends State<VerificationScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.verified_outlined, color: AppColors.primary, size: 56),
+              const Icon(Icons.verified_outlined,
+                  color: AppColors.primary, size: 56),
               const SizedBox(height: 20),
-              const Text('Complete Verification', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('Complete Verification',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               const Text(
                 'Verification opens in a new tab so we can access your camera. Once you submit, come back here and tap Refresh.',
@@ -142,7 +159,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton.icon(
-                  onPressed: () => launchUrl(Uri.parse(verifyUrl), mode: LaunchMode.externalApplication),
+                  onPressed: () => launchUrl(Uri.parse(verifyUrl),
+                      mode: LaunchMode.externalApplication),
                   icon: const Icon(Icons.open_in_new),
                   label: const Text('Open Verification'),
                 ),
@@ -166,13 +184,27 @@ class _VerificationScreenState extends State<VerificationScreen> {
       );
     }
 
-    final controller = WebViewController()
+    _webViewController ??= WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(AppColors.bg)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onPageStarted: (_) {
+            if (mounted) setState(() => _webViewLoading = true);
+          },
           onPageFinished: (_) {
             if (mounted) setState(() => _webViewLoading = false);
+          },
+          onWebResourceError: (error) {
+            if (mounted) {
+              setState(() => _webViewLoading = false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content:
+                      Text('Verification page error: ${error.description}'),
+                ),
+              );
+            }
           },
         ),
       )
@@ -191,9 +223,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
     return Stack(
       children: [
-        WebViewWidget(controller: controller),
+        WebViewWidget(controller: _webViewController!),
         if (_webViewLoading)
-          const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          ),
       ],
     );
   }
@@ -205,7 +239,11 @@ class _StatusMessage extends StatelessWidget {
   final String title;
   final String message;
 
-  const _StatusMessage({required this.icon, required this.color, required this.title, required this.message});
+  const _StatusMessage(
+      {required this.icon,
+      required this.color,
+      required this.title,
+      required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -217,9 +255,15 @@ class _StatusMessage extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 64),
             const SizedBox(height: 20),
-            Text(title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(title,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.hint, fontSize: 14)),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.hint, fontSize: 14)),
           ],
         ),
       ),
