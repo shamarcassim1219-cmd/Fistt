@@ -27,6 +27,9 @@ jobs:
       - name: Generate missing platform folders
         run: flutter create --platforms=android --project-name mygame_app --org com.mygame.app .
 
+      - name: Remove generated Groovy settings file
+        run: rm -f android/settings.gradle
+
       - name: Fix Android Gradle Plugin version
         run: |
           sed -i -E 's/(id "com\.android\.application" version ")[^"]*(")/\18.1.1\2/' android/settings.gradle.kts
