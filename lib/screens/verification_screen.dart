@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 
@@ -117,6 +119,53 @@ class _VerificationScreenState extends State<VerificationScreen> {
       );
     }
 
+    final verifyUrl = 'https://buysellgame.store/verify/?token=$_authToken';
+
+    if (kIsWeb) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.verified_outlined, color: AppColors.primary, size: 56),
+              const SizedBox(height: 20),
+              const Text('Complete Verification', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              const Text(
+                'Verification opens in a new tab so we can access your camera. Once you submit, come back here and tap Refresh.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.hint, fontSize: 13),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: () => launchUrl(Uri.parse(verifyUrl), mode: LaunchMode.externalApplication),
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Open Verification'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() => _loadingStatus = true);
+                    _loadStatus();
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Refresh Status'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(AppColors.bg)
@@ -138,7 +187,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
           }
         },
       )
-      ..loadRequest(Uri.parse('https://buysellgame.store/verify/?token=$_authToken'));
+      ..loadRequest(Uri.parse(verifyUrl));
 
     return Stack(
       children: [
