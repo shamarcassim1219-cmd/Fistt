@@ -50,8 +50,8 @@ jobs:
 
       - name: Fix applicationId
         run: |
-          sed -i 's/applicationId = "com.mygame.app.mygame_app"/applicationId = "com.mygame.app"/' android/app/build.gradle.kts
-          sed -i 's/applicationId "com.mygame.app.mygame_app"/applicationId "com.mygame.app"/' android/app/build.gradle.kts
+          sed -i 's/applicationId = "com.example.mygame_app"/applicationId = "com.mygame.app"/' android/app/build.gradle.kts
+          sed -i 's/applicationId "com.example.mygame_app"/applicationId "com.mygame.app"/' android/app/build.gradle.kts
 
       - name: Bump minSdkVersion to 23
         run: sed -i 's/flutter.minSdkVersion/23/' android/app/build.gradle.kts
