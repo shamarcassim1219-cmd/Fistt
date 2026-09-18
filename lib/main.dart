@@ -80,7 +80,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     if (!kIsWeb) {
       _setupFcm();
-      _loadBiometricSetting();
+      // _loadBiometricSetting();
       _checkAppVersion();
     } else {
       _versionCheckDone = true;
