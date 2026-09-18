@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.0.78+79",
+      "version": "1.0.79+80",
       "dependencies": [
         "background_downloader",
         "cupertino_icons",
@@ -31,7 +31,8 @@
         "shared_preferences",
         "smooth_page_indicator",
         "socket_io_client",
-        "url_launcher"
+        "url_launcher",
+        "webview_flutter"
       ],
       "devDependencies": [
         "flutter_launcher_icons",
@@ -1271,6 +1272,44 @@
       "dependencies": [
         "collection",
         "meta"
+      ]
+    },
+    {
+      "name": "webview_flutter",
+      "version": "4.14.1",
+      "dependencies": [
+        "flutter",
+        "webview_flutter_android",
+        "webview_flutter_platform_interface",
+        "webview_flutter_wkwebview"
+      ]
+    },
+    {
+      "name": "webview_flutter_platform_interface",
+      "version": "2.15.1",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "webview_flutter_wkwebview",
+      "version": "3.26.1",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "path",
+        "webview_flutter_platform_interface"
+      ]
+    },
+    {
+      "name": "webview_flutter_android",
+      "version": "4.14.1",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "webview_flutter_platform_interface"
       ]
     }
   ],
