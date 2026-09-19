@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/anim.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -570,13 +571,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _tile(IconData icon, String title, String? subtitle, VoidCallback onTap) {
-    return ListTile(
+    return FadeSlideIn(child: ListTile(
       leading: Icon(icon, color: AppColors.hint),
       title: Text(title, style: const TextStyle(color: Colors.white)),
       subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(color: AppColors.hint)) : null,
       trailing: const Icon(Icons.chevron_right, color: AppColors.hint),
       onTap: onTap,
-    );
+    ));
   }
 }
 

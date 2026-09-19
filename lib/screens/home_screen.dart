@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../widgets/anim.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -120,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, lang, _) {
         return Scaffold(
           backgroundColor: AppColors.bg,
-          body: _pages[_tab],
+          body: AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: KeyedSubtree(key: ValueKey<int>(_tab), child: _pages[_tab])),
           bottomNavigationBar: NavigationBar(
             selectedIndex: _tab,
             onDestinationSelected: (i) => setState(() => _tab = i),
@@ -482,7 +483,7 @@ class _HomeTabState extends State<_HomeTab> {
                                 final saleType = l['saleType'] ?? 'full';
                                 final isBoosted = l['boosted'] == true;
                                 final sellerName = l['sellerDisplayName'] ?? '';
-                                return Container(
+                                return FadeSlideIn(delay: staggerDelay(i), child: Container(
                                   margin: const EdgeInsets.only(bottom: 10),
                                   decoration: BoxDecoration(
                                     color: AppColors.surface,
@@ -562,7 +563,7 @@ class _HomeTabState extends State<_HomeTab> {
                                         ? const Icon(Icons.gavel_outlined, color: AppColors.primary, size: 18)
                                         : null,
                                   ),
-                                );
+                                ));
                               },
                             ),
                           ),
@@ -653,7 +654,7 @@ class _PromotionsTabState extends State<_PromotionsTab> {
                                   itemCount: _promotions.length,
                                   itemBuilder: (context, i) {
                                     final p = _promotions[i];
-                                    return InkWell(
+                                    return FadeSlideIn(delay: staggerDelay(i), child: InkWell(
                                       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PromotionDetailScreen(promotion: p))),
                                       borderRadius: BorderRadius.circular(16),
                                       child: Container(
@@ -694,7 +695,7 @@ class _PromotionsTabState extends State<_PromotionsTab> {
                                           ],
                                         ),
                                       ),
-                                    );
+                                    ));
                                   },
                                 ),
                               ),

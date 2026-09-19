@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import '../widgets/anim.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import 'dart:io';
@@ -217,7 +218,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                 children: [
                                   Text(AppLocalizations.t('available_balance'), style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13)),
                                   const SizedBox(height: 6),
-                                  Text('LKR ${_balance.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+                                  CountUpText(value: _balance, prefix: 'LKR ', style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
                                 ],
                               ),
                             ),

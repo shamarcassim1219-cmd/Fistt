@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import '../widgets/anim.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../main.dart';
@@ -525,7 +526,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
                       ),
                     ],
                   ),
-                  if (_saleType == 'rental') ...[
+                  AnimatedSize(duration: const Duration(milliseconds: 250), curve: Curves.easeOut, alignment: Alignment.topCenter, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+if (_saleType == 'rental') ...[
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -559,7 +561,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
                       'Buyer picks how many units to rent for. After time expires, you\'ll get a reminder to change the account password.',
                       style: TextStyle(color: AppColors.hint, fontSize: 11),
                     ),
-                  ],
+                  ]
+])),
 
                   const SizedBox(height: 20),
                   _SectionLabel(AppLocalizations.t('screenshots_max6')),
@@ -584,7 +587,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                           ),
                         );
                       }
-                      return Stack(
+                      return PopIn(key: ValueKey(_screenshots[i].path), child: Stack(
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
@@ -603,7 +606,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                             ),
                           ),
                         ],
-                      );
+                      ));
                     },
                   ),
 
