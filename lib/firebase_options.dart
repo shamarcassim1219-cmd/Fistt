@@ -4,10 +4,10 @@ class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform => android;
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBdfFpevNs4uflfio_M8zpsep2fqonkkmg',
-    appId: '1:1050625555685:android:234224eed485932e8fa80c',
-    messagingSenderId: '1050625555685',
-    projectId: 'gamestore-7e350',
-    storageBucket: 'gamestore-7e350.firebasestorage.app',
+    apiKey: 'AIzaSyDldtjCAzG1OibYw9t2aaG72rGfDi1_G08',
+    appId: '1:354593690287:android:9ab9bc9500460aca1a3a5a',
+    messagingSenderId: '354593690287',
+    projectId: 'mygame-b087a',
+    storageBucket: 'mygame-b087a.firebasestorage.app',
   );
 }
