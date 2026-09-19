@@ -128,6 +128,7 @@ jobs:
           storeFile=keystore/release.jks
           PROPEOF
           echo "✅ key.properties created"
+          install -D android/keystore/release.jks android/app/keystore/release.jks
           cat android/key.properties
 
       - name: Print SHA-1 fingerprint for Firebase
