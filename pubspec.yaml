@@ -1,7 +1,7 @@
 name: mygame_app
 description: MYGame Marketplace - Buy & Sell Game Accounts Safely
 publish_to: 'none'
-version: 1.0.84+85
+version: 1.0.85+86
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -38,6 +38,8 @@ dependencies:
   background_downloader: 9.5.4
   file_picker: ^11.0.3
   webview_flutter_android: ^4.10.0
+  camera: ^0.11.0+2
+  google_mlkit_face_detection: ^0.11.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -38,6 +38,36 @@
       "languageVersion": "3.1"
     },
     {
+      "name": "camera",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/camera-0.11.4",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "camera_android_camerax",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/camera_android_camerax-0.6.30",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "camera_avfoundation",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/camera_avfoundation-0.9.23+2",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
+    },
+    {
+      "name": "camera_platform_interface",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/camera_platform_interface-2.14.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "camera_web",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/camera_web-0.3.5+6",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
       "name": "characters",
       "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/characters-1.4.1",
       "packageUri": "lib/",
@@ -282,6 +312,18 @@
       "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/google_identity_services_web-0.3.3+1",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "google_mlkit_commons",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/google_mlkit_commons-0.8.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.16"
+    },
+    {
+      "name": "google_mlkit_face_detection",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/google_mlkit_face_detection-0.11.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.16"
     },
     {
       "name": "google_sign_in",
@@ -696,6 +738,12 @@
       "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/stream_channel-2.1.4",
       "packageUri": "lib/",
       "languageVersion": "3.3"
+    },
+    {
+      "name": "stream_transform",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/stream_transform-2.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
     },
     {
       "name": "string_scanner",

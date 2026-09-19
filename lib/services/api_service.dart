@@ -778,6 +778,22 @@ class ApiService {
     return await _handle(res);
   }
 
+  static Future<Map<String, dynamic>> submitVerification({
+    required Map<String, String> fields,
+    required Map<String, String> filePaths,
+  }) async {
+    final token = await getToken();
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/verification/submit'));
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    request.fields.addAll(fields);
+    for (final e in filePaths.entries) {
+      request.files.add(await http.MultipartFile.fromPath(e.key, e.value));
+    }
+    final streamed = await request.send().timeout(const Duration(seconds: 180));
+    final res = await http.Response.fromStream(streamed);
+    return await _handle(res);
+  }
+
   static Future<bool> checkNicExists(String nic) async {
     final res = await http.get(
       Uri.parse('$baseUrl/verification/check-nic?nic=${Uri.encodeQueryComponent(nic)}'),
