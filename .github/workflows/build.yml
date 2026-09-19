@@ -30,6 +30,11 @@ jobs:
       - name: Generate app launcher icon
         run: dart run flutter_launcher_icons
 
+      - name: Restore Firebase google-services.json
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_ANDROID_CONFIG }}
+        run: echo "$FIREBASE_CONFIG" > android/app/google-services.json
+
       - name: Restore debug keystore (fixed SHA-1 for Firebase/Google Sign-In)
         run: |
           mkdir -p ~/.android
