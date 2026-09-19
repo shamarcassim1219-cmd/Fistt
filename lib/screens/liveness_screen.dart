@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
@@ -50,6 +51,9 @@ class _LivenessScreenState extends State<LivenessScreen> {
     DeviceOrientation.landscapeRight: 270,
   };
 
+  bool _webCountdownStarted = false;
+  int _webSecondsLeft = 3;
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +66,23 @@ class _LivenessScreenState extends State<LivenessScreen> {
     );
     _resetChallenges();
     _initCamera();
+  }
+
+  void _startWebCountdown() {
+    if (_webCountdownStarted) return;
+    _webCountdownStarted = true;
+    _webSecondsLeft = 3;
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || _done) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _webSecondsLeft--);
+      if (_webSecondsLeft <= 0) {
+        timer.cancel();
+        _capture();
+      }
+    });
   }
 
   void _resetChallenges() {
@@ -96,7 +117,11 @@ class _LivenessScreenState extends State<LivenessScreen> {
       }
       _controller = controller;
       setState(() => _initializing = false);
-      _startStream();
+      if (kIsWeb) {
+        _startWebCountdown();
+      } else {
+        _startStream();
+      }
       _startTimeout();
     } catch (e) {
       if (!mounted) return;
@@ -261,6 +286,9 @@ class _LivenessScreenState extends State<LivenessScreen> {
   }
 
   String get _instruction {
+    if (kIsWeb) {
+      return 'Look straight at the camera, capturing in $_webSecondsLeft...';
+    }
     if (_finalStage) return 'Look straight at the camera and hold still';
     switch (_challenges[_index]) {
       case _Challenge.blink:
@@ -326,8 +354,8 @@ class _LivenessScreenState extends State<LivenessScreen> {
     }
 
     final c = _controller!;
-    final total = _challenges.length;
-    final progress = _finalStage ? total : _index;
+    final total = kIsWeb ? 1 : _challenges.length;
+    final progress = kIsWeb ? (_webCountdownStarted ? 1 : 0) : (_finalStage ? total : _index);
 
     return Column(
       children: [
