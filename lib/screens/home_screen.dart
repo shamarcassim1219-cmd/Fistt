@@ -15,6 +15,7 @@ import 'notifications_screen.dart';
 import 'banned_screen.dart';
 import 'login_screen.dart';
 import '../services/auth_helper.dart';
+import '../services/update_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -45,6 +46,9 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
     _checkLoginStatus();
+    if (kIsWeb == false) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => UpdateService.checkForUpdate(context));
+    }
   }
 
   Future<void> _checkLoginStatus() async {
