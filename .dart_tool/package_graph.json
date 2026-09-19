@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.0.92+93",
+      "version": "1.0.94+95",
       "dependencies": [
         "background_downloader",
         "camera",

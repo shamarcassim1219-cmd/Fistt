@@ -66,17 +66,7 @@ class UpdateService {
 
   static Future<void> _downloadAndInstall(
       BuildContext context, String apkUrl) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const AlertDialog(
-        content: Row(children: [
-          CircularProgressIndicator(),
-          SizedBox(width: 16),
-          Text('Downloading...'),
-        ]),
-      ),
-    );
+    final progress = ValueNotifier<double>(0);
 
     final task = DownloadTask(
       url: apkUrl,
@@ -84,15 +74,63 @@ class UpdateService {
       baseDirectory: BaseDirectory.applicationSupport,
     );
 
-    final result = await FileDownloader().download(task);
-    if (context.mounted) Navigator.pop(context);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Downloading update'),
+        content: ValueListenableBuilder<double>(
+          valueListenable: progress,
+          builder: (_, p, __) {
+            final known = p > 0 && p <= 1;
+            final percent = (p * 100).clamp(0, 100).toStringAsFixed(0);
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LinearProgressIndicator(value: known ? p : null, minHeight: 8),
+                const SizedBox(height: 12),
+                Text(known ? '$percent%' : 'Connecting...'),
+                const SizedBox(height: 4),
+                const Text(
+                  'The update file is large (about 90 MB). Please keep the app open.',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => FileDownloader().cancelTaskWithId(task.taskId),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
 
-    if (result.status == TaskStatus.complete) {
+    TaskStatusUpdate? result;
+    try {
+      result = await FileDownloader().download(
+        task,
+        onProgress: (p) {
+          if (p >= 0 && p <= 1) progress.value = p;
+        },
+      );
+    } catch (e) {
+      debugPrint('Update download error: $e');
+    }
+    if (context.mounted) Navigator.pop(context);
+    progress.dispose();
+
+    if (result != null && result.status == TaskStatus.complete) {
       final filePath = await task.filePath();
       await OpenFilex.open(filePath);
+    } else if (result != null && result.status == TaskStatus.canceled) {
+      // cancelled by the user, nothing to show
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Download fail උනා, ආයෙත් try කරන්න')),
+        const SnackBar(content: Text('Download failed. Check your internet and try again.')),
       );
     }
   }
