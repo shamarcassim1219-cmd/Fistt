@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import '../widgets/animated_login_background.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -75,11 +76,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       builder: (context, lang, _) {
         return Scaffold(
           backgroundColor: AppColors.bg,
-          appBar: AppBar(title: Text(AppLocalizations.t('reset_password'))),
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
+          appBar: AppBar(title: Text(AppLocalizations.t('reset_password')), backgroundColor: Colors.transparent, elevation: 0),
+          extendBodyBehindAppBar: true,
+          body: Stack(
+            children: [
+              const AnimatedLoginBackground(),
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -139,9 +144,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                     ),
                   ],
-                ],
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         );
       },

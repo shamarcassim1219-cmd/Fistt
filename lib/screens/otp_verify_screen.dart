@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import '../widgets/animated_login_background.dart';
 import 'home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -133,10 +134,14 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
       builder: (context, lang, _) {
         return Scaffold(
           backgroundColor: AppColors.bg,
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
+          extendBodyBehindAppBar: true,
+          body: Stack(
+            children: [
+              const AnimatedLoginBackground(),
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -190,9 +195,11 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
                                 : const Text('Resend Code', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                           ),
                   ),
-                ],
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         );
       },
