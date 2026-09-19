@@ -42,7 +42,7 @@ jobs:
 
       - name: Create key.properties pointing to debug keystore
         run: |
-          cat > key.properties << KPEOF
+          cat > android/key.properties << KPEOF
           storePassword=android
           keyPassword=android
           keyAlias=androiddebugkey
