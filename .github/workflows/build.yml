@@ -42,12 +42,7 @@ jobs:
 
       - name: Create key.properties pointing to debug keystore
         run: |
-          cat > android/key.properties << KPEOF
-          storePassword=android
-          keyPassword=android
-          keyAlias=androiddebugkey
-          storeFile=$HOME/.android/debug.keystore
-          KPEOF
+          printf 'storePassword=android\nkeyPassword=android\nkeyAlias=androiddebugkey\nstoreFile=%s/.android/debug.keystore\n' "$HOME" > android/key.properties
 
       - name: Print debug keystore SHA-1
         run: keytool -list -v -alias androiddebugkey -keystore ~/.android/debug.keystore -storepass android -keypass android | grep "SHA1:"
