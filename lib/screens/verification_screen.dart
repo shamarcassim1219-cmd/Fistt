@@ -177,8 +177,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
     try {
       final img = await ImagePicker().pickImage(
         source: ImageSource.camera,
-        imageQuality: 85,
-        maxWidth: 1920,
+        imageQuality: 70,
+        maxWidth: 1600,
       );
       if (img != null) setState(() => _files[side] = img.path);
     } catch (e) {

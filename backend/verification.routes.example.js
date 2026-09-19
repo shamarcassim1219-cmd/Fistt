@@ -4,6 +4,7 @@ const express = require('express');
 const multer = require('multer');
 const fs = require('fs/promises');
 const path = require('path');
+const { runAutoVerification } = require('./autoVerify');
 
 const router = express.Router();
 const upload = multer({
@@ -34,10 +35,36 @@ router.post('/verification/submit', requireAuth, upload.fields(fields), async (r
 
   // TODO: reject if user.verifiedStatus is 'pending' or 'verified'
   // TODO: reject if another user already has this nicNumber (except this user)
-  // TODO: save record: userId, fullName, birthday, address, nicNumber, province,
-  //       district, documentType and the 2-4 file paths, then:
-  //       user.verifiedStatus = 'pending'
-  res.json({ ok: true, verifiedStatus: 'pending' });
+  const paths = Object.values(f).map((arr) => arr[0].path);
+  const details = {
+    fullName: b.fullName, birthday: b.birthday, nicNumber: b.nicNumber.toUpperCase(),
+    address: b.address, province: b.province, district: b.district, documentType: type,
+  };
+  const files = Object.fromEntries(Object.entries(f).map(([k, arr]) => [k, arr[0].path]));
+
+  // ---- AUTOMATIC CHECK (OCR + face match) ----
+  let result;
+  try {
+    result = await runAutoVerification({ details, files });
+  } catch (e) {
+    result = { decision: 'review', reason: 'auto check error', checks: {} };
+  }
+  console.log('auto-verify', req.user.id, result.decision, JSON.stringify(result.checks));
+
+  if (result.decision === 'approve') {
+    // TODO: save record (details + paths + result.checks), status 'approved'
+    // TODO: user.verifiedStatus = 'verified'; notify (type 'verification_approved')
+    return res.json({ ok: true, verifiedStatus: 'verified' });
+  }
+  if (result.decision === 'reject') {
+    for (const p of paths) { try { await fs.unlink(p); } catch (_) {} } // delete photos
+    // TODO: save record with status 'rejected' + rejectionReason = result.reason (no photo paths)
+    // TODO: user.verifiedStatus = 'rejected'; notify (type 'verification_rejected')
+    return res.json({ ok: true, verifiedStatus: 'rejected', rejectionReason: result.reason });
+  }
+  // 'review' -> unsure, an admin decides (admin approve/reject routes below)
+  // TODO: save record (details + paths + result.checks), status 'pending'; user.verifiedStatus = 'pending'
+  return res.json({ ok: true, verifiedStatus: 'pending' });
 });
 
 // ---- USER: status  (extend your existing GET /verification/status) ---------

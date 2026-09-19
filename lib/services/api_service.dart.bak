@@ -741,6 +741,45 @@ class ApiService {
     await _handle(res);
   }
 
+  // ---------- VERIFICATION ----------
+  static Future<void> submitVerification({
+    required String fullName,
+    required String nicNumber,
+    required String address,
+    required String province,
+    required String district,
+    required String documentType,
+    required String frontImageUrl,
+    String? backImageUrl,
+    String? selfieImageUrl,
+    String? selfieVideoUrl,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/verification'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'fullName': fullName,
+        'nicNumber': nicNumber,
+        'address': address,
+        'province': province,
+        'district': district,
+        'documentType': documentType,
+        'frontImageUrl': frontImageUrl,
+        'backImageUrl': backImageUrl,
+        'selfieImageUrl': selfieImageUrl,
+        'selfieVideoUrl': selfieVideoUrl,
+      }),
+    );
+    await _handle(res);
+  }
+
+  static Future<Map<String, dynamic>> getVerificationStatusFull() async {
+    final res = await http.get(Uri.parse('$baseUrl/verification/status'), headers: await _headers());
+    return await _handle(res);
+  }
+
+  static Future<Map<String, dynamic>> submitVerification({
+    required Map<String, String> fields,
     required Map<String, String> filePaths,
   }) async {
     final token = await getToken();

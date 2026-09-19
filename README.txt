@@ -1,7 +1,8 @@
-FILES (copy over your ~/Fistt project, same paths):
-  pubspec.yaml                          (adds camera + google_mlkit_face_detection)
-  lib/screens/verification_screen.dart  (REPLACED - new in-app flow, no website)
-  lib/screens/liveness_screen.dart      (NEW)
-  lib/services/sl_locations.dart        (NEW)
-  lib/services/api_service.dart         (adds submitVerification)
-  backend/verification.routes.example.js (reference for your server)
+Flutter (copy into ~/Fistt, same path):
+  lib/screens/verification_screen.dart   (auto-result handling)
+Server (copy to your backend):
+  backend/autoVerify.js                  (OCR + face match + NIC/birthday check)
+  backend/autoVerify.test.js             (node autoVerify.test.js)
+  backend/verification.routes.example.js (how to call it)
+Server setup:  npm i @aws-sdk/client-rekognition multer
+Env vars:      AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
