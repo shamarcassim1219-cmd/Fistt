@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
-import 'package:mime/mime.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'device_service.dart';
@@ -744,13 +742,12 @@ class ApiService {
   }
 
   // ---------- VERIFICATION ----------
-
   static Future<Map<String, dynamic>> getVerificationStatusFull() async {
     final res = await http.get(Uri.parse('$baseUrl/verification/status'), headers: await _headers());
     return await _handle(res);
   }
 
-  static Future<Map<String, dynamic>> submitVerification({
+  static Future<Map<String, dynamic>> submitVerificationFiles({
     required Map<String, String> fields,
     required Map<String, String> filePaths,
   }) async {
@@ -759,12 +756,7 @@ class ApiService {
     if (token != null) request.headers['Authorization'] = 'Bearer $token';
     request.fields.addAll(fields);
     for (final e in filePaths.entries) {
-      final mimeType = lookupMimeType(e.value) ?? 'image/jpeg';
-      request.files.add(await http.MultipartFile.fromPath(
-        e.key,
-        e.value,
-        contentType: MediaType.parse(mimeType),
-      ));
+      request.files.add(await http.MultipartFile.fromPath(e.key, e.value));
     }
     final streamed = await request.send().timeout(const Duration(seconds: 180));
     final res = await http.Response.fromStream(streamed);

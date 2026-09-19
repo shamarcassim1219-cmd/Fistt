@@ -219,7 +219,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         if (_docType == 'nic') 'selfie_back': _files['selfie_back']!,
       };
       final data =
-          await ApiService.submitVerification(fields: fields, filePaths: files);
+          await ApiService.submitVerificationFiles(fields: fields, filePaths: files);
       if (!mounted) return;
       final st = (data['verifiedStatus'] ?? 'pending').toString();
       setState(() {

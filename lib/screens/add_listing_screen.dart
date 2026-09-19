@@ -523,14 +523,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
                           onSelected: (_) => setState(() => _saleType = 'rental'),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ChoiceChip(
-                          label: const Text('Installment'),
-                          selected: _saleType == 'installment',
-                          onSelected: (_) => setState(() => _saleType = 'installment'),
-                        ),
-                      ),
                     ],
                   ),
                   if (_saleType == 'rental') ...[
@@ -565,39 +557,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
                     const SizedBox(height: 6),
                     const Text(
                       'Buyer picks how many units to rent for. After time expires, you\'ll get a reminder to change the account password.',
-                      style: TextStyle(color: AppColors.hint, fontSize: 11),
-                    ),
-                  ],
-                  if (_saleType == 'installment') ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _installmentCountCtrl,
-                            keyboardType: TextInputType.number,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(labelText: 'Number of installments'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: _installmentFrequency,
-                            decoration: const InputDecoration(labelText: 'Frequency'),
-                            dropdownColor: AppColors.surface,
-                            items: const [
-                              DropdownMenuItem(value: 'weekly', child: Text('Weekly', style: TextStyle(color: Colors.white))),
-                              DropdownMenuItem(value: 'monthly', child: Text('Monthly', style: TextStyle(color: Colors.white))),
-                            ],
-                            onChanged: (v) => setState(() => _installmentFrequency = v),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'The price above is the total price, split across these installments. You decide when to share credentials.',
                       style: TextStyle(color: AppColors.hint, fontSize: 11),
                     ),
                   ],

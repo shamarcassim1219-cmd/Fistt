@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.0.89+90",
+      "version": "1.0.91+92",
       "dependencies": [
         "background_downloader",
         "camera",
@@ -28,6 +28,7 @@
         "image_picker",
         "intl",
         "local_auth",
+        "mime",
         "open_filex",
         "package_info_plus",
         "path_provider",
@@ -410,6 +411,11 @@
       ]
     },
     {
+      "name": "mime",
+      "version": "2.1.0",
+      "dependencies": []
+    },
+    {
       "name": "yaml",
       "version": "3.1.4",
       "dependencies": [
@@ -655,11 +661,6 @@
       "dependencies": [
         "flutter"
       ]
-    },
-    {
-      "name": "mime",
-      "version": "2.1.0",
-      "dependencies": []
     },
     {
       "name": "async",
