@@ -1,3 +1,4 @@
+import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -756,7 +757,7 @@ class ApiService {
     if (token != null) request.headers['Authorization'] = 'Bearer $token';
     request.fields.addAll(fields);
     for (final e in filePaths.entries) {
-      request.files.add(await http.MultipartFile.fromPath(e.key, e.value));
+      request.files.add(await http.MultipartFile.fromPath(e.key, e.value, contentType: MediaType('image', 'jpeg')));
     }
     final streamed = await request.send().timeout(const Duration(seconds: 180));
     final res = await http.Response.fromStream(streamed);
