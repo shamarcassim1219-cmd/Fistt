@@ -741,6 +741,15 @@ class ApiService {
     await _handle(res);
   }
 
+  // ---------- VERIFICATION ----------
+
+  static Future<Map<String, dynamic>> getVerificationStatusFull() async {
+    final res = await http.get(Uri.parse('$baseUrl/verification/status'), headers: await _headers());
+    return await _handle(res);
+  }
+
+  static Future<Map<String, dynamic>> submitVerification({
+    required Map<String, String> fields,
     required Map<String, String> filePaths,
   }) async {
     final token = await getToken();
