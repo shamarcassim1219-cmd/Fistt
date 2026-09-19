@@ -218,16 +218,25 @@ class _VerificationScreenState extends State<VerificationScreen> {
         if (_docType == 'nic') 'back': _files['back']!,
         if (_docType == 'nic') 'selfie_back': _files['selfie_back']!,
       };
-      await ApiService.submitVerification(fields: fields, filePaths: files);
+      final data =
+          await ApiService.submitVerification(fields: fields, filePaths: files);
       if (!mounted) return;
+      final st = (data['verifiedStatus'] ?? 'pending').toString();
       setState(() {
         _submitting = false;
         _inFlow = false;
-        _status = 'pending';
+        _status = st;
         _statusDocType = _docType;
-        _rejectReason = null;
+        _rejectReason = data['rejectionReason']?.toString();
+        _isReupload = st == 'rejected';
       });
-      _snack('Verification submitted');
+      if (st == 'verified') {
+        _snack('You are verified!');
+      } else if (st == 'rejected') {
+        _snack('Verification was not approved');
+      } else {
+        _snack('Verification submitted');
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
@@ -298,7 +307,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
           color: Colors.orangeAccent,
           title: 'Verification Pending',
           message:
-              'Your ${_docLabel(_statusDocType)} verification is under review. This usually takes 1-2 business days.',
+              'Your ${_docLabel(_statusDocType)} verification needs a manual check by our team. This usually takes 1-2 business days.',
           action: OutlinedButton.icon(
             onPressed: () {
               setState(() => _loadingStatus = true);
@@ -773,7 +782,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
     return _pageScaffold(
       title: 'Review & submit',
-      subtitle: 'Check everything is correct. Our team will review it within 1-2 business days.',
+      subtitle: 'Check everything is correct. We check your documents automatically, it takes a few seconds.',
       bottom: ElevatedButton(
         onPressed: _submitting ? null : _submitAll,
         child: _submitting
