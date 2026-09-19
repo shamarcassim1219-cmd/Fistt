@@ -103,12 +103,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
       const _Step(_Kind.details),
       const _Step(_Kind.docSelect),
       const _Step(_Kind.capture, 'front'),
-      const _Step(_Kind.liveness, 'front'),
     ];
     if (_docType == 'nic') {
       list.add(const _Step(_Kind.capture, 'back'));
-      list.add(const _Step(_Kind.liveness, 'back'));
     }
+    list.add(const _Step(_Kind.liveness, 'front'));
     list.add(const _Step(_Kind.review));
     _steps = list;
   }
@@ -216,7 +215,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
         'front': _files['front']!,
         'selfie_front': _files['selfie_front']!,
         if (_docType == 'nic') 'back': _files['back']!,
-        if (_docType == 'nic') 'selfie_back': _files['selfie_back']!,
       };
       final data =
           await ApiService.submitVerificationFiles(fields: fields, filePaths: files);
