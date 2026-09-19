@@ -7,7 +7,7 @@ import 'package:open_filex/open_filex.dart';
 
 class UpdateService {
   static const String versionCheckUrl =
-      'https://buysellgame.store/version.json';
+      'https://api.finbassshamar.online/app-version';
 
   static Future<void> checkForUpdate(BuildContext context) async {
     try {
@@ -17,8 +17,8 @@ class UpdateService {
       if (response.statusCode != 200) return;
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final latestVersionCode = data['latest_version_code'] as int;
-      final apkUrl = data['apk_url'] as String;
+      final latestVersionCode = data['latestVersionCode'] as int;
+      final apkUrl = data['apkUrl'] as String;
       final forceUpdate = data['force_update'] as bool? ?? false;
       final notes = data['update_notes'] as String? ?? '';
 
