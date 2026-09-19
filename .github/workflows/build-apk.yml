@@ -117,6 +117,19 @@ jobs:
           mkdir -p ~/.android
           echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 --decode > ~/.android/debug.keystore
 
+      - name: Restore release keystore
+        run: |
+          mkdir -p android/keystore
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/keystore/release.jks
+          cat > android/key.properties << 'PROPEOF'
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=keystore/release.jks
+          PROPEOF
+          echo "✅ key.properties created"
+          cat android/key.properties
+
       - name: Print SHA-1 fingerprint for Firebase
         run: keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep "SHA1:"
 
