@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import '../services/safe_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import '../main.dart';
 import '../services/api_service.dart';
@@ -220,7 +221,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with SecureScreenMixin 
   Future<void> _pickImage() async {
     if (_sending) return;
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final picked = await picker.pickImageSafe(source: ImageSource.gallery, imageQuality: 80);
     if (picked == null) return;
     setState(() => _pendingImage = picked);
   }

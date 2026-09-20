@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/safe_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../main.dart';
@@ -51,7 +52,7 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
 
   Future<void> _pickPhoto() async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final picked = await picker.pickImageSafe(source: ImageSource.gallery, imageQuality: 80);
     if (picked == null) return;
     setState(() {
       _pickedPhoto = picked;

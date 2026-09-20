@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import '../services/safe_picker.dart';
 import '../widgets/anim.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -139,7 +140,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
   Future<void> _pickScreenshots() async {
     try {
       final picker = ImagePicker();
-      final picked = await picker.pickMultiImage(imageQuality: 80);
+      final picked = await picker.pickMultiImageSafe(imageQuality: 80);
       if (picked.isEmpty) return;
       if (!mounted) return;
       setState(() {

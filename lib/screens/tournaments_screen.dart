@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/safe_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -144,7 +145,7 @@ Widget _banner(String? url, {double height = 160}) {
 
 Future<String?> _pickAndUpload() async {
   final picker = ImagePicker();
-  final file = await picker.pickImage(source: ImageSource.gallery, maxWidth: 800, imageQuality: 85);
+  final file = await picker.pickImageSafe(source: ImageSource.gallery, maxWidth: 800, imageQuality: 85);
   if (file == null) return null;
   return await ApiService.uploadImage(file);
 }

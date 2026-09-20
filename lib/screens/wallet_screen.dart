@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import '../services/safe_picker.dart';
 import '../widgets/anim.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:async';
@@ -439,7 +440,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   InkWell(
                     onTap: () async {
                       final picker = ImagePicker();
-                      final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+                      final picked = await picker.pickImageSafe(source: ImageSource.gallery, imageQuality: 80);
                       if (picked != null) {
                         setModalState(() => slipFile = picked);
                       }

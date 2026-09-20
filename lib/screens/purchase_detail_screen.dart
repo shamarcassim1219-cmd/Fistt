@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../services/safe_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/secure_screen_mixin.dart';
 import '../main.dart';
@@ -123,7 +124,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
                   onPressed: () async {
-                    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70);
+                    final picked = await ImagePicker().pickImageSafe(source: ImageSource.gallery, imageQuality: 70);
                     if (picked != null) {
                       setDialogState(() => pickedPhoto = picked);
                     }

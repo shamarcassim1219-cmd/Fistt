@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../services/safe_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -193,7 +194,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
   Future<void> _takeDocPhoto(String side) async {
     try {
-      final img = await ImagePicker().pickImage(
+      final img = await ImagePicker().pickImageSafe(
         source: ImageSource.camera,
         imageQuality: 70,
         maxWidth: 1600,
