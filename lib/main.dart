@@ -248,7 +248,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
     return MaterialApp(
       navigatorKey: navigatorKey,
       builder: (context, child) => NoInternetOverlay(child: child ?? const SizedBox.shrink()),
-      title: 'MYGame Marketplace',
+      title: 'MyGame',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
