@@ -872,4 +872,14 @@ class ApiService {
     );
     await _handle(res);
   }
+
+  static Future<bool> totpVerifyUnlock(String code) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/totp/verify'),
+      headers: await _headers(),
+      body: jsonEncode({'code': code}),
+    );
+    final data = await _handle(res);
+    return data['enabled'] == true;
+  }
 }

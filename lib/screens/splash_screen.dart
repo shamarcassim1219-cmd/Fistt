@@ -6,6 +6,7 @@ import '../main.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 import 'intro_screen.dart';
+import 'totp_screens.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -78,6 +79,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (!mounted) return;
 
     Widget next = isLoggedIn ? const HomeScreen() : const LoginScreen();
+    if (isLoggedIn && await needsTotpUnlock()) next = const TotpUnlockScreen();
 
 
     Navigator.of(context).pushReplacement(

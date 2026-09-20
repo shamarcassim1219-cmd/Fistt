@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import 'home_screen.dart';
+import 'login_screen.dart';
 
 /// Small dialog that asks for a 6-digit authenticator code. Returns the code or null.
 Future<String?> askTotpCode(BuildContext context, {String title = 'Enter authenticator code'}) {
@@ -46,6 +47,148 @@ Future<String?> askTotpCode(BuildContext context, {String title = 'Enter authent
       ],
     ),
   );
+}
+
+/// Remembers on the phone whether two-step verification is on.
+Future<void> _saveTotpFlag(bool enabled) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool('totp_enabled', enabled);
+}
+
+/// Called on app start (logged-in users). True when the authenticator code must be entered
+/// before the app opens. Asks the server; falls back to the saved flag when offline.
+Future<bool> needsTotpUnlock() async {
+  final prefs = await SharedPreferences.getInstance();
+  final cached = prefs.getBool('totp_enabled') ?? false;
+  try {
+    final enabled = await ApiService.totpStatus().timeout(const Duration(seconds: 4));
+    await prefs.setBool('totp_enabled', enabled);
+    return enabled;
+  } catch (_) {
+    return cached;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// App unlock (shown when the app is opened and two-step verification is on)
+// ---------------------------------------------------------------------------
+class TotpUnlockScreen extends StatefulWidget {
+  const TotpUnlockScreen({super.key});
+
+  @override
+  State<TotpUnlockScreen> createState() => _TotpUnlockScreenState();
+}
+
+class _TotpUnlockScreenState extends State<TotpUnlockScreen> {
+  final _codeCtrl = TextEditingController();
+  bool _verifying = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _codeCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _unlock() async {
+    final code = _codeCtrl.text.trim();
+    if (code.length != 6) {
+      setState(() => _error = 'Enter the 6-digit code');
+      return;
+    }
+    setState(() {
+      _verifying = true;
+      _error = null;
+    });
+    try {
+      final enabled = await ApiService.totpVerifyUnlock(code);
+      await _saveTotpFlag(enabled);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceFirst('Exception: ', '');
+          _verifying = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _logout() async {
+    await ApiService.clearToken();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_logged_in', false);
+    await prefs.setBool('totp_enabled', false);
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: AppColors.bg,
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Icon(Icons.lock_outline, size: 60, color: AppColors.primary),
+                  const SizedBox(height: 16),
+                  const Text('Welcome back',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Open your authenticator app and enter the 6-digit code for MYGame.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.hint, fontSize: 14),
+                  ),
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: _codeCtrl,
+                    autofocus: true,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    maxLength: 6,
+                    onSubmitted: (_) => _verifying ? null : _unlock(),
+                    style: const TextStyle(color: Colors.white, fontSize: 22, letterSpacing: 8),
+                    decoration: const InputDecoration(labelText: 'Authenticator code'),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 6),
+                    Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: _verifying ? null : _unlock,
+                      child: _verifying
+                          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text('Unlock'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: _verifying ? null : _logout,
+                    child: const Text('Log out', style: TextStyle(color: AppColors.hint)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -209,6 +352,7 @@ class _TwoFactorSettingsScreenState extends State<TwoFactorSettingsScreen> {
     });
     try {
       final enabled = await ApiService.totpStatus();
+      await _saveTotpFlag(enabled);
       if (!mounted) return;
       setState(() {
         _enabled = enabled;
@@ -266,6 +410,7 @@ class _TwoFactorSettingsScreenState extends State<TwoFactorSettingsScreen> {
     });
     try {
       await ApiService.totpConfirm(_secret ?? '', code);
+      await _saveTotpFlag(true);
       if (!mounted) return;
       setState(() {
         _enabled = true;
@@ -291,6 +436,7 @@ class _TwoFactorSettingsScreenState extends State<TwoFactorSettingsScreen> {
     });
     try {
       await ApiService.totpDisable(code);
+      await _saveTotpFlag(false);
       if (!mounted) return;
       setState(() {
         _enabled = false;
