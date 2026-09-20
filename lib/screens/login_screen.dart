@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'totp_screens.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -75,7 +76,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         throw Exception('Failed to get Google ID token');
       }
 
-      final signInData = await ApiService.googleSignIn(idToken);
+      var signInData = await ApiService.googleSignIn(idToken);
+      if (signInData['requiresTotp'] == true) {
+        if (!mounted) return;
+        final totpCode = await askTotpCode(context);
+        if (totpCode == null) return;
+        signInData = await ApiService.googleSignIn(idToken, totpCode: totpCode);
+      }
 
       try {
         await FirebaseMessaging.instance.requestPermission(alert: true, badge: true, sound: true);
@@ -121,7 +128,14 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       if (_isRegister) {
         await ApiService.register(_emailCtrl.text.trim(), _passCtrl.text.trim(), _displayNameCtrl.text.trim());
       } else {
-        await ApiService.login(_emailCtrl.text.trim(), _passCtrl.text.trim());
+        final loginData = await ApiService.login(_emailCtrl.text.trim(), _passCtrl.text.trim());
+        if (loginData['requiresTotp'] == true) {
+          if (!mounted) return;
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => TotpLoginScreen(ticket: loginData['ticket'].toString(), isGate: widget.isGate),
+          ));
+          return;
+        }
       }
 
       if (!mounted) return;
@@ -162,7 +176,13 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         throw Exception('Failed to get Google ID token');
       }
 
-      final signInData = await ApiService.googleSignIn(idToken);
+      var signInData = await ApiService.googleSignIn(idToken);
+      if (signInData['requiresTotp'] == true) {
+        if (!mounted) return;
+        final totpCode = await askTotpCode(context);
+        if (totpCode == null) return;
+        signInData = await ApiService.googleSignIn(idToken, totpCode: totpCode);
+      }
 
       try {
         await FirebaseMessaging.instance.requestPermission(

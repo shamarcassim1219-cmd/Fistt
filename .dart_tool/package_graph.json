@@ -5,10 +5,11 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.0.100+101",
+      "version": "1.1.6+108",
       "dependencies": [
         "background_downloader",
         "camera",
+        "connectivity_plus",
         "cupertino_icons",
         "device_info_plus",
         "dio",
@@ -1404,6 +1405,35 @@
         "collection",
         "meta",
         "pub_semver"
+      ]
+    },
+    {
+      "name": "connectivity_plus",
+      "version": "6.1.5",
+      "dependencies": [
+        "collection",
+        "connectivity_plus_platform_interface",
+        "flutter",
+        "flutter_web_plugins",
+        "meta",
+        "nm",
+        "web"
+      ]
+    },
+    {
+      "name": "nm",
+      "version": "0.5.0",
+      "dependencies": [
+        "dbus"
+      ]
+    },
+    {
+      "name": "connectivity_plus_platform_interface",
+      "version": "2.1.0",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "plugin_platform_interface"
       ]
     }
   ],

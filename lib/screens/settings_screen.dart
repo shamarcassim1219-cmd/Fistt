@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'totp_screens.dart';
 import '../widgets/anim.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -332,6 +333,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
               }),
 
+              _tile(Icons.security, 'Two-step verification', 'Google Authenticator', () async {
+                if (!await requireLogin(context, reason: 'Login to manage two-step verification')) return;
+                if (!context.mounted) return;
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const TwoFactorSettingsScreen()));
+              }),
               _tile(Icons.block_outlined, AppLocalizations.t('blocked_users'), null, () async {
                 if (!await requireLogin(context, reason: 'Login to view blocked users')) return;
                 if (!context.mounted) return;

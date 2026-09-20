@@ -103,13 +103,14 @@ class ApiService {
     return data['user'];
   }
 
-  static Future<void> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(String email, String password) async {
     final res = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: await _headers(withAuth: false),
       body: jsonEncode({'email': email, 'password': password}),
     );
-    await _handle(res);
+    // {requiresTotp: true, ticket} when two-step verification is on, otherwise {message, email}
+    return await _handle(res);
   }
 
   static Future<Map<String, dynamic>> verifyLogin(String email, String code) async {
@@ -146,7 +147,7 @@ class ApiService {
     await _handle(res);
   }
 
-  static Future<Map<String, dynamic>> googleSignIn(String idToken) async {
+  static Future<Map<String, dynamic>> googleSignIn(String idToken, {String? totpCode}) async {
     final deviceFingerprint = await DeviceService.getFingerprint();
     final deviceModel = await DeviceService.getModel();
     final res = await http.post(
@@ -154,10 +155,12 @@ class ApiService {
       headers: await _headers(withAuth: false),
       body: jsonEncode({
         'idToken': idToken,
+        if (totpCode != null) 'totpCode': totpCode,
         'deviceFingerprint': deviceFingerprint, 'deviceModel': deviceModel,
       }),
     );
     final data = await _handle(res);
+    if (data['requiresTotp'] == true) return data; // needs the authenticator code first
     await saveToken(data['token']);
     return data;
   }
@@ -822,5 +825,51 @@ class ApiService {
       if (lv < cv) return false;
     }
     return false;
+  }
+
+  // ---------- TWO-STEP VERIFICATION (Google Authenticator) ----------
+  static Future<Map<String, dynamic>> verifyTotpLogin(String ticket, String code) async {
+    final deviceFingerprint = await DeviceService.getFingerprint();
+    final deviceModel = await DeviceService.getModel();
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/verify-totp-login'),
+      headers: await _headers(withAuth: false),
+      body: jsonEncode({
+        'ticket': ticket, 'code': code,
+        'deviceFingerprint': deviceFingerprint, 'deviceModel': deviceModel,
+      }),
+    );
+    final data = await _handle(res);
+    await saveToken(data['token']);
+    return data['user'];
+  }
+
+  static Future<bool> totpStatus() async {
+    final res = await http.get(Uri.parse('$baseUrl/auth/totp/status'), headers: await _headers());
+    final data = await _handle(res);
+    return data['enabled'] == true;
+  }
+
+  static Future<Map<String, dynamic>> totpGenerate() async {
+    final res = await http.post(Uri.parse('$baseUrl/auth/totp/generate'), headers: await _headers());
+    return await _handle(res);
+  }
+
+  static Future<void> totpConfirm(String secret, String code) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/totp/confirm'),
+      headers: await _headers(),
+      body: jsonEncode({'secret': secret, 'code': code}),
+    );
+    await _handle(res);
+  }
+
+  static Future<void> totpDisable(String code) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/totp/disable'),
+      headers: await _headers(),
+      body: jsonEncode({'code': code}),
+    );
+    await _handle(res);
   }
 }
