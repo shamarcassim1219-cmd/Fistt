@@ -8,6 +8,7 @@ import 'offers_screen.dart';
 import 'wallet_screen.dart';
 import 'verification_screen.dart';
 import 'chat_conversation_screen.dart';
+import 'tournaments_screen.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -67,6 +68,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'outbid': return Icons.gavel_outlined;
       case 'admin_message': return Icons.support_agent_outlined;
       case 'credentials_shared': return Icons.lock_open_outlined;
+      case 'tournament_invite': return Icons.mail_outline;
+      case 'tournament_invite_response': return Icons.how_to_reg_outlined;
+      case 'tournament_room': return Icons.meeting_room_outlined;
+      case 'tournament_reminder': return Icons.alarm;
+      case 'tournament_prize': return Icons.emoji_events;
+      case 'tournament_suspended': return Icons.block;
+      case 'tournament_cancelled':
+      case 'tournament_team_dissolved': return Icons.cancel_outlined;
       default: return Icons.notifications_outlined;
     }
   }
@@ -128,6 +137,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             ),
           );
+        }
+        break;
+
+      case 'tournament_invite':
+      case 'tournament_invite_response':
+      case 'tournament_room':
+      case 'tournament_reminder':
+      case 'tournament_prize':
+      case 'tournament_suspended':
+      case 'tournament_cancelled':
+      case 'tournament_team_dissolved':
+        final tid = int.tryParse('$relatedId');
+        if (tid != null) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => TournamentDetailScreen(id: tid)));
         }
         break;
 

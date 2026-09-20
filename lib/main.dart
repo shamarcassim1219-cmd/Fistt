@@ -19,6 +19,7 @@ import 'screens/purchase_detail_screen.dart';
 import 'screens/sale_detail_screen.dart';
 import 'screens/offers_screen.dart';
 import 'screens/admin_chat_screen.dart';
+import 'screens/tournaments_screen.dart';
 
 class AppColors {
   static const bg = Color(0xFF0B0B10);
@@ -202,6 +203,10 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
       'order_completed', 'sale_paid', 'dispute_resolved', 'dispute_raised', 'credentials_shared'
     };
     const offerTypes = {'offer_received', 'offer_accepted', 'offer_rejected', 'outbid'};
+    const tournamentTypes = {
+      'tournament_invite', 'tournament_invite_response', 'tournament_room', 'tournament_reminder',
+      'tournament_prize', 'tournament_suspended', 'tournament_cancelled', 'tournament_team_dissolved'
+    };
 
     try {
       if (orderTypes.contains(type) && relatedId != null) {
@@ -229,6 +234,11 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
           }
         } catch (_) {}
         nav.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+        return;
+      }
+
+      if (tournamentTypes.contains(type) && relatedId != null) {
+        nav.push(MaterialPageRoute(builder: (_) => TournamentDetailScreen(id: relatedId)));
         return;
       }
 
