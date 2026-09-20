@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'wallet_screen.dart';
-import 'totp_screens.dart';
 import '../widgets/anim.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,19 +10,9 @@ import '../services/api_service.dart';
 import '../services/auth_helper.dart';
 import '../services/app_localizations.dart';
 import 'login_screen.dart';
-import 'verification_screen.dart';
 import 'profile_management_screen.dart';
-import 'change_password_screen.dart';
-import 'change_email_screen.dart';
-import 'wallet_bank_details_screen.dart';
-import 'my_listings_screen.dart';
-import 'my_purchases_screen.dart';
-import 'my_sales_screen.dart';
 import 'referral_code_screen.dart';
-import 'blocked_users_screen.dart';
-import 'offers_screen.dart';
 import 'live_chat_screen.dart';
-import 'favorites_screen.dart';
 import 'legal_screen.dart';
 import 'help_faq_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -193,10 +182,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _comingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$feature coming soon')));
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = _profile;
@@ -279,75 +264,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileManagementScreen()));
                 _loadProfile();
               }),
-              _tile(
-                Icons.verified_outlined,
-                AppLocalizations.t('verification_center'),
-                null,
-                () async {
-                  if (!await requireLogin(context, reason: 'Login to verify your account')) return;
-                  if (!context.mounted) return;
-                  await Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
-                  _loadProfile();
-                },
-              ),
-              _tile(Icons.list_alt_outlined, AppLocalizations.t('my_listings'), null, () async {
-                if (!await requireLogin(context, reason: 'Login to view your listings')) return;
-                if (!context.mounted) return;
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyListingsScreen()));
-              }),
-              _tile(Icons.shopping_bag_outlined, AppLocalizations.t('my_purchases'), null, () async {
-                if (!await requireLogin(context, reason: 'Login to view your purchases')) return;
-                if (!context.mounted) return;
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPurchasesScreen()));
-              }),
-              _tile(Icons.storefront_outlined, AppLocalizations.t('my_sales'), null, () async {
-                if (!await requireLogin(context, reason: 'Login to view your sales')) return;
-                if (!context.mounted) return;
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MySalesScreen()));
-              }),
-              _tile(Icons.local_offer_outlined, AppLocalizations.t('offers'), null, () async {
-                if (!await requireLogin(context, reason: 'Login to view your offers')) return;
-                if (!context.mounted) return;
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()));
-              }),
-              _tile(Icons.bookmark_border, AppLocalizations.t('saved_wishlist_accounts'), null, () async {
-                if (!await requireLogin(context, reason: 'Login to view your saved accounts')) return;
-                if (!context.mounted) return;
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen()));
-              }),
-              _tile(Icons.account_balance_outlined, AppLocalizations.t('wallet_bank_details'), null, () async {
-                if (!await requireLogin(context, reason: 'Login to manage your bank details')) return;
-                if (!context.mounted) return;
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletBankDetailsScreen()));
-              }),
               _tile(Icons.card_giftcard_outlined, AppLocalizations.t('referral_code'), null, () async {
                 if (!await requireLogin(context, reason: 'Login to view your referral code')) return;
                 if (!context.mounted) return;
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralCodeScreen()));
-              }),
-
-              _SectionHeader(AppLocalizations.t('security')),
-              _tile(Icons.email_outlined, AppLocalizations.t('change_email'), null, () async {
-                if (!await requireLogin(context, reason: 'Login to change your email')) return;
-                if (!context.mounted) return;
-                final changed = await Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangeEmailScreen()));
-                if (changed == true) _loadProfile();
-              }),
-              _tile(Icons.lock_reset, AppLocalizations.t('change_password'), null, () async {
-                if (!await requireLogin(context, reason: 'Login to change your password')) return;
-                if (!context.mounted) return;
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
-              }),
-
-              _tile(Icons.security, 'Two-step verification', 'Google Authenticator', () async {
-                if (!await requireLogin(context, reason: 'Login to manage two-step verification')) return;
-                if (!context.mounted) return;
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const TwoFactorSettingsScreen()));
-              }),
-              _tile(Icons.block_outlined, AppLocalizations.t('blocked_users'), null, () async {
-                if (!await requireLogin(context, reason: 'Login to view blocked users')) return;
-                if (!context.mounted) return;
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const BlockedUsersScreen()));
               }),
 
               _SectionHeader(AppLocalizations.t('preferences')),
