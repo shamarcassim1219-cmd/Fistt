@@ -2,3 +2,4 @@ test-apk.apk
 *.apk
 android/key.properties
 android/keystore/
+functions/node_modules/
