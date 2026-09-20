@@ -582,6 +582,46 @@ class ApiService {
     return data['isFavorite'] ?? false;
   }
 
+  // ---------- TOP-UP STORE ----------
+  static Future<List<dynamic>> getTopupGames() async {
+    final res = await http.get(Uri.parse('$baseUrl/topup/games'), headers: await _headers());
+    final data = await _handle(res);
+    return data['games'];
+  }
+
+  static Future<List<dynamic>> getTopupPackages(int gameId) async {
+    final res = await http.get(Uri.parse('$baseUrl/topup/games/$gameId/packages'), headers: await _headers());
+    final data = await _handle(res);
+    return data['packages'];
+  }
+
+  static Future<Map<String, dynamic>> submitTopupOrder({
+    required int gameId,
+    required int packageId,
+    required String playerId,
+    String? zoneId,
+    String? region,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/topup/order'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'gameId': gameId,
+        'packageId': packageId,
+        'playerId': playerId,
+        'zoneId': zoneId,
+        'region': region,
+      }),
+    );
+    return await _handle(res);
+  }
+
+  static Future<List<dynamic>> getMyTopupOrders() async {
+    final res = await http.get(Uri.parse('$baseUrl/topup/my-orders'), headers: await _headers());
+    final data = await _handle(res);
+    return data['orders'];
+  }
+
   // ---------- PROMOTIONS ----------
   static Future<List<dynamic>> getPromotions() async {
     final res = await http.get(Uri.parse('$baseUrl/promotions'), headers: await _headers(withAuth: false));
