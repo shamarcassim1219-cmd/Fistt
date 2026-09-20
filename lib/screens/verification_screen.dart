@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/sl_locations.dart';
@@ -86,6 +87,24 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   // ---------------------------------------------------------------- flow
+
+  // Copy a photo into the app's own storage (the phone may delete cache files at any time)
+  Future<String> _persist(String srcPath, String key) async {
+    final base = await getApplicationSupportDirectory();
+    final folder = Directory('${base.path}/verification');
+    if (!await folder.exists()) await folder.create(recursive: true);
+    final dest = '${folder.path}/${key}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    await File(srcPath).copy(dest);
+    return dest;
+  }
+
+  Future<void> _clearSaved() async {
+    try {
+      final base = await getApplicationSupportDirectory();
+      final folder = Directory('${base.path}/verification');
+      if (await folder.exists()) await folder.delete(recursive: true);
+    } catch (_) {}
+  }
 
   void _startFlow({bool reupload = false}) {
     setState(() {
@@ -179,7 +198,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
         imageQuality: 70,
         maxWidth: 1600,
       );
-      if (img != null) setState(() => _files[side] = img.path);
+      if (img != null) {
+        final saved = await _persist(img.path, side);
+        if (!mounted) return;
+        setState(() => _files[side] = saved);
+      }
     } catch (e) {
       _snack('Could not open the camera');
     }
@@ -194,10 +217,34 @@ class _VerificationScreenState extends State<VerificationScreen> {
         ),
       ),
     );
-    if (path != null) setState(() => _files['selfie_$side'] = path);
+    if (path != null) {
+      try {
+        final saved = await _persist(path, 'selfie_$side');
+        if (!mounted) return;
+        setState(() => _files['selfie_$side'] = saved);
+      } catch (_) {
+        _snack('Could not save the photo. Please try again.');
+      }
+    }
   }
 
   Future<void> _submitAll() async {
+    // make sure every photo is still on the phone
+    final need = ['front', 'selfie_front', if (_docType == 'nic') ...['back', 'selfie_back']];
+    final bad = need.where((k) => _files[k] == null || !File(_files[k]!).existsSync()).toList();
+    if (bad.isNotEmpty) {
+      for (final k in bad) {
+        _files.remove(k);
+      }
+      final idx = _steps.indexWhere((st) =>
+          (st.kind == _Kind.capture && bad.contains(st.side)) ||
+          (st.kind == _Kind.liveness && bad.contains('selfie_${st.side}')));
+      setState(() {
+        if (idx >= 0) _stepIndex = idx;
+      });
+      _snack('A photo was removed by your phone. Please take it again.');
+      return;
+    }
     setState(() => _submitting = true);
     try {
       final d = _dob!;
@@ -219,6 +266,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       final data =
           await ApiService.submitVerificationFiles(fields: fields, filePaths: files);
       if (!mounted) return;
+      _clearSaved();
       final st = (data['verifiedStatus'] ?? 'pending').toString();
       setState(() {
         _submitting = false;
