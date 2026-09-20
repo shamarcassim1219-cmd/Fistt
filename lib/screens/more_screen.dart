@@ -16,10 +16,11 @@ const List<Map<String, dynamic>> _defaultTools = [
 
 
 const String _ffImage = 'assets/images/ff_info.jpg';
+const String _tourneyImage = 'assets/images/tournaments.jpg';
 
-Widget _ffBanner({double? height}) {
+Widget _ffBanner({double? height, String asset = _ffImage}) {
   return Image.asset(
-    _ffImage,
+    asset,
     fit: BoxFit.cover,
     height: height,
     width: double.infinity,
@@ -33,11 +34,11 @@ Widget _ffBanner({double? height}) {
   );
 }
 
-Widget _photoOverlay(String title, String caption) {
+Widget _photoOverlay(String title, String caption, {String asset = _ffImage}) {
   return Stack(
     fit: StackFit.expand,
     children: [
-      _ffBanner(),
+      _ffBanner(asset: asset),
       const DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -149,13 +150,17 @@ class _MoreScreenState extends State<MoreScreen> {
                     itemCount: _tools.length,
                     itemBuilder: (_, i) {
                       final t = _tools[i] as Map;
-                      if (t['key'] == 'ff_info') {
+                      if (t['key'] == 'ff_info' || t['key'] == 'tournaments') {
                         return InkWell(
                           borderRadius: BorderRadius.circular(16),
                           onTap: () => _open(t),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(16),
-                            child: _photoOverlay('${t['title'] ?? 'Free Fire Info Check'}', 'Get your information'),
+                            child: _photoOverlay(
+                              '${t['title'] ?? ''}',
+                              t['key'] == 'tournaments' ? 'Compete and win prizes' : 'Get your information',
+                              asset: t['key'] == 'tournaments' ? _tourneyImage : _ffImage,
+                            ),
                           ),
                         );
                       }
