@@ -833,6 +833,82 @@ class ApiService {
     return Map<String, dynamic>.from(data);
   }
 
+  // ---------- TOURNAMENTS ----------
+  static Future<Map<String, dynamic>> getTournaments() async {
+    final res = await http.get(Uri.parse('$baseUrl/tournaments'), headers: await _headers());
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
+  }
+
+  static Future<Map<String, dynamic>> getTournament(int id) async {
+    final res = await http.get(Uri.parse('$baseUrl/tournaments/$id'), headers: await _headers());
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
+  }
+
+  static Future<String> registerTournament(int id, {required String guildName, String? guildImageUrl, required String gameId, required String gameName}) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/tournaments/$id/register'),
+      headers: await _headers(),
+      body: jsonEncode({'guildName': guildName, 'guildImageUrl': guildImageUrl ?? '', 'gameId': gameId, 'gameName': gameName}),
+    );
+    final data = await _handle(res);
+    return '${data['message'] ?? 'Registered'}';
+  }
+
+  static Future<List<dynamic>> searchTournamentUsers(String q) async {
+    final res = await http.get(Uri.parse('$baseUrl/tournaments/users/search?q=${Uri.encodeQueryComponent(q)}'), headers: await _headers());
+    final data = await _handle(res);
+    return (data['users'] as List?) ?? [];
+  }
+
+  static Future<void> inviteTournamentPlayer(int teamId, int userId) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/tournaments/teams/$teamId/invite'),
+      headers: await _headers(),
+      body: jsonEncode({'userId': userId}),
+    );
+    await _handle(res);
+  }
+
+  static Future<void> acceptTournamentInvite(int memberId, String gameId, String gameName) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/tournaments/invites/$memberId/accept'),
+      headers: await _headers(),
+      body: jsonEncode({'gameId': gameId, 'gameName': gameName}),
+    );
+    await _handle(res);
+  }
+
+  static Future<void> rejectTournamentInvite(int memberId) async {
+    final res = await http.post(Uri.parse('$baseUrl/tournaments/invites/$memberId/reject'), headers: await _headers());
+    await _handle(res);
+  }
+
+  static Future<void> removeTournamentMember(int teamId, int memberId) async {
+    final res = await http.delete(Uri.parse('$baseUrl/tournaments/teams/$teamId/members/$memberId'), headers: await _headers());
+    await _handle(res);
+  }
+
+  static Future<void> leaveTournamentTeam(int teamId) async {
+    final res = await http.post(Uri.parse('$baseUrl/tournaments/teams/$teamId/leave'), headers: await _headers());
+    await _handle(res);
+  }
+
+  static Future<String> dissolveTournamentTeam(int teamId) async {
+    final res = await http.post(Uri.parse('$baseUrl/tournaments/teams/$teamId/dissolve'), headers: await _headers());
+    final data = await _handle(res);
+    return '${data['message'] ?? 'Team dissolved'}';
+  }
+
+  static Future<void> updateTournamentTeam(int teamId, {String? guildName, String? guildImageUrl}) async {
+    final body = <String, dynamic>{};
+    if (guildName != null) body['guildName'] = guildName;
+    if (guildImageUrl != null) body['guildImageUrl'] = guildImageUrl;
+    final res = await http.put(Uri.parse('$baseUrl/tournaments/teams/$teamId'), headers: await _headers(), body: jsonEncode(body));
+    await _handle(res);
+  }
+
   // ---------- APP UPDATE CHECK ----------
   // Checks GitHub Releases for a newer version than the one currently installed.
   static Future<void> resendOtp(String email, String purpose) async {

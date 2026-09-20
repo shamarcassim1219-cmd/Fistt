@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:gal/gal.dart';
 import '../services/api_service.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'tournaments_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 
 const List<Map<String, dynamic>> _defaultTools = [
   {'key': 'ff_info', 'title': 'Free Fire Info Check', 'subtitle': 'Check any account by UID', 'icon': 'sports_esports'},
+  {'key': 'tournaments', 'title': 'Tournaments', 'subtitle': 'Compete and win prizes', 'icon': 'emoji_events'},
 ];
 
 
@@ -70,6 +73,8 @@ IconData _iconFor(String? name) {
       return Icons.diamond;
     case 'search':
       return Icons.search;
+    case 'emoji_events':
+      return Icons.emoji_events;
     case 'shield':
       return Icons.shield;
     case 'star':
@@ -109,7 +114,12 @@ class _MoreScreenState extends State<MoreScreen> {
   }
 
   void _open(Map t) {
-    if (t['key'] == 'ff_info') {
+    final link = '${t['linkUrl'] ?? ''}';
+    if (link.isNotEmpty) {
+      launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+    } else if (t['key'] == 'tournaments') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const TournamentsScreen()));
+    } else if (t['key'] == 'ff_info') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const FfInfoScreen()));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
