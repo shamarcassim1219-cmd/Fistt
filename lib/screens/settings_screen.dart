@@ -370,6 +370,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _tile(Icons.policy_outlined, AppLocalizations.t('privacy_policy'), null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen(type: 'privacy')));
               }),
+              _tile(Icons.currency_exchange_outlined, 'Refund Policy', null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen(type: 'refund')));
+              }),
 
               _SectionHeader(AppLocalizations.t('support')),
               _tile(Icons.help_outline, AppLocalizations.t('help_and_faq'), null, () {

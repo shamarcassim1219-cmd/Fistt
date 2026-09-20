@@ -2,27 +2,59 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 
 class LegalScreen extends StatelessWidget {
-  final String type; // 'terms' or 'privacy'
+  final String type; // 'terms', 'privacy', or 'refund'
   const LegalScreen({super.key, required this.type});
+
+  String get _title {
+    switch (type) {
+      case 'terms':
+        return 'Terms & Conditions';
+      case 'refund':
+        return 'Refund Policy';
+      default:
+        return 'Privacy Policy';
+    }
+  }
+
+  String get _heading {
+    switch (type) {
+      case 'terms':
+        return 'MYGame Marketplace — Terms & Conditions';
+      case 'refund':
+        return 'MYGame Marketplace — Refund Policy';
+      default:
+        return 'MYGame Marketplace — Privacy Policy';
+    }
+  }
+
+  List<Widget> _sections() {
+    switch (type) {
+      case 'terms':
+        return _termsSections();
+      case 'refund':
+        return _refundSections();
+      default:
+        return _privacySections();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isTerms = type == 'terms';
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: Text(isTerms ? 'Terms & Conditions' : 'Privacy Policy')),
+      appBar: AppBar(title: Text(_title)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
             Text(
-              isTerms ? 'MYGame Marketplace — Terms & Conditions' : 'MYGame Marketplace — Privacy Policy',
+              _heading,
               style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             const Text('Last updated: September 2026', style: TextStyle(color: AppColors.hint, fontSize: 12)),
             const SizedBox(height: 24),
-            if (isTerms) ..._termsSections() else ..._privacySections(),
+            ..._sections(),
             const SizedBox(height: 30),
           ],
         ),
@@ -87,6 +119,27 @@ class LegalScreen extends StatelessWidget {
           'We may update this Privacy Policy from time to time to reflect changes in our practices, technology, or legal requirements. We will make reasonable efforts to notify users of material changes through the app. Your continued use of MYGame Marketplace after such updates constitutes your acceptance of the revised Privacy Policy.'),
       _section('12. Contact Us',
           'If you have any questions, concerns, or requests regarding this Privacy Policy or how your data is handled, please contact our support team using the "Report a Problem" feature or "Live Chat with Admin" option available in the Settings section of the app.'),
+    ];
+  }
+
+  List<Widget> _refundSections() {
+    return [
+      _section('1. Escrow-Based Protection',
+          'All purchases on MYGame Marketplace go through our escrow system. Your payment is held securely by the Platform and is not released to the seller until you confirm receipt of the account, the holding period ends without a dispute, or an admin resolves a dispute in your favor. This structure exists to protect buyers before a formal refund would ever be needed.'),
+      _section('2. When a Refund May Be Issued',
+          'A refund may be granted if: the seller fails to deliver the account credentials within the agreed time; the delivered account does not match the listing description (wrong rank, missing items, incorrect ownership); the account is reclaimed, banned, or recovered by the original owner shortly after handover; or the seller is found to have engaged in fraud or misrepresentation. Refund eligibility is determined after review of the evidence submitted by both parties.'),
+      _section('3. How to Request a Refund',
+          'If an issue occurs with your order, raise a dispute from the order details screen before the escrow holding period ends. Include clear evidence such as screenshots, chat logs, and login attempts. Our admin team will review the case and respond with a decision. Refund requests made after the escrow period has ended and funds have been released to the seller cannot be guaranteed.'),
+      _section('4. Non-Refundable Situations',
+          'Refunds will generally not be granted if: you simply changed your mind after a successful, verified handover; the account was delivered exactly as described and you failed to change the password/secure it in time, resulting in it being reclaimed due to your own delay; the issue arises from a third-party game publisher\'s own ban/suspension unrelated to the account\'s ownership history; or you violated the Platform\'s Terms & Conditions during the transaction.'),
+      _section('5. Refund Method & Timeline',
+          'Approved refunds are returned to your MYGame Marketplace wallet balance, from which you may withdraw using your saved bank/payment details, subject to the Platform\'s standard withdrawal processing times. Refunds are not issued directly back to external payment methods.'),
+      _section('6. Commission & Fees on Refunds',
+          'If a refund is approved due to a seller-side issue (non-delivery, misrepresentation, fraud), the Platform commission charged on that transaction is also reversed in full. If a refund is issued as a goodwill or partial resolution in a shared-fault dispute, commission may be adjusted proportionally at the admin team\'s discretion.'),
+      _section('7. Disputed Decisions',
+          'Refund and dispute decisions made by our admin team are based on the evidence available at the time of review and are considered final. If new evidence becomes available after a decision, you may reopen the case through the "Report a Problem" or "Live Chat with Admin" feature in Settings.'),
+      _section('8. Changes to This Policy',
+          'We may update this Refund Policy from time to time to reflect changes in our escrow process or legal requirements. Continued use of MYGame Marketplace after such updates constitutes your acceptance of the revised policy.'),
     ];
   }
 
