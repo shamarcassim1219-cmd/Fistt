@@ -15,6 +15,10 @@ import 'screens/notifications_screen.dart';
 import 'services/app_version_service.dart';
 import 'screens/force_update_screen.dart';
 import 'widgets/no_internet_overlay.dart';
+import 'screens/purchase_detail_screen.dart';
+import 'screens/sale_detail_screen.dart';
+import 'screens/offers_screen.dart';
+import 'screens/admin_chat_screen.dart';
 
 class AppColors {
   static const bg = Color(0xFF0B0B10);
@@ -186,6 +190,65 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _handleNotificationTap(RemoteMessage message) async {
+    final data = message.data;
+    final type = data['type'] as String?;
+    final relatedIdStr = data['relatedId'] as String?;
+    final relatedId = int.tryParse(relatedIdStr ?? '');
+    final nav = navigatorKey.currentState;
+    if (nav == null || type == null) return;
+
+    const orderTypes = {
+      'order_completed', 'sale_paid', 'dispute_resolved', 'dispute_raised', 'credentials_shared'
+    };
+    const offerTypes = {'offer_received', 'offer_accepted', 'offer_rejected', 'outbid'};
+
+    try {
+      if (orderTypes.contains(type) && relatedId != null) {
+        // Try to find this order among purchases first, then sales.
+        try {
+          final purchases = await ApiService.getMyPurchases();
+          final match = purchases.firstWhere(
+            (o) => o['id'] == relatedId,
+            orElse: () => null,
+          );
+          if (match != null) {
+            nav.push(MaterialPageRoute(builder: (_) => PurchaseDetailScreen(order: match)));
+            return;
+          }
+        } catch (_) {}
+        try {
+          final sales = await ApiService.getMySales();
+          final match = sales.firstWhere(
+            (o) => o['id'] == relatedId,
+            orElse: () => null,
+          );
+          if (match != null) {
+            nav.push(MaterialPageRoute(builder: (_) => SaleDetailScreen(order: match)));
+            return;
+          }
+        } catch (_) {}
+        nav.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+        return;
+      }
+
+      if (offerTypes.contains(type)) {
+        nav.push(MaterialPageRoute(builder: (_) => const OffersScreen()));
+        return;
+      }
+
+      if (type == 'admin_message' && relatedId != null) {
+        nav.push(MaterialPageRoute(builder: (_) => AdminChatScreen(orderId: relatedId)));
+        return;
+      }
+
+      // new_message, promotion, and anything unrecognized falls back here.
+      nav.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+    } catch (_) {
+      nav.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+    }
+  }
+
   Future<void> _setupFcm() async {
     try {
       final messaging = FirebaseMessaging.instance;
@@ -215,11 +278,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
               backgroundColor: AppColors.surface,
               action: SnackBarAction(
                 label: 'View',
-                onPressed: () {
-                  navigatorKey.currentState?.push(
-                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                  );
-                },
+                onPressed: () => _handleNotificationTap(message),
               ),
             ),
           );
@@ -227,17 +286,13 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
       });
 
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        navigatorKey.currentState?.push(
-          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-        );
+        _handleNotificationTap(message);
       });
 
       final initialMessage = await messaging.getInitialMessage();
       if (initialMessage != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          navigatorKey.currentState?.push(
-            MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-          );
+          _handleNotificationTap(initialMessage);
         });
       }
     } catch (e) {}
