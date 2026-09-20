@@ -909,6 +909,13 @@ class ApiService {
     await _handle(res);
   }
 
+  // ---------- GAME DPI & SENSITIVITY ----------
+  static Future<Map<String, dynamic>> getGameTunerConfig(String game) async {
+    final res = await http.get(Uri.parse('$baseUrl/gamedpi/config?game=${Uri.encodeQueryComponent(game)}'), headers: await _headers());
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
+  }
+
   // ---------- APP UPDATE CHECK ----------
   // Checks GitHub Releases for a newer version than the one currently installed.
   static Future<void> resendOtp(String email, String purpose) async {

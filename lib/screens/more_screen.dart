@@ -6,6 +6,7 @@ import 'package:gal/gal.dart';
 import '../services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'tournaments_screen.dart';
+import 'game_tuner_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 import 'home_screen.dart' show PromotionsTab;
@@ -13,6 +14,7 @@ import 'home_screen.dart' show PromotionsTab;
 const List<Map<String, dynamic>> _defaultTools = [
   {'key': 'ff_info', 'title': 'Free Fire Info Check', 'subtitle': 'Check any account by UID', 'icon': 'sports_esports'},
   {'key': 'tournaments', 'title': 'Tournaments', 'subtitle': 'Compete and win prizes', 'icon': 'emoji_events'},
+  {'key': 'game_tuner', 'title': 'Game DPI & Sensitivity', 'subtitle': 'Best settings for your phone', 'icon': 'tune'},
   {'key': 'events', 'title': 'Events', 'subtitle': 'Promotions and offers', 'icon': 'campaign'},
 ];
 
@@ -21,6 +23,7 @@ const Map<String, dynamic> _eventsTool = {'key': 'events', 'title': 'Events', 's
 
 const String _ffImage = 'assets/images/ff_info.jpg';
 const String _tourneyImage = 'assets/images/tournaments.jpg';
+const String _tunerImage = 'assets/images/game_tuner.jpg';
 
 Widget _ffBanner({double? height, String asset = _ffImage}) {
   return Image.asset(
@@ -80,6 +83,8 @@ IconData _iconFor(String? name) {
       return Icons.search;
     case 'emoji_events':
       return Icons.emoji_events;
+    case 'tune':
+      return Icons.tune;
     case 'shield':
       return Icons.shield;
     case 'star':
@@ -127,6 +132,8 @@ class _MoreScreenState extends State<MoreScreen> {
     final link = '${t['linkUrl'] ?? ''}';
     if (link.isNotEmpty) {
       launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+    } else if (t['key'] == 'game_tuner') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const GameTunerScreen()));
     } else if (t['key'] == 'tournaments') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const TournamentsScreen()));
     } else if (t['key'] == 'ff_info') {
@@ -153,16 +160,16 @@ class _MoreScreenState extends State<MoreScreen> {
                   child: GridView.builder(
                     padding: const EdgeInsets.all(16),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                      crossAxisCount: 1,
                       mainAxisSpacing: 14,
                       crossAxisSpacing: 14,
-                      childAspectRatio: 1.0,
+                      childAspectRatio: 2.0,
                     ),
                     itemCount: _tools.length,
                     itemBuilder: (_, i) {
                       final t = _tools[i] as Map;
                       if (t['key'] == 'events') return _eventsBox(() => _open(t));
-                      if (t['key'] == 'ff_info' || t['key'] == 'tournaments') {
+                      if (t['key'] == 'ff_info' || t['key'] == 'tournaments' || t['key'] == 'game_tuner') {
                         return InkWell(
                           borderRadius: BorderRadius.circular(16),
                           onTap: () => _open(t),
@@ -170,8 +177,8 @@ class _MoreScreenState extends State<MoreScreen> {
                             borderRadius: BorderRadius.circular(16),
                             child: _photoOverlay(
                               '${t['title'] ?? ''}',
-                              t['key'] == 'tournaments' ? 'Compete and win prizes' : 'Get your information',
-                              asset: t['key'] == 'tournaments' ? _tourneyImage : _ffImage,
+                              t['key'] == 'tournaments' ? 'Compete and win prizes' : (t['key'] == 'game_tuner' ? 'Best settings for your phone' : 'Get your information'),
+                              asset: t['key'] == 'tournaments' ? _tourneyImage : (t['key'] == 'game_tuner' ? _tunerImage : _ffImage),
                             ),
                           ),
                         );
@@ -401,7 +408,7 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: SizedBox(height: 150, width: double.infinity, child: _photoOverlay('Free Fire Info Check', 'Get your information')),
+            child: AspectRatio(aspectRatio: 2, child: _photoOverlay('Free Fire Info Check', 'Get your information')),
           ),
           const SizedBox(height: 16),
           TextField(
