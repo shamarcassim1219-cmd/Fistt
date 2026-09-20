@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+import '../services/ui_prefs.dart';
 import 'more_screen.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -41,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _showWelcomeIfPending());
+    UiPrefs.load();
     if (kIsWeb) {
       Future.delayed(const Duration(milliseconds: 1500), () {
         if (mounted) _showDownloadAppPrompt();
@@ -119,20 +122,26 @@ class _HomeScreenState extends State<HomeScreen> {
     return ValueListenableBuilder<String>(
       valueListenable: AppLocalizations.currentLanguage,
       builder: (context, lang, _) {
-        return Scaffold(
+        return ValueListenableBuilder<bool>(
+          valueListenable: UiPrefs.glassNav,
+          builder: (context, glass, _) => Scaffold(
+          extendBody: glass,
           backgroundColor: AppColors.bg,
           body: AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: KeyedSubtree(key: ValueKey<int>(_tab), child: _pages[_tab])),
-          bottomNavigationBar: NavigationBar(
+          bottomNavigationBar: _GlassNavBar(glass: glass, child: NavigationBar(
             selectedIndex: _tab,
+            backgroundColor: glass ? Colors.transparent : null,
+            surfaceTintColor: Colors.transparent,
+            elevation: glass ? 0 : null,
             onDestinationSelected: (i) => setState(() => _tab = i),
             destinations: [
               NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: AppLocalizations.t('home')),
               NavigationDestination(icon: const Icon(Icons.apps_outlined), selectedIcon: const Icon(Icons.apps), label: "More"),
-              NavigationDestination(icon: const Icon(Icons.add_box_outlined), selectedIcon: const Icon(Icons.add_box), label: AppLocalizations.t('sell')),
+              NavigationDestination(icon: const _SellIcon(selected: false), selectedIcon: const _SellIcon(selected: true), label: AppLocalizations.t('sell')),
               NavigationDestination(icon: const Icon(Icons.settings_outlined), selectedIcon: const Icon(Icons.settings), label: AppLocalizations.t('settings')),
             ],
-          ),
-        );
+          )),
+        ));
       },
     );
   }
@@ -771,6 +780,61 @@ class PromotionDetailScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+
+// ---------- glass bottom bar + new Sell icon ----------
+class _GlassNavBar extends StatelessWidget {
+  final bool glass;
+  final Widget child;
+  const _GlassNavBar({required this.glass, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!glass) return child;
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.white.withValues(alpha: 0.16), Colors.white.withValues(alpha: 0.06)],
+            ),
+            border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.28), width: 1)),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _SellIcon extends StatelessWidget {
+  final bool selected;
+  const _SellIcon({required this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.primary;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        gradient: selected
+            ? LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [c, Color.lerp(c, Colors.pinkAccent, 0.6)!])
+            : null,
+        color: selected ? null : c.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: selected ? Colors.white.withValues(alpha: 0.5) : c.withValues(alpha: 0.7), width: 1.5),
+        boxShadow: selected ? [BoxShadow(color: c.withValues(alpha: 0.5), blurRadius: 12)] : null,
+      ),
+      child: Icon(Icons.sell_rounded, size: 19, color: selected ? Colors.white : c),
     );
   }
 }

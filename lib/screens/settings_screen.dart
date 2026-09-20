@@ -9,6 +9,7 @@ import '../main.dart';
 import '../services/api_service.dart';
 import '../services/auth_helper.dart';
 import '../services/app_localizations.dart';
+import '../services/ui_prefs.dart';
 import 'login_screen.dart';
 import 'profile_management_screen.dart';
 import 'referral_code_screen.dart';
@@ -293,6 +294,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                   if (choice != null) await AppLocalizations.setLanguage(choice);
                 },
+              ),
+
+              ValueListenableBuilder<bool>(
+                valueListenable: UiPrefs.glassNav,
+                builder: (context, glass, _) => SwitchListTile(
+                  secondary: const Icon(Icons.blur_on_outlined, color: AppColors.hint),
+                  title: const Text('Glass navigation bar', style: TextStyle(color: Colors.white)),
+                  subtitle: const Text('Frosted glass look for the bottom bar', style: TextStyle(color: AppColors.hint)),
+                  value: glass,
+                  activeThumbColor: AppColors.primary,
+                  onChanged: (v) => UiPrefs.setGlassNav(v),
+                ),
               ),
 
               _SectionHeader('Privacy & Data'),
