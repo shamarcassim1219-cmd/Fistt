@@ -9,6 +9,57 @@ const List<Map<String, dynamic>> _defaultTools = [
   {'key': 'ff_info', 'title': 'Free Fire Info Check', 'subtitle': 'Check any account by UID', 'icon': 'sports_esports'},
 ];
 
+
+const String _ffImage = 'assets/images/ff_info.jpg';
+
+Widget _ffBanner({double? height}) {
+  return Image.asset(
+    _ffImage,
+    fit: BoxFit.cover,
+    height: height,
+    width: double.infinity,
+    errorBuilder: (_, __, ___) => Container(
+      height: height,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(colors: [Color(0xFF7B2FF7), Color(0xFFF107A3)]),
+      ),
+      child: const Center(child: Icon(Icons.sports_esports, size: 56, color: Colors.white70)),
+    ),
+  );
+}
+
+Widget _photoOverlay(String title, String caption) {
+  return Stack(
+    fit: StackFit.expand,
+    children: [
+      _ffBanner(),
+      const DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.transparent, Color(0xCC000000)],
+          ),
+        ),
+      ),
+      Positioned(
+        left: 12,
+        right: 12,
+        bottom: 12,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+            const SizedBox(height: 2),
+            Text(caption, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
 IconData _iconFor(String? name) {
   switch (name) {
     case 'sports_esports':
@@ -86,6 +137,16 @@ class _MoreScreenState extends State<MoreScreen> {
                     itemCount: _tools.length,
                     itemBuilder: (_, i) {
                       final t = _tools[i] as Map;
+                      if (t['key'] == 'ff_info') {
+                        return InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => _open(t),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: _photoOverlay('${t['title'] ?? 'Free Fire Info Check'}', 'Get your information'),
+                          ),
+                        );
+                      }
                       return InkWell(
                         borderRadius: BorderRadius.circular(16),
                         onTap: () => _open(t),
@@ -287,6 +348,11 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: SizedBox(height: 150, width: double.infinity, child: _photoOverlay('Free Fire Info Check', 'Get your information')),
+          ),
+          const SizedBox(height: 16),
           TextField(
             controller: _uidCtrl,
             keyboardType: TextInputType.number,
@@ -294,7 +360,7 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            initialValue: _region,
+            value: _region,
             decoration: const InputDecoration(labelText: 'Region', border: OutlineInputBorder()),
             items: _regions.map((r) => DropdownMenuItem(value: r, child: Text(r.toUpperCase()))).toList(),
             onChanged: (v) => setState(() => _region = v ?? 'sg'),
