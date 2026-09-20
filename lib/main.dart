@@ -14,6 +14,7 @@ import 'screens/splash_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'services/app_version_service.dart';
 import 'screens/force_update_screen.dart';
+import 'widgets/no_internet_overlay.dart';
 
 class AppColors {
   static const bg = Color(0xFF0B0B10);
@@ -246,6 +247,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
+      builder: (context, child) => NoInternetOverlay(child: child ?? const SizedBox.shrink()),
       title: 'MYGame Marketplace',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
