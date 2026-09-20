@@ -816,6 +816,23 @@ class ApiService {
     return data['exists'] == true;
   }
 
+  // ---------- MORE TOOLS ----------
+  static Future<List<dynamic>> getMoreTools() async {
+    final res = await http.get(Uri.parse('$baseUrl/tools/list'), headers: await _headers());
+    final data = await _handle(res);
+    return (data['tools'] as List?) ?? [];
+  }
+
+  static Future<Map<String, dynamic>> ffInfoCheck(String uid, String region) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/tools/ff-info'),
+      headers: await _headers(),
+      body: jsonEncode({'uid': uid, 'region': region}),
+    );
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
+  }
+
   // ---------- APP UPDATE CHECK ----------
   // Checks GitHub Releases for a newer version than the one currently installed.
   static Future<void> resendOtp(String email, String purpose) async {

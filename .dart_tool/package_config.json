@@ -314,6 +314,12 @@
       "languageVersion": "3.5"
     },
     {
+      "name": "gal",
+      "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/gal-2.3.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "google_fonts",
       "rootUri": "file:///data/data/com.termux/files/home/.pub-cache/hosted/pub.dev/google_fonts-6.3.3",
       "packageUri": "lib/",

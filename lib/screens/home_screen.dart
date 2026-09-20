@@ -1,3 +1,4 @@
+import 'more_screen.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../widgets/anim.dart';
@@ -32,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _pages = const [
     _HomeTab(),
     WalletScreen(),
+    MoreScreen(),
     AddListingScreen(),
     _PromotionsTab(),
     SettingsScreen(),
@@ -97,13 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(color: AppColors.hint, fontSize: 13),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.sports_esports),
-            tooltip: "Top-up Store",
-            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Top-up Store - Coming soon")),
-            ),
-          ),
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Not now')),
           ElevatedButton(
             onPressed: () {
@@ -135,6 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
             destinations: [
               NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: AppLocalizations.t('home')),
               NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined), selectedIcon: const Icon(Icons.account_balance_wallet), label: AppLocalizations.t('wallet')),
+              NavigationDestination(icon: const Icon(Icons.apps_outlined), selectedIcon: const Icon(Icons.apps), label: "More"),
               NavigationDestination(icon: const Icon(Icons.add_box_outlined), selectedIcon: const Icon(Icons.add_box), label: AppLocalizations.t('sell')),
               NavigationDestination(icon: const Icon(Icons.campaign_outlined), selectedIcon: const Icon(Icons.campaign), label: AppLocalizations.t('promotions_tab')),
               NavigationDestination(icon: const Icon(Icons.settings_outlined), selectedIcon: const Icon(Icons.settings), label: AppLocalizations.t('settings')),
