@@ -97,6 +97,13 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(color: AppColors.hint, fontSize: 13),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.sports_esports),
+            tooltip: "Top-up Store",
+            onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Top-up Store - Coming soon")),
+            ),
+          ),
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Not now')),
           ElevatedButton(
             onPressed: () {
