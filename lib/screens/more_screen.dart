@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:gal/gal.dart';
 import '../services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'login_screen.dart';
 
 const List<Map<String, dynamic>> _defaultTools = [
   {'key': 'ff_info', 'title': 'Free Fire Info Check', 'subtitle': 'Check any account by UID', 'icon': 'sports_esports'},
@@ -204,7 +206,29 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
     super.dispose();
   }
 
+  Future<void> _askLogin() async {
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Login required'),
+        content: const Text('Please login to use this tool.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Login')),
+        ],
+      ),
+    );
+    if (go == true && mounted) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+    }
+  }
+
   Future<void> _check() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('is_logged_in') ?? false)) {
+      await _askLogin();
+      return;
+    }
     final uid = _uidCtrl.text.trim();
     if (!RegExp(r'^\d{5,15}$').hasMatch(uid)) {
       setState(() => _error = 'Enter a valid Free Fire UID (numbers only)');
