@@ -8,11 +8,15 @@ import 'package:url_launcher/url_launcher.dart';
 import 'tournaments_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
+import 'home_screen.dart' show PromotionsTab;
 
 const List<Map<String, dynamic>> _defaultTools = [
   {'key': 'ff_info', 'title': 'Free Fire Info Check', 'subtitle': 'Check any account by UID', 'icon': 'sports_esports'},
   {'key': 'tournaments', 'title': 'Tournaments', 'subtitle': 'Compete and win prizes', 'icon': 'emoji_events'},
+  {'key': 'events', 'title': 'Events', 'subtitle': 'Promotions and offers', 'icon': 'campaign'},
 ];
+
+const Map<String, dynamic> _eventsTool = {'key': 'events', 'title': 'Events', 'subtitle': 'Promotions and offers', 'icon': 'campaign'};
 
 
 const String _ffImage = 'assets/images/ff_info.jpg';
@@ -80,6 +84,8 @@ IconData _iconFor(String? name) {
       return Icons.shield;
     case 'star':
       return Icons.star;
+    case 'campaign':
+      return Icons.campaign;
     default:
       return Icons.apps;
   }
@@ -105,7 +111,10 @@ class _MoreScreenState extends State<MoreScreen> {
   Future<void> _load() async {
     try {
       final list = await ApiService.getMoreTools();
-      if (mounted) setState(() => _tools = list);
+      // the Events box is always shown, even when the server list does not include it
+      final tools = List<dynamic>.from(list);
+      if (!tools.any((t) => t is Map && t['key'] == 'events')) tools.add(_eventsTool);
+      if (mounted) setState(() => _tools = tools);
     } catch (_) {
       // backend route not ready or offline: show default tools
       if (mounted) setState(() => _tools = _defaultTools);
@@ -122,6 +131,8 @@ class _MoreScreenState extends State<MoreScreen> {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const TournamentsScreen()));
     } else if (t['key'] == 'ff_info') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const FfInfoScreen()));
+    } else if (t['key'] == 'events') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const EventsPage()));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Coming soon')),
@@ -150,6 +161,7 @@ class _MoreScreenState extends State<MoreScreen> {
                     itemCount: _tools.length,
                     itemBuilder: (_, i) {
                       final t = _tools[i] as Map;
+                      if (t['key'] == 'events') return _eventsBox(() => _open(t));
                       if (t['key'] == 'ff_info' || t['key'] == 'tournaments') {
                         return InkWell(
                           borderRadius: BorderRadius.circular(16),
@@ -435,5 +447,64 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
         ],
       ),
     );
+  }
+}
+
+// ======================= EVENTS (moved from the bottom bar) =======================
+
+Widget _eventsBox(VoidCallback onTap) {
+  return InkWell(
+    borderRadius: BorderRadius.circular(16),
+    onTap: onTap,
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        fit: StackFit.expand,
+        children: const [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF6C4CF1), Color(0xFFF107A3)],
+              ),
+            ),
+          ),
+          Center(child: Icon(Icons.campaign, size: 64, color: Colors.white24)),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Color(0xCC000000)],
+              ),
+            ),
+          ),
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 12,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Events', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                SizedBox(height: 2),
+                Text('Promotions and offers', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class EventsPage extends StatelessWidget {
+  const EventsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(appBar: AppBar(), body: const PromotionsTab());
   }
 }

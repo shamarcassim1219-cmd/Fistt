@@ -35,7 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
     WalletScreen(),
     MoreScreen(),
     AddListingScreen(),
-    _PromotionsTab(),
     SettingsScreen(),
   ];
 
@@ -132,7 +131,6 @@ class _HomeScreenState extends State<HomeScreen> {
               NavigationDestination(icon: const Icon(Icons.account_balance_wallet_outlined), selectedIcon: const Icon(Icons.account_balance_wallet), label: AppLocalizations.t('wallet')),
               NavigationDestination(icon: const Icon(Icons.apps_outlined), selectedIcon: const Icon(Icons.apps), label: "More"),
               NavigationDestination(icon: const Icon(Icons.add_box_outlined), selectedIcon: const Icon(Icons.add_box), label: AppLocalizations.t('sell')),
-              NavigationDestination(icon: const Icon(Icons.campaign_outlined), selectedIcon: const Icon(Icons.campaign), label: AppLocalizations.t('promotions_tab')),
               NavigationDestination(icon: const Icon(Icons.settings_outlined), selectedIcon: const Icon(Icons.settings), label: AppLocalizations.t('settings')),
             ],
           ),
@@ -577,14 +575,14 @@ class _HomeTabState extends State<_HomeTab> {
   }
 }
 
-class _PromotionsTab extends StatefulWidget {
-  const _PromotionsTab();
+class PromotionsTab extends StatefulWidget {
+  const PromotionsTab();
 
   @override
-  State<_PromotionsTab> createState() => _PromotionsTabState();
+  State<PromotionsTab> createState() => _PromotionsTabState();
 }
 
-class _PromotionsTabState extends State<_PromotionsTab> {
+class _PromotionsTabState extends State<PromotionsTab> {
   List<dynamic> _promotions = [];
   bool _loading = true;
   String? _error;
