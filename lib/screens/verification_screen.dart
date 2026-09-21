@@ -231,7 +231,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
   Future<void> _submitAll() async {
     // make sure every photo is still on the phone
-    final need = ['front', 'selfie_front', if (_docType == 'nic') ...['back', 'selfie_back']];
+    final need = ['front', 'selfie_front', if (_docType == 'nic') 'back'];
     final bad = need.where((k) => _files[k] == null || !File(_files[k]!).existsSync()).toList();
     if (bad.isNotEmpty) {
       for (final k in bad) {
@@ -824,7 +824,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
       thumb('Document front', 'front'),
       thumb('Face (front)', 'selfie_front'),
       if (_docType == 'nic') thumb('Document back', 'back'),
-      if (_docType == 'nic') thumb('Face (back)', 'selfie_back'),
     ];
 
     return _pageScaffold(
