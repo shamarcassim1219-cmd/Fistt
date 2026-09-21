@@ -352,51 +352,9 @@ class _HomeTabState extends State<_HomeTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: AppColors.primary.withOpacity(0.2),
-                  backgroundImage: _profile?['profilePhotoUrl'] != null ? NetworkImage(_profile!['profilePhotoUrl']) : null,
-                  child: _profile?['profilePhotoUrl'] == null
-                      ? const Icon(Icons.person, size: 18, color: AppColors.primary)
-                      : null,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(AppLocalizations.t('app_name'),
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                ),
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                      onPressed: () async {
-                        await Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
-                        _loadUnreadCount();
-                      },
-                    ),
-                    if (_unreadCount > 0)
-                      Positioned(
-                        right: 6,
-                        top: 6,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
-                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                          child: Text(
-                            _unreadCount > 9 ? '9+' : '$_unreadCount',
-                            style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
+            child: const Text('Marketplace',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -409,7 +367,11 @@ class _HomeTabState extends State<_HomeTab> {
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
                       hintText: AppLocalizations.t('search_accounts'),
-                      prefixIcon: const Icon(Icons.search, color: AppColors.hint),
+                      hintStyle: const TextStyle(fontSize: 13, color: AppColors.hint),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      prefixIcon: const Icon(Icons.search, color: AppColors.hint, size: 20),
+                      prefixIconConstraints: const BoxConstraints(minWidth: 38, minHeight: 36),
                       suffixIcon: _searchCtrl.text.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.close, color: AppColors.hint, size: 18),
@@ -425,14 +387,18 @@ class _HomeTabState extends State<_HomeTab> {
                 const SizedBox(width: 8),
                 InkWell(
                   onTap: _showSortSheet,
+                  borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(9),
                     decoration: BoxDecoration(
-                      color: AppColors.fieldFill,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [AppColors.primary, AppColors.primary.withOpacity(0.65)],
+                      ),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
                     ),
-                    child: const Icon(Icons.sort, color: AppColors.hint, size: 22),
+                    child: const Icon(Icons.tune_rounded, color: Colors.white, size: 20),
                   ),
                 ),
               ],
@@ -491,85 +457,136 @@ class _HomeTabState extends State<_HomeTab> {
                                 final saleType = l['saleType'] ?? 'full';
                                 final isBoosted = l['boosted'] == true;
                                 final sellerName = l['sellerDisplayName'] ?? '';
+                                final priceLine = saleType == 'rental'
+                                    ? '${l['game'] ?? ''} · Rental · LKR ${(l['rentalPricePerUnit'] as num? ?? displayPrice).toStringAsFixed(0)}/${l['rentalUnit'] ?? 'day'}'
+                                    : saleType == 'installment'
+                                        ? '${l['game'] ?? ''} · Installment · LKR ${displayPrice.toStringAsFixed(0)} total'
+                                        : '${l['game'] ?? ''} · LKR ${displayPrice.toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}';
                                 return FadeSlideIn(delay: staggerDelay(i), child: Container(
-                                  margin: const EdgeInsets.only(bottom: 10),
+                                  margin: const EdgeInsets.only(bottom: 14),
+                                  clipBehavior: Clip.antiAlias,
                                   decoration: BoxDecoration(
                                     color: AppColors.surface,
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(14),
                                     border: Border.all(color: isBoosted ? Colors.amber.withOpacity(0.5) : AppColors.border),
                                   ),
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.all(10),
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (_) => ListingDetailScreen(listingId: l['id'])),
-                                      );
-                                    },
-                                    leading: Stack(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: screenshots.isNotEmpty
-                                              ? Image.network(screenshots[0], width: 56, height: 56, fit: BoxFit.cover)
-                                              : Container(
-                                                  width: 56, height: 56, color: AppColors.fieldFill,
-                                                  child: const Icon(Icons.image_outlined, color: AppColors.hint),
-                                                ),
-                                        ),
-                                        if (isBoosted)
-                                          Positioned(
-                                            top: -4, left: -4,
-                                            child: Container(
-                                              padding: const EdgeInsets.all(3),
-                                              decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle),
-                                              child: const Icon(Icons.bolt, size: 10, color: Colors.black),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (_) => ListingDetailScreen(listingId: l['id'])),
+                                        );
+                                      },
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          AspectRatio(
+                                            aspectRatio: 16 / 10,
+                                            child: Stack(
+                                              fit: StackFit.expand,
+                                              children: [
+                                                screenshots.isNotEmpty
+                                                    ? Image.network(
+                                                        screenshots[0],
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder: (_, __, ___) => Container(
+                                                          color: AppColors.fieldFill,
+                                                          child: const Icon(Icons.broken_image_outlined, color: AppColors.hint, size: 36),
+                                                        ),
+                                                      )
+                                                    : Container(
+                                                        color: AppColors.fieldFill,
+                                                        child: const Icon(Icons.image_outlined, color: AppColors.hint, size: 40),
+                                                      ),
+                                                if (isBoosted)
+                                                  Positioned(
+                                                    top: 8,
+                                                    left: 8,
+                                                    child: Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                                      decoration: BoxDecoration(color: Colors.amber, borderRadius: BorderRadius.circular(20)),
+                                                      child: const Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          Icon(Icons.bolt, size: 12, color: Colors.black),
+                                                          SizedBox(width: 2),
+                                                          Text('Boosted', style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold)),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                if (allowBidding)
+                                                  Positioned(
+                                                    top: 8,
+                                                    right: 8,
+                                                    child: Container(
+                                                      padding: const EdgeInsets.all(5),
+                                                      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                                      child: const Icon(Icons.gavel_outlined, size: 14, color: Colors.white),
+                                                    ),
+                                                  ),
+                                                if (screenshots.length > 1)
+                                                  Positioned(
+                                                    bottom: 8,
+                                                    right: 8,
+                                                    child: Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                                      decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(20)),
+                                                      child: Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          const Icon(Icons.photo_library_outlined, size: 12, color: Colors.white),
+                                                          const SizedBox(width: 3),
+                                                          Text('${screenshots.length}', style: const TextStyle(color: Colors.white, fontSize: 10)),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
                                             ),
                                           ),
-                                      ],
-                                    ),
-                                    title: Row(
-                                      children: [
-                                        Flexible(child: Text(l['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
-                                        if (isBoosted) ...[
-                                          const SizedBox(width: 4),
-                                          const Icon(Icons.bolt, size: 14, color: Colors.amber),
-                                        ],
-                                      ],
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const SizedBox(height: 2),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.person_outline, size: 11, color: AppColors.hint),
-                                            const SizedBox(width: 3),
-                                            Flexible(
-                                              child: Text('by $sellerName',
-                                                  style: const TextStyle(color: AppColors.hint, fontSize: 11),
-                                                  overflow: TextOverflow.ellipsis),
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  l['title'] ?? '',
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  priceLine,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(color: AppColors.hint, fontSize: 12),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Row(
+                                                  children: [
+                                                    const Icon(Icons.person_outline, size: 11, color: AppColors.hint),
+                                                    const SizedBox(width: 3),
+                                                    Flexible(
+                                                      child: Text('by $sellerName',
+                                                          style: const TextStyle(color: AppColors.hint, fontSize: 11),
+                                                          overflow: TextOverflow.ellipsis),
+                                                    ),
+                                                    if (l['sellerVerified'] == true) ...[
+                                                      const SizedBox(width: 3),
+                                                      const Icon(Icons.verified, size: 12, color: AppColors.primary),
+                                                    ],
+                                                  ],
+                                                ),
+                                              ],
                                             ),
-                                            if (l['sellerVerified'] == true) ...[
-                                              const SizedBox(width: 3),
-                                              const Icon(Icons.verified, size: 12, color: AppColors.primary),
-                                            ],
-                                          ],
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          saleType == 'rental'
-                                              ? '${l['game'] ?? ''} · Rental · LKR ${(l['rentalPricePerUnit'] as num? ?? displayPrice).toStringAsFixed(0)}/${l['rentalUnit'] ?? 'day'}'
-                                              : saleType == 'installment'
-                                                  ? '${l['game'] ?? ''} · Installment · LKR ${displayPrice.toStringAsFixed(0)} total'
-                                                  : '${l['game'] ?? ''} · LKR ${displayPrice.toStringAsFixed(0)}${allowBidding ? ' (bidding)' : ''}',
-                                          style: const TextStyle(color: AppColors.hint, fontSize: 12),
-                                        ),
-                                      ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    trailing: allowBidding
-                                        ? const Icon(Icons.gavel_outlined, color: AppColors.primary, size: 18)
-                                        : null,
                                   ),
                                 ));
                               },
