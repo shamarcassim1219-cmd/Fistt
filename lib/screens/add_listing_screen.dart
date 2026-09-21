@@ -9,6 +9,7 @@ import '../services/api_service.dart';
 import '../services/auth_helper.dart';
 import '../services/app_localizations.dart';
 import '../services/games_list.dart';
+import 'verification_screen.dart';
 
 class AddListingScreen extends StatefulWidget {
   const AddListingScreen({super.key});
@@ -346,9 +347,26 @@ class _AddListingScreenState extends State<AddListingScreen> {
                     Text(
                       _verifiedStatus == 'pending'
                           ? 'Your verification is under review. You can post listings once approved.'
-                          : 'Only verified sellers can post listings. Go to Settings to get verified.',
+                          : 'Only verified sellers can post listings. Verify your account to start selling.',
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: AppColors.hint, fontSize: 13),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          await Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
+                          if (mounted) _checkVerification();
+                        },
+                        icon: const Icon(Icons.verified_user_outlined),
+                        label: Text(_verifiedStatus == 'pending'
+                            ? 'View verification status'
+                            : _verifiedStatus == 'rejected'
+                                ? 'Re-upload documents'
+                                : 'Go to Verification Center'),
+                      ),
                     ),
                   ],
                 ),
