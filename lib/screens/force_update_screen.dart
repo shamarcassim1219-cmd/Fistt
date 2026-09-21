@@ -10,16 +10,26 @@ class ForceUpdateScreen extends StatelessWidget {
     required this.info,
   });
 
-  Future<void> _update() async {
-    final uri = Uri.parse(info.apkUrl);
-
+  Future<void> _update(BuildContext context) async {
+    final url = info.apkUrl.isNotEmpty
+        ? info.apkUrl
+        : 'https://buysellgame.store/downloads/app-release.apk';
+    final uri = Uri.parse(url);
+    var opened = false;
     try {
-      await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
+      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
+    if (!opened) {
+      try {
+        opened = await launchUrl(uri, mode: LaunchMode.platformDefault);
+      } catch (_) {}
+    }
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not open the download. Please open buysellgame.store in your browser to download the app.'),
+        ),
       );
-    } catch (_) {
-      // Ignore launch errors.
     }
   }
 
@@ -82,7 +92,7 @@ class ForceUpdateScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: _update,
+                      onPressed: () => _update(context),
                       icon: const Icon(Icons.download_rounded),
                       label: const Text(
                         'Update Now',
