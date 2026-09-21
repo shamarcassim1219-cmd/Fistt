@@ -3,6 +3,7 @@ import '../services/ui_prefs.dart';
 import 'more_screen.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../widgets/fancy_nav_bar.dart';
 import '../widgets/anim.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
@@ -128,19 +129,16 @@ class _HomeScreenState extends State<HomeScreen> {
           extendBody: glass,
           backgroundColor: AppColors.bg,
           body: AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: KeyedSubtree(key: ValueKey<int>(_tab), child: _pages[_tab])),
-          bottomNavigationBar: _GlassNavBar(glass: glass, child: NavigationBar(
+          bottomNavigationBar: FancyNavBar(
             selectedIndex: _tab,
-            backgroundColor: glass ? Colors.transparent : null,
-            surfaceTintColor: Colors.transparent,
-            elevation: glass ? 0 : null,
-            onDestinationSelected: (i) => setState(() => _tab = i),
-            destinations: [
-              NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: AppLocalizations.t('home')),
-              NavigationDestination(icon: const Icon(Icons.apps_outlined), selectedIcon: const Icon(Icons.apps), label: "More"),
-              NavigationDestination(icon: const _SellIcon(selected: false), selectedIcon: const _SellIcon(selected: true), label: AppLocalizations.t('sell')),
-              NavigationDestination(icon: const Icon(Icons.settings_outlined), selectedIcon: const Icon(Icons.settings), label: AppLocalizations.t('settings')),
+            onSelected: (i) => setState(() => _tab = i),
+            items: [
+              FancyNavItem(icon: Icons.home_outlined, selectedIcon: Icons.home_rounded, label: AppLocalizations.t('home')),
+              const FancyNavItem(icon: Icons.grid_view_outlined, selectedIcon: Icons.grid_view_rounded, label: 'More'),
+              FancyNavItem(icon: Icons.sell_outlined, selectedIcon: Icons.sell, label: AppLocalizations.t('sell')),
+              FancyNavItem(icon: Icons.settings_outlined, selectedIcon: Icons.settings, label: AppLocalizations.t('settings')),
             ],
-          )),
+          ),
         ));
       },
     );

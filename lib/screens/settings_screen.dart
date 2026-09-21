@@ -253,16 +253,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Divider(height: 1),
 
               _SectionHeader(AppLocalizations.t('account')),
-              _tile(Icons.account_balance_wallet_outlined, AppLocalizations.t('wallet'), null, () async {
-                if (!await requireLogin(context, reason: 'Login to open your wallet')) return;
-                if (!context.mounted) return;
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
-              }),
               _tile(Icons.person_outline, AppLocalizations.t('profile_management'), null, () async {
                 if (!await requireLogin(context, reason: 'Login to manage your profile')) return;
                 if (!context.mounted) return;
                 await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileManagementScreen()));
                 _loadProfile();
+              }),
+              _tile(Icons.account_balance_wallet_outlined, AppLocalizations.t('wallet'), null, () async {
+                if (!await requireLogin(context, reason: 'Login to open your wallet')) return;
+                if (!context.mounted) return;
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
               }),
               _tile(Icons.card_giftcard_outlined, AppLocalizations.t('referral_code'), null, () async {
                 if (!await requireLogin(context, reason: 'Login to view your referral code')) return;
