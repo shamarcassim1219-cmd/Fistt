@@ -357,6 +357,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
                       height: 50,
                       child: ElevatedButton.icon(
                         onPressed: () async {
+                          if (!await requireLogin(context, reason: 'Login to verify your account')) return;
+                          if (!context.mounted) return;
                           await Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
                           if (mounted) _checkVerification();
                         },

@@ -481,7 +481,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     final canRent = l['status'] == 'active' && !isOwnListing && saleType == 'rental';
     final canInstallment = l['status'] == 'active' && !isOwnListing && saleType == 'installment';
     final canMakeOffer = l['status'] == 'active' && !isOwnListing && saleType == 'full';
-    final canBid = allowBidding && !isOwnListing && (biddingActive || biddingNotStarted);
+    final canBid = allowBidding && !isOwnListing && saleType != 'rental' && (biddingActive || biddingNotStarted);
 
     return ListView(
       padding: const EdgeInsets.all(16),
