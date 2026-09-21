@@ -49,7 +49,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Tapping the "Update downloaded" notification opens the APK installer,
   // even if the app was closed while downloading.
-  FileDownloader().registerCallbacks(
+  if (!kIsWeb) FileDownloader().registerCallbacks(
     taskNotificationTapCallback: (task, notificationType) async {
       if (task.filename == 'mygame_update.apk') {
         await OpenFilex.open(await task.filePath());
