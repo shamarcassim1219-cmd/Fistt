@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+  // Show the portfolio once per day, then go straight to the web app
+  (function(){
+    try{
+      if(new URLSearchParams(location.search).has('stay')) return;
+      var today = new Date().toDateString();
+      if(localStorage.getItem('bsg_portfolio_date') === today){
+        location.replace('/app/');
+      } else {
+        localStorage.setItem('bsg_portfolio_date', today);
+      }
+    }catch(e){}
+  })();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BuySellGame — Buy and sell game accounts safely</title>
@@ -637,7 +651,7 @@
   const modal = document.getElementById('downloadModal');
   function handleContinueClick(e){
     e.preventDefault();
-    if(shouldShowDownloadPrompt()){
+    if(false){
       modal.classList.add('open');
     } else {
       window.location.href = WEBAPP_URL;
