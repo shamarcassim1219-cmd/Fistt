@@ -54,11 +54,20 @@ jobs:
       - name: Build web
         run: flutter build web --release
 
-      - name: Deploy to cPanel via FTP
+      - name: Deploy landing page to cPanel root
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir: ./landing/
+          server-dir: ./
+
+      - name: Deploy Flutter web app to /app/
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           local-dir: ./build/web/
-          server-dir: ./
+          server-dir: ./app/
