@@ -63,6 +63,28 @@ class ApiService {
     _forcingLogout = false;
   }
 
+  static Future<void> _forceLogoutExpired() async {
+    if (_forcingLogout) return;
+    _forcingLogout = true;
+    await clearToken();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_logged_in', false);
+    final nav = navigatorKey.currentState;
+    if (nav != null) {
+      nav.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+      final ctx = navigatorKey.currentContext;
+      if (ctx != null) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          const SnackBar(content: Text('Your session expired. Please log in again.'), duration: Duration(seconds: 4)),
+        );
+      }
+    }
+    _forcingLogout = false;
+  }
+
   static Future<Map<String, dynamic>> _handle(http.Response res) async {
     final body = jsonDecode(utf8.decode(res.bodyBytes));
     if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -75,6 +97,10 @@ class ApiService {
       if (errorMsg.toString().startsWith('ACCOUNT_DELETED:')) {
         _forceLogoutDeleted();
         throw Exception('Your account no longer exists.');
+      }
+      if (errorMsg.toString().contains('Invalid or expired token') && await getToken() != null) {
+        _forceLogoutExpired();
+        throw Exception('Your session expired. Please log in again.');
       }
       throw Exception(errorMsg);
     }
