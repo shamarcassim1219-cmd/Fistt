@@ -253,6 +253,7 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
                       const Divider(height: 1),
 
                       _sectionHeader('Trust & Activity'),
+                      if (_verifiedStatus != 'verified')
                       _tile(Icons.verified_outlined, AppLocalizations.t('verification_center'), _verificationSubtitle(), () async {
                         await Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
                         _loadProfile();
