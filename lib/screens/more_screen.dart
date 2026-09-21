@@ -152,6 +152,57 @@ Widget _toolBox({
   );
 }
 
+class MoreScreen extends StatefulWidget {
+  const MoreScreen({super.key});
+
+  @override
+  State<MoreScreen> createState() => _MoreScreenState();
+}
+
+class _MoreScreenState extends State<MoreScreen> {
+  List<dynamic> _tools = _defaultTools;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final list = await ApiService.getMoreTools();
+      // the Events box is always shown, even when the server list does not include it
+      final tools = List<dynamic>.from(list);
+      if (!tools.any((t) => t is Map && t['key'] == 'events')) tools.add(_eventsTool);
+      if (mounted) setState(() => _tools = tools);
+    } catch (_) {
+      // backend route not ready or offline: show default tools
+      if (mounted) setState(() => _tools = _defaultTools);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _open(Map t) {
+    final link = '${t['linkUrl'] ?? ''}';
+    if (link.isNotEmpty) {
+      launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+    } else if (t['key'] == 'game_tuner') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const GameTunerScreen()));
+    } else if (t['key'] == 'tournaments') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const TournamentsScreen()));
+    } else if (t['key'] == 'ff_info') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const FfInfoScreen()));
+    } else if (t['key'] == 'events') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const EventsPage()));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Coming soon')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
