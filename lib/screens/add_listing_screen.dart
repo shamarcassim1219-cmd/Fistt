@@ -538,6 +538,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      if (['PUBG Mobile', 'Free Fire', 'Garena Free Fire'].contains(_selectedGame))
                       Expanded(
                         child: ChoiceChip(
                           label: const Text('Rental'),
@@ -671,7 +672,7 @@ if (_saleType == 'rental') ...[
                   TextFormField(
                     controller: _vaultEmailCtrl,
                     style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(labelText: '$_selectedPlatform Email / Username'),
+                    decoration: InputDecoration(labelText: _saleType == 'rental' ? 'Secondary Email' : '$_selectedPlatform Email / Username'),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
