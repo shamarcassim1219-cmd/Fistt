@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -801,6 +802,23 @@ class ApiService {
     request.fields.addAll(fields);
     for (final e in filePaths.entries) {
       request.files.add(await http.MultipartFile.fromPath(e.key, e.value, contentType: MediaType('image', 'jpeg')));
+    }
+    final streamed = await request.send().timeout(const Duration(seconds: 180));
+    final res = await http.Response.fromStream(streamed);
+    return await _handle(res);
+  }
+
+  // web: photos live in memory (no files), so they are uploaded from bytes
+  static Future<Map<String, dynamic>> submitVerificationBytes({
+    required Map<String, String> fields,
+    required Map<String, Uint8List> files,
+  }) async {
+    final token = await getToken();
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/verification/submit'));
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    request.fields.addAll(fields);
+    for (final e in files.entries) {
+      request.files.add(http.MultipartFile.fromBytes(e.key, e.value, filename: '${e.key}.jpg', contentType: MediaType('image', 'jpeg')));
     }
     final streamed = await request.send().timeout(const Duration(seconds: 180));
     final res = await http.Response.fromStream(streamed);

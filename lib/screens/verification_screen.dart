@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/safe_picker.dart';
 import 'package:flutter/services.dart';
@@ -28,6 +31,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
   // ----- status -----
   bool _loadingStatus = true;
   String _status = 'not_verified';
+  // web only: the browser has no files, so photos are kept in memory (key = blob url)
+  final Map<String, Uint8List> _webBytes = {};
   String? _statusDocType;
   String? _rejectReason;
   String? _statusLoadError;
@@ -53,18 +58,38 @@ class _VerificationScreenState extends State<VerificationScreen> {
   // keys: front, back, selfie_front, selfie_back
   final Map<String, String> _files = {};
 
+  Timer? _pollTimer;
+
   @override
   void initState() {
     super.initState();
     _loadStatus();
+    _pollTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted && _status == 'pending' && !_inFlow && !_submitting) _loadStatus();
+    });
   }
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _nameCtrl.dispose();
     _addressCtrl.dispose();
     _nicCtrl.dispose();
     super.dispose();
+  }
+
+  Widget _img(String path, {BoxFit fit = BoxFit.cover, double? width}) {
+    if (kIsWeb) {
+      final b = _webBytes[path];
+      if (b != null) return Image.memory(b, fit: fit, width: width);
+      return Image.network(path, fit: fit, width: width);
+    }
+    return Image.file(File(path), fit: fit, width: width);
+  }
+
+  bool _photoOk(String? path) {
+    if (path == null) return false;
+    return kIsWeb ? _webBytes.containsKey(path) : File(path).existsSync();
   }
 
   Future<void> _loadStatus() async {
@@ -91,6 +116,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
   // Copy a photo into the app's own storage (the phone may delete cache files at any time)
   Future<String> _persist(String srcPath, String key) async {
+    if (kIsWeb) return srcPath;
     final base = await getApplicationSupportDirectory();
     final folder = Directory('${base.path}/verification');
     if (!await folder.exists()) await folder.create(recursive: true);
@@ -100,6 +126,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Future<void> _clearSaved() async {
+    if (kIsWeb) {
+      _webBytes.clear();
+      return;
+    }
     try {
       final base = await getApplicationSupportDirectory();
       final folder = Directory('${base.path}/verification');
@@ -194,12 +224,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
   Future<void> _takeDocPhoto(String side) async {
     try {
-      final img = await ImagePicker().pickImageSafe(
-        source: ImageSource.camera,
-        imageQuality: 70,
-        maxWidth: 1600,
-      );
+      final picker = ImagePicker();
+      final img = kIsWeb
+          ? await picker.pickImage(source: ImageSource.camera, imageQuality: 70, maxWidth: 1600)
+          : await picker.pickImageSafe(
+              source: ImageSource.camera,
+              imageQuality: 70,
+              maxWidth: 1600,
+            );
       if (img != null) {
+        if (kIsWeb) _webBytes[img.path] = await img.readAsBytes();
         final saved = await _persist(img.path, side);
         if (!mounted) return;
         setState(() => _files[side] = saved);
@@ -210,6 +244,24 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Future<void> _runLiveness(String side) async {
+    if (kIsWeb) {
+      try {
+        final img = await ImagePicker().pickImage(
+          source: ImageSource.camera,
+          preferredCameraDevice: CameraDevice.front,
+          imageQuality: 70,
+          maxWidth: 1600,
+        );
+        if (img != null) {
+          _webBytes[img.path] = await img.readAsBytes();
+          if (!mounted) return;
+          setState(() => _files['selfie_$side'] = img.path);
+        }
+      } catch (_) {
+        _snack('Could not open the camera');
+      }
+      return;
+    }
     final path = await Navigator.push<String>(
       context,
       MaterialPageRoute(
@@ -232,7 +284,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   Future<void> _submitAll() async {
     // make sure every photo is still on the phone
     final need = ['front', 'selfie_front', if (_docType == 'nic') 'back'];
-    final bad = need.where((k) => _files[k] == null || !File(_files[k]!).existsSync()).toList();
+    final bad = need.where((k) => !_photoOk(_files[k])).toList();
     if (bad.isNotEmpty) {
       for (final k in bad) {
         _files.remove(k);
@@ -264,8 +316,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
         'selfie_front': _files['selfie_front']!,
         if (_docType == 'nic') 'back': _files['back']!,
       };
-      final data =
-          await ApiService.submitVerificationFiles(fields: fields, filePaths: files);
+      final data = kIsWeb
+          ? await ApiService.submitVerificationBytes(
+              fields: fields,
+              files: {for (final e in files.entries) e.key: _webBytes[e.value]!},
+            )
+          : await ApiService.submitVerificationFiles(fields: fields, filePaths: files);
       if (!mounted) return;
       _clearSaved();
       final st = (data['verifiedStatus'] ?? 'pending').toString();
@@ -352,9 +408,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
         return _centered(
           icon: Icons.hourglass_top_outlined,
           color: Colors.orangeAccent,
-          title: 'Verification Pending',
+          title: 'Under verification',
           message:
-              'Your ${_docLabel(_statusDocType)} verification needs a manual check by our team. This usually takes 1-2 business days.',
+              'Your ${_docLabel(_statusDocType)} is being checked automatically. This usually takes about 5 minutes and you will get a notification when it is done. If our system cannot decide, a team member will check it manually (up to 1-2 business days). This page updates by itself.',
           action: OutlinedButton.icon(
             onPressed: () {
               setState(() => _loadingStatus = true);
@@ -751,7 +807,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }) {
     final img = path == null
         ? Center(child: Icon(placeholderIcon, size: 64, color: AppColors.hint))
-        : Image.file(File(path), fit: BoxFit.cover, width: double.infinity);
+        : _img(path, fit: BoxFit.cover, width: double.infinity);
     return Column(
       children: [
         Container(
@@ -808,7 +864,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 borderRadius: BorderRadius.circular(10),
                 child: p == null
                     ? Container(color: AppColors.fieldFill)
-                    : Image.file(File(p), fit: BoxFit.cover),
+                    : _img(p, fit: BoxFit.cover),
               ),
             ),
             const SizedBox(height: 4),
