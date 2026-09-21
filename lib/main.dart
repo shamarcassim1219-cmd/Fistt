@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'firebase_options.dart';
 import 'services/api_service.dart';
-import 'screens/login_screen.dart';
-import 'screens/dashboard_screen.dart';
-import 'screens/orders_screen.dart';
-import 'screens/order_detail_screen.dart';
-import 'screens/disputes_screen.dart';
-import 'screens/verification_list_screen.dart';
-import 'screens/wallet_requests_screen.dart';
-import 'screens/support_requests_screen.dart';
-import 'screens/sub_admin_requests_screen.dart';
+import 'services/app_localizations.dart';
+import 'screens/splash_screen.dart';
+import 'screens/notifications_screen.dart';
+import 'services/app_version_service.dart';
+import 'screens/force_update_screen.dart';
+import 'widgets/no_internet_overlay.dart';
+import 'screens/purchase_detail_screen.dart';
+import 'screens/sale_detail_screen.dart';
+import 'screens/offers_screen.dart';
+import 'screens/admin_chat_screen.dart';
+import 'screens/tournaments_screen.dart';
 
 class AppColors {
   static const bg = Color(0xFF0B0B10);
@@ -28,122 +36,227 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {}
 
+const AndroidNotificationChannel _channel = AndroidNotificationChannel(
+  'mygame_notifications',
+  'MYGame Notifications',
+  description: 'Notifications for orders, offers, and account activity',
+  importance: Importance.high,
+);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  runApp(const MyGameAdminApp());
-}
 
-/// Routes a tapped (or foreground-received) push notification to the
-/// relevant admin screen, based on the `type` / `relatedId` data payload
-/// sent by the backend's notifyUser() -> sendPushNotification().
-void handleNotificationNavigation(RemoteMessage message) {
-  final nav = navigatorKey.currentState;
-  if (nav == null) return;
-  final type = message.data['type']?.toString() ?? '';
-  final relatedId = message.data['relatedId']?.toString();
-  final hasRelatedId = relatedId != null && relatedId.isNotEmpty;
-
-  switch (type) {
-    case 'admin_new_order':
-    case 'admin_alert': // legacy fallback for older order/dispute pushes
-      if (hasRelatedId) {
-        nav.push(MaterialPageRoute(builder: (_) => OrderDetailScreen(orderId: int.parse(relatedId))));
-      } else {
-        nav.push(MaterialPageRoute(builder: (_) => const OrdersScreen()));
-      }
-      break;
-    case 'admin_new_dispute':
-    case 'dispute_raised':
-      nav.push(MaterialPageRoute(builder: (_) => const DisputesScreen()));
-      break;
-    case 'admin_new_verification':
-      nav.push(MaterialPageRoute(builder: (_) => const VerificationListScreen()));
-      break;
-    case 'admin_new_topup':
-    case 'admin_new_withdrawal':
-      nav.push(MaterialPageRoute(builder: (_) => const WalletRequestsScreen()));
-      break;
-    case 'admin_new_support':
-      nav.push(MaterialPageRoute(builder: (_) => const SupportRequestsScreen()));
-      break;
-    case 'admin_new_subadmin_request':
-      nav.push(MaterialPageRoute(builder: (_) => const SubAdminRequestsScreen()));
-      break;
-    default:
-      // Unknown type — stay put, nothing to route to.
-      break;
+  try {
+    await AppLocalizations.loadSavedLanguage();
+  } catch (e, st) {
+    debugPrint('STARTUP_LANGUAGE_ERROR: $e');
+    debugPrintStack(stackTrace: st);
   }
+
+  if (!kIsWeb) {
+    try {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+      final localNotifications = FlutterLocalNotificationsPlugin();
+      await localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_channel);
+      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+      await localNotifications.initialize(const InitializationSettings(android: androidInit));
+    } catch (e) {}
+  }
+
+  runApp(const MyGameApp());
 }
 
-class MyGameAdminApp extends StatelessWidget {
-  const MyGameAdminApp({super.key});
+class MyGameApp extends StatefulWidget {
+  const MyGameApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'MYGame Admin',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: AppColors.bg,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          brightness: Brightness.dark,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.bg,
-          elevation: 0,
-          foregroundColor: Colors.white,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: AppColors.fieldFill,
-          labelStyle: const TextStyle(color: AppColors.hint),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        ),
-      ),
-      home: const _AuthGate(),
-    );
-  }
+  State<MyGameApp> createState() => _MyGameAppState();
 }
 
-class _AuthGate extends StatefulWidget {
-  const _AuthGate();
-
-  @override
-  State<_AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends State<_AuthGate> {
-  bool _loading = true;
-  bool _loggedIn = false;
+class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
+  final LocalAuthentication _auth = LocalAuthentication();
+  bool _isLocked = false;
+  bool _biometricEnabled = false;
+  bool _unlocking = false;
+  DateTime? _pausedAt;
+  AppVersionInfo? _forceUpdateInfo;
+  bool _versionCheckDone = false;
 
   @override
   void initState() {
     super.initState();
-    _check();
+    WidgetsBinding.instance.addObserver(this);
+    if (!kIsWeb) {
+      _setupFcm();
+      _loadBiometricSetting();
+      _checkAppVersion();
+    } else {
+      _versionCheckDone = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _checkAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentBuild =
+          int.tryParse(packageInfo.buildNumber) ?? 0;
+
+      final info = await AppVersionService.checkVersion();
+
+      if (!mounted) return;
+
+      if (info != null && currentBuild < info.minimumVersionCode) {
+        setState(() {
+          _forceUpdateInfo = info;
+          _versionCheckDone = true;
+        });
+      } else {
+        setState(() {
+          _versionCheckDone = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _versionCheckDone = true;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadBiometricSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    final enabled = prefs.getBool('biometric_lock_enabled') ?? false;
+    setState(() {
+      _biometricEnabled = enabled;
+      _isLocked = enabled;
+    });
+    if (enabled) _tryUnlock();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_biometricEnabled) return;
+
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _pausedAt = DateTime.now();
+      if (!_isLocked) {
+        setState(() => _isLocked = true);
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      if (_pausedAt != null) {
+        _pausedAt = null; // consume it — don't re-trigger on later spurious resumes
+        _tryUnlock();
+      }
+    }
+  }
+
+  // Fingerprint is mandatory when enabled — the app stays locked on any failure,
+  // cancellation, or missing biometric hardware. The only way in is a successful
+  // scan or turning the setting off from within an already-unlocked session.
+  Future<void> _tryUnlock() async {
+    if (_unlocking) return;
+    _unlocking = true;
+    try {
+      final canCheck = await _auth.canCheckBiometrics;
+      final isSupported = await _auth.isDeviceSupported();
+      if (!canCheck || !isSupported) {
+        // No biometric hardware available — keep the app locked and let the
+        // user know, rather than silently letting them in.
+        _unlocking = false;
+        return;
+      }
+      final didAuth = await _auth.authenticate(
+        localizedReason: 'Unlock MYGame Marketplace',
+        options: const AuthenticationOptions(biometricOnly: true, stickyAuth: true),
+      );
+      if (didAuth) {
+        setState(() => _isLocked = false);
+      }
+      // If didAuth is false (cancelled/failed), stay locked — no fallback unlock.
+    } catch (e) {
+      // Any plugin/platform error also keeps the app locked.
+    } finally {
+      _unlocking = false;
+    }
+  }
+
+  Future<void> _handleNotificationTap(RemoteMessage message) async {
+    final data = message.data;
+    final type = data['type'] as String?;
+    final relatedIdStr = data['relatedId'] as String?;
+    final relatedId = int.tryParse(relatedIdStr ?? '');
+    final nav = navigatorKey.currentState;
+    if (nav == null || type == null) return;
+
+    const orderTypes = {
+      'order_completed', 'sale_paid', 'dispute_resolved', 'dispute_raised', 'credentials_shared'
+    };
+    const offerTypes = {'offer_received', 'offer_accepted', 'offer_rejected', 'outbid'};
+    const tournamentTypes = {
+      'tournament_invite', 'tournament_invite_response', 'tournament_room', 'tournament_reminder',
+      'tournament_prize', 'tournament_suspended', 'tournament_cancelled', 'tournament_team_dissolved'
+    };
+
+    try {
+      if (orderTypes.contains(type) && relatedId != null) {
+        // Try to find this order among purchases first, then sales.
+        try {
+          final purchases = await ApiService.getMyPurchases();
+          final match = purchases.firstWhere(
+            (o) => o['id'] == relatedId,
+            orElse: () => null,
+          );
+          if (match != null) {
+            nav.push(MaterialPageRoute(builder: (_) => PurchaseDetailScreen(order: match)));
+            return;
+          }
+        } catch (_) {}
+        try {
+          final sales = await ApiService.getMySales();
+          final match = sales.firstWhere(
+            (o) => o['id'] == relatedId,
+            orElse: () => null,
+          );
+          if (match != null) {
+            nav.push(MaterialPageRoute(builder: (_) => SaleDetailScreen(order: match)));
+            return;
+          }
+        } catch (_) {}
+        nav.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+        return;
+      }
+
+      if (tournamentTypes.contains(type) && relatedId != null) {
+        nav.push(MaterialPageRoute(builder: (_) => TournamentDetailScreen(id: relatedId)));
+        return;
+      }
+
+      if (offerTypes.contains(type)) {
+        nav.push(MaterialPageRoute(builder: (_) => const OffersScreen()));
+        return;
+      }
+
+      if (type == 'admin_message' && relatedId != null) {
+        nav.push(MaterialPageRoute(builder: (_) => AdminChatScreen(orderId: relatedId)));
+        return;
+      }
+
+      // new_message, promotion, and anything unrecognized falls back here.
+      nav.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+    } catch (_) {
+      nav.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+    }
   }
 
   Future<void> _setupFcm() async {
@@ -153,58 +266,174 @@ class _AuthGateState extends State<_AuthGate> {
 
       final token = await messaging.getToken();
       if (token != null) {
-        await ApiService.saveFcmToken(token);
+        final loggedIn = await ApiService.getToken();
+        if (loggedIn != null) {
+          await ApiService.saveFcmToken(token);
+        }
       }
 
       messaging.onTokenRefresh.listen((newToken) async {
-        await ApiService.saveFcmToken(newToken);
+        final loggedIn = await ApiService.getToken();
+        if (loggedIn != null) {
+          await ApiService.saveFcmToken(newToken);
+        }
       });
 
-      // Notification tapped while app was backgrounded.
-      FirebaseMessaging.onMessageOpenedApp.listen(handleNotificationNavigation);
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        final context = navigatorKey.currentContext;
+        if (context != null && message.notification != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${message.notification!.title}: ${message.notification!.body}'),
+              backgroundColor: AppColors.surface,
+              action: SnackBarAction(
+                label: 'View',
+                onPressed: () => _handleNotificationTap(message),
+              ),
+            ),
+          );
+        }
+      });
 
-      // App was fully closed and launched by tapping a notification.
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        _handleNotificationTap(message);
+      });
+
       final initialMessage = await messaging.getInitialMessage();
       if (initialMessage != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          handleNotificationNavigation(initialMessage);
+          _handleNotificationTap(initialMessage);
         });
       }
-
-      // Show a quick banner if a push arrives while the app is open.
-      FirebaseMessaging.onMessage.listen((message) {
-        final ctx = navigatorKey.currentContext;
-        final notif = message.notification;
-        if (ctx == null || notif == null) return;
-        ScaffoldMessenger.of(ctx).showSnackBar(
-          SnackBar(
-            content: Text('${notif.title ?? ''}: ${notif.body ?? ''}'),
-            action: SnackBarAction(label: 'Open', onPressed: () => handleNotificationNavigation(message)),
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      });
-    } catch (_) {}
-  }
-
-  Future<void> _check() async {
-    final token = await ApiService.getToken();
-    final loggedIn = token != null;
-    if (loggedIn) await _setupFcm();
-    setState(() {
-      _loggedIn = loggedIn;
-      _loading = false;
-    });
+    } catch (e) {}
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Scaffold(
-        backgroundColor: AppColors.bg,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-      );
-    }
-    return _loggedIn ? const DashboardScreen() : const LoginScreen();
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      builder: (context, child) => NoInternetOverlay(child: child ?? const SizedBox.shrink()),
+      title: 'MyGame',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        pageTransitionsTheme: PageTransitionsTheme(builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        }),
+        scaffoldBackgroundColor: AppColors.bg,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          brightness: Brightness.dark,
+          surface: AppColors.surface,
+        ),
+        brightness: Brightness.dark,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: AppColors.bg,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: false,
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: AppColors.surface,
+          indicatorColor: AppColors.primary.withOpacity(0.25),
+          labelTextStyle: WidgetStateProperty.all(
+            const TextStyle(fontSize: 11, color: Colors.white),
+          ),
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.white,
+            side: const BorderSide(color: AppColors.border),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppColors.fieldFill,
+          hintStyle: const TextStyle(color: AppColors.hint),
+          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Colors.white54),
+          ),
+        ),
+        dividerTheme: const DividerThemeData(color: AppColors.border),
+        listTileTheme: const ListTileThemeData(
+          iconColor: AppColors.hint,
+          textColor: Colors.white,
+        ),
+        switchTheme: SwitchThemeData(
+          thumbColor: WidgetStateProperty.resolveWith((states) =>
+              states.contains(WidgetState.selected) ? AppColors.primary : AppColors.hint),
+          trackColor: WidgetStateProperty.resolveWith((states) =>
+              states.contains(WidgetState.selected)
+                  ? AppColors.primary.withOpacity(0.4)
+                  : AppColors.border),
+        ),
+      ),
+      themeMode: ThemeMode.dark,
+      home: !_versionCheckDone
+          ? const SplashScreen()
+          : _forceUpdateInfo != null
+              ? ForceUpdateScreen(info: _forceUpdateInfo!)
+              : Stack(
+        children: [
+          const SplashScreen(),
+          if (_isLocked)
+            Positioned.fill(
+              child: Container(
+                color: AppColors.bg,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.fingerprint, size: 80, color: AppColors.primary),
+                      const SizedBox(height: 24),
+                      const Text('App Locked', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 40),
+                        child: Text(
+                          'Verify your fingerprint or face to continue',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.hint, fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: _tryUnlock,
+                        icon: const Icon(Icons.lock_open),
+                        label: const Text('Unlock'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
