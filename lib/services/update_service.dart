@@ -1,3 +1,4 @@
+import 'api_service.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -11,22 +12,11 @@ class UpdateService {
 
   static Future<void> checkForUpdate(BuildContext context) async {
     try {
-      final response = await http
-          .get(Uri.parse(versionCheckUrl))
-          .timeout(const Duration(seconds: 8));
-      if (response.statusCode != 200) return;
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final latestVersionCode = data['latestVersionCode'] as int;
-      final apkUrl = data['apkUrl'] as String;
-      final forceUpdate = data['force_update'] as bool? ?? false;
-      final notes = data['update_notes'] as String? ?? '';
-
       final info = await PackageInfo.fromPlatform();
-      final currentVersionCode = int.parse(info.buildNumber);
-
-      if (currentVersionCode < latestVersionCode && context.mounted) {
-        _showUpdateDialog(context, apkUrl, forceUpdate, notes);
+      final r = await ApiService.checkForUpdate(info.version);
+      final url = (r['downloadUrl'] ?? '').toString();
+      if (r['updateAvailable'] == true && url.isNotEmpty && context.mounted) {
+        _showUpdateDialog(context, url, false, '');
       }
     } catch (e) {
       debugPrint('Update check failed: $e');
