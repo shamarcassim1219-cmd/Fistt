@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
     UiPrefs.load();
     if (kIsWeb) {
       Future.delayed(const Duration(milliseconds: 1500), () {
-        if (mounted) _showDownloadAppPrompt();
+        // if (mounted) _showDownloadAppPrompt();
       });
     }
     _checkLoginStatus();

@@ -511,23 +511,6 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                             ),
                           ),
                         ),
-                        if (kIsWeb) ...[
-                          const SizedBox(height: 28),
-                          Center(
-                            child: OutlinedButton.icon(
-                              onPressed: () => launchUrl(
-                                Uri.parse('https://buysellgame.store/downloads/app-release.apk'),
-                                mode: LaunchMode.externalApplication,
-                              ),
-                              icon: const Icon(Icons.android, color: AppColors.primary),
-                              label: const Text('Download Android App', style: TextStyle(color: AppColors.primary)),
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppColors.primary),
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              ),
-                            ),
-                          ),
-                        ],
                         const SizedBox(height: 20),
                       ],
                     ),

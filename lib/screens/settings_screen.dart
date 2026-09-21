@@ -329,14 +329,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _SectionHeader('About'),
               if (!kIsWeb)
               _tile(Icons.info_outline, 'App Version', '$_appVersion — Tap to check for updates', _checkForUpdate),
-              if (kIsWeb)
-                _tile(Icons.android, 'Download Android App', 'Get the app for a better experience', () {
-                  launchUrl(
-                    Uri.parse('https://buysellgame.store/downloads/app-release.apk'),
-                    mode: LaunchMode.externalApplication,
-                    webOnlyWindowName: '_blank',
-                  );
-                }),
 
               const SizedBox(height: 10),
               Padding(
