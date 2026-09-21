@@ -68,6 +68,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case 'outbid': return Icons.gavel_outlined;
       case 'admin_message': return Icons.support_agent_outlined;
       case 'credentials_shared': return Icons.lock_open_outlined;
+      case 'tournament_new': return Icons.emoji_events_outlined;
+      case 'tool_new': return Icons.new_releases_outlined;
       case 'tournament_invite': return Icons.mail_outline;
       case 'tournament_invite_response': return Icons.how_to_reg_outlined;
       case 'tournament_room': return Icons.meeting_room_outlined;
@@ -141,6 +143,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         break;
 
       case 'tournament_invite':
+      case 'tournament_new':
       case 'tournament_invite_response':
       case 'tournament_room':
       case 'tournament_reminder':

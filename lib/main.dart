@@ -204,7 +204,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
     };
     const offerTypes = {'offer_received', 'offer_accepted', 'offer_rejected', 'outbid'};
     const tournamentTypes = {
-      'tournament_invite', 'tournament_invite_response', 'tournament_room', 'tournament_reminder',
+      'tournament_new', 'tournament_invite', 'tournament_invite_response', 'tournament_room', 'tournament_reminder',
       'tournament_prize', 'tournament_suspended', 'tournament_cancelled', 'tournament_team_dissolved'
     };
 
