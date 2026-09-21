@@ -9,10 +9,8 @@ import '../main.dart';
 import '../services/api_service.dart';
 import '../services/auth_helper.dart';
 import '../services/app_localizations.dart';
-import '../services/ui_prefs.dart';
 import 'login_screen.dart';
 import 'profile_management_screen.dart';
-import 'notifications_screen.dart';
 import 'referral_code_screen.dart';
 import 'live_chat_screen.dart';
 import 'legal_screen.dart';
@@ -255,45 +253,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Divider(height: 1),
 
               _SectionHeader(AppLocalizations.t('account')),
-              ListTile(
-                leading: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: AppColors.primary.withOpacity(0.2),
-                  backgroundImage: _profile?['profilePhotoUrl'] != null ? NetworkImage('${_profile!['profilePhotoUrl']}') : null,
-                  child: _profile?['profilePhotoUrl'] == null ? const Icon(Icons.person, color: AppColors.primary) : null,
-                ),
-                title: Text('${_profile?['displayName'] ?? 'My profile'}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                subtitle: Text('${_profile?['email'] ?? 'View and edit your profile'}', style: const TextStyle(color: AppColors.hint)),
-                trailing: const Icon(Icons.chevron_right, color: AppColors.hint),
-                onTap: () async {
-                  if (!await requireLogin(context, reason: 'Login to manage your profile')) return;
-                  if (!context.mounted) return;
-                  await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileManagementScreen()));
-                  _loadProfile();
-                },
-              ),
-              FadeSlideIn(
-                child: ListTile(
-                  leading: const Icon(Icons.notifications_outlined, color: AppColors.hint),
-                  title: const Text('Notifications', style: TextStyle(color: Colors.white)),
-                  trailing: FutureBuilder<dynamic>(
-                    future: ApiService.getUnreadNotificationCount(),
-                    builder: (context, snap) {
-                      final n = int.tryParse('${snap.data ?? 0}') ?? 0;
-                      if (n <= 0) return const Icon(Icons.chevron_right, color: AppColors.hint);
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(20)),
-                        child: Text(n > 99 ? '99+' : '$n', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                      );
-                    },
-                  ),
-                  onTap: () async {
-                    await Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
-                    if (mounted) setState(() {});
-                  },
-                ),
-              ),
               _tile(Icons.account_balance_wallet_outlined, AppLocalizations.t('wallet'), null, () async {
                 if (!await requireLogin(context, reason: 'Login to open your wallet')) return;
                 if (!context.mounted) return;
@@ -334,18 +293,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   );
                   if (choice != null) await AppLocalizations.setLanguage(choice);
                 },
-              ),
-
-              ValueListenableBuilder<bool>(
-                valueListenable: UiPrefs.glassNav,
-                builder: (context, glass, _) => SwitchListTile(
-                  secondary: const Icon(Icons.blur_on_outlined, color: AppColors.hint),
-                  title: const Text('Glass navigation bar', style: TextStyle(color: Colors.white)),
-                  subtitle: const Text('Frosted glass look for the bottom bar', style: TextStyle(color: AppColors.hint)),
-                  value: glass,
-                  activeThumbColor: AppColors.primary,
-                  onChanged: (v) => UiPrefs.setGlassNav(v),
-                ),
               ),
 
               _SectionHeader('Privacy & Data'),
