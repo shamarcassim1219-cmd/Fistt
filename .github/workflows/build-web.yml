@@ -52,7 +52,7 @@ jobs:
           convert assets/icon/app_icon.png -resize 512x512 web/icons/Icons-maskable-512.png
 
       - name: Build web
-        run: flutter build web --release
+        run: flutter build web --release --base-href /app/
 
       - name: Deploy landing page to cPanel root
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
