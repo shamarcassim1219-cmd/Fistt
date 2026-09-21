@@ -1,3 +1,4 @@
+import 'socket_service.dart';
 import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
@@ -24,6 +25,7 @@ class ApiService {
   }
 
   static Future<void> clearToken() async {
+    SocketService.disconnect(); // drop the old user's realtime connection
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
   }
