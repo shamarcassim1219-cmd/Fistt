@@ -1,3 +1,4 @@
+import '../services/update_service.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/app_version_service.dart';
@@ -14,23 +15,7 @@ class ForceUpdateScreen extends StatelessWidget {
     final url = info.apkUrl.isNotEmpty
         ? info.apkUrl
         : 'https://buysellgame.store/downloads/app-release.apk';
-    final uri = Uri.parse(url);
-    var opened = false;
-    try {
-      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {}
-    if (!opened) {
-      try {
-        opened = await launchUrl(uri, mode: LaunchMode.platformDefault);
-      } catch (_) {}
-    }
-    if (!opened && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not open the download. Please open buysellgame.store in your browser to download the app.'),
-        ),
-      );
-    }
+    await UpdateService.downloadAndInstall(context, url);
   }
 
   @override

@@ -44,7 +44,7 @@ class UpdateService {
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(ctx);
-                await _downloadAndInstall(context, apkUrl);
+                await downloadAndInstall(context, apkUrl);
               },
               child: const Text('Update Now'),
             ),
@@ -54,7 +54,7 @@ class UpdateService {
     );
   }
 
-  static Future<void> _downloadAndInstall(
+  static Future<void> downloadAndInstall(
       BuildContext context, String apkUrl) async {
     final progress = ValueNotifier<double>(0);
 
