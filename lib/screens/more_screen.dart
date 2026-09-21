@@ -152,6 +152,62 @@ Widget _toolBox({
   );
 }
 
+List<Color> _gradientFor(String? key) {
+  switch (key) {
+    case 'ff_info':
+      return const [Color(0xFF7B2FF7), Color(0xFFF107A3)];
+    case 'tournaments':
+      return const [Color(0xFFFFB300), Color(0xFFE65100)];
+    case 'game_tuner':
+      return const [Color(0xFF00C6FF), Color(0xFF0072FF)];
+    case 'events':
+      return const [Color(0xFF6C4CF1), Color(0xFFF107A3)];
+    default:
+      return const [Color(0xFF3A3A55), Color(0xFF1E1E30)];
+  }
+}
+
+Widget _toolBox({
+  required String title,
+  required String subtitle,
+  required IconData icon,
+  required List<Color> gradient,
+  required VoidCallback onTap,
+}) {
+  return InkWell(
+    borderRadius: BorderRadius.circular(16),
+    onTap: onTap,
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: gradient),
+            ),
+          ),
+          Positioned(right: -10, top: -10, child: Icon(icon, size: 90, color: Colors.white.withOpacity(0.12))),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(icon, size: 28, color: Colors.white),
+                const SizedBox(height: 10),
+                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+                const SizedBox(height: 3),
+                Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
 
