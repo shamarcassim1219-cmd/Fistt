@@ -57,11 +57,22 @@ class UpdateService {
   static Future<void> downloadAndInstall(
       BuildContext context, String apkUrl) async {
     final progress = ValueNotifier<double>(0);
+    var dialogOpen = true;
 
     final task = DownloadTask(
       url: apkUrl,
       filename: 'mygame_update.apk',
       baseDirectory: BaseDirectory.applicationSupport,
+    );
+
+    // Progress also shows in the notification bar, so the download keeps
+    // going when the app is hidden or closed. Tap it when done to install.
+    FileDownloader().configureNotification(
+      running: const TaskNotification('Downloading update', '{progress}'),
+      complete: const TaskNotification('Update downloaded', 'Tap to install'),
+      error: const TaskNotification(
+          'Update download failed', 'Open the app and try again'),
+      progressBar: true,
     );
 
     showDialog(
@@ -83,7 +94,7 @@ class UpdateService {
                 Text(known ? '$percent%' : 'Connecting...'),
                 const SizedBox(height: 4),
                 const Text(
-                  'The update file is large (about 90 MB). Please keep the app open.',
+                  'The update file is large (about 90 MB). Tap Hide to keep using the app. The download continues in the notification bar.',
                   style: TextStyle(fontSize: 12),
                 ),
               ],
@@ -94,6 +105,13 @@ class UpdateService {
           TextButton(
             onPressed: () => FileDownloader().cancelTaskWithId(task.taskId),
             child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              dialogOpen = false;
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('Hide'),
           ),
         ],
       ),
@@ -110,7 +128,7 @@ class UpdateService {
     } catch (e) {
       debugPrint('Update download error: $e');
     }
-    if (context.mounted) Navigator.pop(context);
+    if (dialogOpen && context.mounted) Navigator.pop(context);
     progress.dispose();
 
     if (result != null && result.status == TaskStatus.complete) {

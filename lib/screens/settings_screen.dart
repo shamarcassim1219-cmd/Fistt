@@ -1,3 +1,4 @@
+import '../services/update_service.dart';
 import 'package:flutter/material.dart';
 import 'wallet_screen.dart';
 import '../widgets/anim.dart';
@@ -391,7 +392,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pop(ctx);
-                    _downloadAndInstallUpdate(result['downloadUrl']);
+                    UpdateService.downloadAndInstall(context, result["downloadUrl"].toString());
                   },
                   child: const Text('Download'),
                 ),

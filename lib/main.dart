@@ -1,3 +1,5 @@
+import 'package:background_downloader/background_downloader.dart' show FileDownloader;
+import 'package:open_filex/open_filex.dart' show OpenFilex;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -45,6 +47,15 @@ const AndroidNotificationChannel _channel = AndroidNotificationChannel(
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Tapping the "Update downloaded" notification opens the APK installer,
+  // even if the app was closed while downloading.
+  FileDownloader().registerCallbacks(
+    taskNotificationTapCallback: (task, notificationType) async {
+      if (task.filename == 'mygame_update.apk') {
+        await OpenFilex.open(await task.filePath());
+      }
+    },
+  );
 
   try {
     await AppLocalizations.loadSavedLanguage();
