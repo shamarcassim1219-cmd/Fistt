@@ -11,6 +11,7 @@ import '../services/app_localizations.dart';
 import '../services/auth_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'my_sales_screen.dart';
+import 'wallet_bank_details_screen.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -613,8 +614,10 @@ class _WalletScreenState extends State<WalletScreen> {
                         setModalState(() => submitting = false);
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please add your bank account details first (Settings → Wallet & Bank Details)')),
+                          const SnackBar(content: Text('Please add your bank account details first')),
                         );
+                        await Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletBankDetailsScreen()));
+                        if (mounted) _load();
                         return;
                       }
 
