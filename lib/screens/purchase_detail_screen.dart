@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/safe_picker.dart';
@@ -119,7 +120,7 @@ class _PurchaseDetailScreenState extends State<PurchaseDetailScreen> with Secure
                 if (pickedPhoto != null)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.file(File(pickedPhoto!.path), height: 120, fit: BoxFit.cover, width: double.infinity),
+                    child: kIsWeb ? Image.network(pickedPhoto!.path, height: 120, fit: BoxFit.cover, width: double.infinity) : Image.file(File(pickedPhoto!.path), height: 120, fit: BoxFit.cover, width: double.infinity),
                   ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
