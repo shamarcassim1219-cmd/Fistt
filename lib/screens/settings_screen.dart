@@ -14,6 +14,7 @@ import 'profile_management_screen.dart';
 import 'referral_code_screen.dart';
 import 'live_chat_screen.dart';
 import 'legal_screen.dart';
+import 'notifications_screen.dart';
 import 'help_faq_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -294,6 +295,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (choice != null) await AppLocalizations.setLanguage(choice);
                 },
               ),
+
+              _tile(Icons.notifications_outlined, 'Notifications', null, () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+              }),
 
               _SectionHeader('Privacy & Data'),
               _tile(Icons.description_outlined, AppLocalizations.t('terms_and_conditions'), null, () {

@@ -96,56 +96,61 @@ IconData _iconFor(String? name) {
   }
 }
 
-class MoreScreen extends StatefulWidget {
-  const MoreScreen({super.key});
-
-  @override
-  State<MoreScreen> createState() => _MoreScreenState();
+List<Color> _gradientFor(String? key) {
+  switch (key) {
+    case 'ff_info':
+      return const [Color(0xFF7B2FF7), Color(0xFFF107A3)];
+    case 'tournaments':
+      return const [Color(0xFFFFB300), Color(0xFFE65100)];
+    case 'game_tuner':
+      return const [Color(0xFF00C6FF), Color(0xFF0072FF)];
+    case 'events':
+      return const [Color(0xFF6C4CF1), Color(0xFFF107A3)];
+    default:
+      return const [Color(0xFF3A3A55), Color(0xFF1E1E30)];
+  }
 }
 
-class _MoreScreenState extends State<MoreScreen> {
-  List<dynamic> _tools = _defaultTools;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final list = await ApiService.getMoreTools();
-      // the Events box is always shown, even when the server list does not include it
-      final tools = List<dynamic>.from(list);
-      if (!tools.any((t) => t is Map && t['key'] == 'events')) tools.add(_eventsTool);
-      if (mounted) setState(() => _tools = tools);
-    } catch (_) {
-      // backend route not ready or offline: show default tools
-      if (mounted) setState(() => _tools = _defaultTools);
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  void _open(Map t) {
-    final link = '${t['linkUrl'] ?? ''}';
-    if (link.isNotEmpty) {
-      launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
-    } else if (t['key'] == 'game_tuner') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const GameTunerScreen()));
-    } else if (t['key'] == 'tournaments') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const TournamentsScreen()));
-    } else if (t['key'] == 'ff_info') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const FfInfoScreen()));
-    } else if (t['key'] == 'events') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const EventsPage()));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Coming soon')),
-      );
-    }
-  }
+Widget _toolBox({
+  required String title,
+  required String subtitle,
+  required IconData icon,
+  required List<Color> gradient,
+  required VoidCallback onTap,
+}) {
+  return InkWell(
+    borderRadius: BorderRadius.circular(16),
+    onTap: onTap,
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: gradient),
+            ),
+          ),
+          Positioned(right: -10, top: -10, child: Icon(icon, size: 90, color: Colors.white.withOpacity(0.12))),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(icon, size: 28, color: Colors.white),
+                const SizedBox(height: 10),
+                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+                const SizedBox(height: 3),
+                Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -163,47 +168,43 @@ class _MoreScreenState extends State<MoreScreen> {
                       crossAxisCount: 1,
                       mainAxisSpacing: 14,
                       crossAxisSpacing: 14,
-                      childAspectRatio: 2.0,
+                      childAspectRatio: 1.6,
                     ),
                     itemCount: _tools.length,
                     itemBuilder: (_, i) {
                       final t = _tools[i] as Map;
-                      if (t['key'] == 'events') return _eventsBox(() => _open(t));
-                      if (t['key'] == 'ff_info' || t['key'] == 'tournaments' || t['key'] == 'game_tuner') {
-                        return InkWell(
-                          borderRadius: BorderRadius.circular(16),
+                      final key = t['key']?.toString();
+
+                      final subtitle =
+                          (t['subtitle'] ?? '').toString().isNotEmpty
+                              ? '${t['subtitle']}'
+                              : key == 'tournaments'
+                                  ? 'Compete and win prizes'
+                                  : key == 'game_tuner'
+                                      ? 'Best settings for your phone'
+                                      : key == 'ff_info'
+                                          ? 'Get your information'
+                                          : key == 'events'
+                                              ? 'Promotions and offers'
+                                              : '';
+
+                      return TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        duration: Duration(milliseconds: 350 + (i * 80)),
+                        curve: Curves.easeOut,
+                        builder: (context, value, child) => Opacity(
+                          opacity: value,
+                          child: Transform.translate(
+                            offset: Offset(0, (1 - value) * 20),
+                            child: child,
+                          ),
+                        ),
+                        child: _toolBox(
+                          title: '${t['title'] ?? ''}',
+                          subtitle: subtitle,
+                          icon: _iconFor(t['icon']?.toString()),
+                          gradient: _gradientFor(key),
                           onTap: () => _open(t),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: _photoOverlay(
-                              '${t['title'] ?? ''}',
-                              t['key'] == 'tournaments' ? 'Compete and win prizes' : (t['key'] == 'game_tuner' ? 'Best settings for your phone' : 'Get your information'),
-                              asset: t['key'] == 'tournaments' ? _tourneyImage : (t['key'] == 'game_tuner' ? _tunerImage : _ffImage),
-                            ),
-                          ),
-                        );
-                      }
-                      return InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () => _open(t),
-                        child: Ink(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          padding: const EdgeInsets.all(14),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(_iconFor(t['icon']?.toString()), size: 40, color: Theme.of(context).colorScheme.primary),
-                              const SizedBox(height: 12),
-                              Text('${t['title'] ?? ''}', textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
-                              if ((t['subtitle'] ?? '').toString().isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text('${t['subtitle']}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
-                              ],
-                            ],
-                          ),
                         ),
                       );
                     },
