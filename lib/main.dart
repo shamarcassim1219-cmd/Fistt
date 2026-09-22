@@ -1,4 +1,4 @@
-import 'package:background_downloader/background_downloader.dart' show FileDownloader;
+import 'package:background_downloader/background_downloader.dart' show FileDownloader, TaskStatus;
 import 'package:open_filex/open_filex.dart' show OpenFilex;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -53,6 +53,16 @@ void main() async {
     taskNotificationTapCallback: (task, notificationType) async {
       if (task.filename == 'mygame_update.apk') {
         await OpenFilex.open(await task.filePath());
+      }
+    },
+    // Fires the install prompt as soon as the APK finishes downloading,
+    // whether the update dialog was hidden, the app stayed open, or was
+    // backgrounded — one reliable path instead of depending on the
+    // screen that started the download still being active.
+    taskStatusCallback: (update) async {
+      if (update.task.filename == 'mygame_update.apk' &&
+          update.status == TaskStatus.complete) {
+        await OpenFilex.open(await update.task.filePath());
       }
     },
   );

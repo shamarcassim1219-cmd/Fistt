@@ -132,8 +132,9 @@ class UpdateService {
     progress.dispose();
 
     if (result != null && result.status == TaskStatus.complete) {
-      final filePath = await task.filePath();
-      await OpenFilex.open(filePath);
+      // Install prompt is triggered by the global taskStatusCallback in
+      // main.dart, so it still shows even if this dialog was hidden or
+      // this screen is gone by the time the download finishes.
     } else if (result != null && result.status == TaskStatus.canceled) {
       // cancelled by the user, nothing to show
     } else if (context.mounted) {

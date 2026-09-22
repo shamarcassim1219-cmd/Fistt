@@ -5,8 +5,9 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.1.59+161",
+      "version": "1.1.60+162",
       "dependencies": [
+        "android_intent_plus",
         "background_downloader",
         "camera",
         "connectivity_plus",
@@ -1442,6 +1443,15 @@
         "collection",
         "meta",
         "pub_semver"
+      ]
+    },
+    {
+      "name": "android_intent_plus",
+      "version": "5.3.1",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "platform"
       ]
     }
   ],
