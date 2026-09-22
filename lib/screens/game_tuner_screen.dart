@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
+import 'ff_apply_settings_screen.dart';
 
 // ======================= helpers =======================
 
@@ -464,10 +466,28 @@ class _PhoneSettingsScreenState extends State<_PhoneSettingsScreen> {
   Widget _dpiCard() {
     final factor = double.tryParse('${widget.preset['dpiFactor']}') ?? 1.0;
     if (widget.platform == 'ios') {
-      return const Card(
+      return Card(
         child: Padding(
-          padding: EdgeInsets.all(14),
-          child: Text('iPhone and iPad do not allow changing the screen DPI, so there is nothing to adjust. Use the sensitivity values above and the smooth-play tips below.'),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('iPhone and iPad do not allow changing the screen DPI, so there is nothing to adjust. Use the sensitivity values above and the smooth-play tips below.'),
+              const SizedBox(height: 12),
+              Card(
+                color: Colors.green.shade50,
+                child: ListTile(
+                  leading: const Icon(Icons.chat, color: Colors.green),
+                  title: const Text('Accurate Sensi File එකක් ගන්නද?'),
+                  subtitle: const Text('WhatsApp හරහා order කරන්න'),
+                  onTap: () => launchUrl(
+                    Uri.parse('https://wa.me/94713051219?text=Hi, mata iPhone sensi file eka ganna one'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -625,6 +645,16 @@ class _PhoneSettingsScreenState extends State<_PhoneSettingsScreen> {
             padding: EdgeInsets.fromLTRB(8, 14, 8, 24),
             child: Text('These are recommended starting values, not guaranteed for every player. Test in the Training Ground and adjust each slider by 3 to 5 points until aiming feels right.', style: TextStyle(fontSize: 12)),
           ),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: FilledButton.icon(
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FfApplySettingsScreen())),
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('Settings Apply කරලා Free Fire Open කරමු'),
+            ),
+          ),
+          const SizedBox(height: 12),
         ],
       ),
     );
