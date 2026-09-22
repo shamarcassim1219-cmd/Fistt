@@ -394,6 +394,50 @@ class _PhoneSettingsScreenState extends State<_PhoneSettingsScreen> {
     return int.tryParse('${widget.preset[key]}') ?? 0;
   }
 
+  bool get _isFreeFire => widget.gameTitle.toLowerCase().contains('free fire');
+  int get _maxSens => _isFreeFire ? 200 : 100;
+  Map<String, int>? _customResult;
+
+  void _detectCustomDpi(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final density = (mq.devicePixelRatio * 160).round();
+    final currentSW = mq.size.shortestSide.round();
+
+    double factor;
+    if (currentSW > 420) {
+      factor = 1.15;
+    } else if (currentSW > 400) {
+      factor = 1.08;
+    } else {
+      factor = 1.0;
+    }
+    var targetSW = (currentSW / factor).floor();
+    if (targetSW < 320) targetSW = 320;
+
+    final base = _maxSens == 200 ? 170 : 85;
+    final general = (base + (factor - 1.0) * 100).round().clamp(0, _maxSens);
+    final redDot = (general * 0.93).round().clamp(0, _maxSens);
+    final scope2x = (redDot * 0.85).round().clamp(0, _maxSens);
+    final scope4x = (redDot * 0.70).round().clamp(0, _maxSens);
+    final awm = (redDot * 0.55).round().clamp(0, _maxSens);
+    final freeLook = (_maxSens * 0.18).round().clamp(0, _maxSens);
+
+    setState(() {
+      _sw.text = '\$currentSW';
+      _customResult = {
+        'density': density,
+        'currentSW': currentSW,
+        'targetSW': targetSW,
+        'general': general,
+        'redDot': redDot,
+        'scope2x': scope2x,
+        'scope4x': scope4x,
+        'awm': awm,
+        'freeLook': freeLook,
+      };
+    });
+  }
+
   Widget _bar(String label, int v) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -403,7 +447,7 @@ class _PhoneSettingsScreenState extends State<_PhoneSettingsScreen> {
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(value: v / 100, minHeight: 10),
+              child: LinearProgressIndicator(value: (v / _maxSens).clamp(0.0, 1.0), minHeight: 10),
             ),
           ),
           SizedBox(width: 44, child: Text('$v', textAlign: TextAlign.right, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
@@ -463,6 +507,35 @@ class _PhoneSettingsScreenState extends State<_PhoneSettingsScreen> {
             const Text('1. Settings > About phone > tap Build number 7 times.\n2. Settings > Developer options > Smallest width.\n3. Type the new number and confirm. The screen size updates right away.\n4. Open Free Fire and test. To undo, type your original number again.'),
             const SizedBox(height: 8),
             const Text('Keep the change small and never go below 320. DPI mostly changes how big things look on screen, so treat it as fine-tuning.', style: TextStyle(fontSize: 12)),
+            if (_isFreeFire) ...[
+              const Divider(height: 24),
+              const Text('Custom DPI (auto-detect)', style: TextStyle(fontWeight: FontWeight.w800)),
+              const SizedBox(height: 4),
+              const Text("Reads your actual phone's screen right now and works out a Smallest width and Free Fire sensitivity to try, even if your phone is not in our list.", style: TextStyle(fontSize: 12)),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => _detectCustomDpi(context),
+                icon: const Icon(Icons.smartphone),
+                label: const Text("Detect my phone's real settings"),
+              ),
+              if (_customResult != null) ...[
+                const SizedBox(height: 12),
+                _kv('Current Smallest width', '\${_customResult!['currentSW']} dp'),
+                _kv('Suggested Smallest width', '\${_customResult!['targetSW']} dp'),
+                const SizedBox(height: 8),
+                _kv('General', '\${_customResult!['general']}'),
+                _kv('Red Dot', '\${_customResult!['redDot']}'),
+                _kv('2x Scope', '\${_customResult!['scope2x']}'),
+                _kv('4x Scope', '\${_customResult!['scope4x']}'),
+                _kv('AWM Scope', '\${_customResult!['awm']}'),
+                _kv('Free Look', '\${_customResult!['freeLook']}'),
+                const SizedBox(height: 6),
+                const Text('These are calculated from your real screen, not a guess. Use them as a starting point and fine-tune in Training Grounds.', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
+              ],
+            ] else ...[
+              const SizedBox(height: 8),
+              const Text('Custom DPI auto-detect: coming soon for this game.', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
           ],
         ),
       ),
