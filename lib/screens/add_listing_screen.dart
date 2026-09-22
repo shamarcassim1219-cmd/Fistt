@@ -138,6 +138,69 @@ class _AddListingScreenState extends State<AddListingScreen> {
     );
   }
 
+  void _showCoverPreview() {
+    if (_screenshots.isEmpty) return;
+    final cover = _screenshots.first;
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: Text('This is how your listing card will look on Home',
+                  style: TextStyle(color: Colors.white, fontSize: 13), textAlign: TextAlign.center),
+            ),
+            Container(
+              width: 260,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.border),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AspectRatio(
+                    aspectRatio: 1.4,
+                    child: kIsWeb
+                        ? Image.network(cover.path, fit: BoxFit.cover, width: double.infinity)
+                        : Image.file(File(cover.path), fit: BoxFit.cover, width: double.infinity),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _titleCtrl.text.trim().isEmpty ? 'Your listing title' : _titleCtrl.text.trim(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text('LKR --', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Close', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickScreenshots() async {
     try {
       final picker = ImagePicker();
@@ -611,12 +674,33 @@ if (_saleType == 'rental') ...[
                       }
                       return PopIn(key: ValueKey(_screenshots[i].path), child: Stack(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: kIsWeb
-                                ? Image.network(_screenshots[i].path, width: double.infinity, height: double.infinity, fit: BoxFit.cover)
-                                : Image.file(File(_screenshots[i].path), width: double.infinity, height: double.infinity, fit: BoxFit.cover),
+                          GestureDetector(
+                            onTap: () {
+                              if (i == 0) return;
+                              setState(() {
+                                final item = _screenshots.removeAt(i);
+                                _screenshots.insert(0, item);
+                              });
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: kIsWeb
+                                  ? Image.network(_screenshots[i].path, width: double.infinity, height: double.infinity, fit: BoxFit.cover)
+                                  : Image.file(File(_screenshots[i].path), width: double.infinity, height: double.infinity, fit: BoxFit.cover),
+                            ),
                           ),
+                          if (i == 0)
+                            Positioned(
+                              left: 4, bottom: 4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text('COVER', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
                           Positioned(
                             top: 2, right: 2,
                             child: GestureDetector(
@@ -631,6 +715,19 @@ if (_saleType == 'rental') ...[
                       ));
                     },
                   ),
+                  if (_screenshots.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Tap a photo to make it the cover photo shown on Home.',
+                      style: const TextStyle(color: AppColors.hint, fontSize: 11),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _showCoverPreview,
+                      icon: const Icon(Icons.visibility_outlined, size: 18),
+                      label: const Text('Preview how it looks on Home'),
+                    ),
+                  ],
 
                   const SizedBox(height: 24),
                   _SectionLabel(AppLocalizations.t('account_vault')),
