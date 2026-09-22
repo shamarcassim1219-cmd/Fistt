@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _HomeTab(),
     MoreScreen(),
     AddListingScreen(),
+    NotificationsScreen(),
     SettingsScreen(),
   ];
 
@@ -132,10 +133,12 @@ class _HomeScreenState extends State<HomeScreen> {
           bottomNavigationBar: FancyNavBar(
             selectedIndex: _tab,
             onSelected: (i) => setState(() => _tab = i),
+            centerIndex: 2,
             items: [
               FancyNavItem(icon: Icons.home_outlined, selectedIcon: Icons.home_rounded, label: AppLocalizations.t('home')),
               const FancyNavItem(icon: Icons.grid_view_outlined, selectedIcon: Icons.grid_view_rounded, label: 'More'),
               FancyNavItem(icon: Icons.sell_outlined, selectedIcon: Icons.sell, label: AppLocalizations.t('sell')),
+              const FancyNavItem(icon: Icons.notifications_outlined, selectedIcon: Icons.notifications_rounded, label: 'Alerts'),
               FancyNavItem(icon: Icons.settings_outlined, selectedIcon: Icons.settings, label: AppLocalizations.t('settings')),
             ],
           ),
