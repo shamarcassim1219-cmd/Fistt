@@ -423,7 +423,7 @@ class _PhoneSettingsScreenState extends State<_PhoneSettingsScreen> {
     final freeLook = (_maxSens * 0.18).round().clamp(0, _maxSens);
 
     setState(() {
-      _sw.text = '\$currentSW';
+      _sw.text = '$currentSW';
       _customResult = {
         'density': density,
         'currentSW': currentSW,
@@ -520,15 +520,15 @@ class _PhoneSettingsScreenState extends State<_PhoneSettingsScreen> {
               ),
               if (_customResult != null) ...[
                 const SizedBox(height: 12),
-                _kv('Current Smallest width', '\${_customResult!['currentSW']} dp'),
-                _kv('Suggested Smallest width', '\${_customResult!['targetSW']} dp'),
+                _kv('Current Smallest width', '${_customResult!['currentSW']} dp'),
+                _kv('Suggested Smallest width', '${_customResult!['targetSW']} dp'),
                 const SizedBox(height: 8),
-                _kv('General', '\${_customResult!['general']}'),
-                _kv('Red Dot', '\${_customResult!['redDot']}'),
-                _kv('2x Scope', '\${_customResult!['scope2x']}'),
-                _kv('4x Scope', '\${_customResult!['scope4x']}'),
-                _kv('AWM Scope', '\${_customResult!['awm']}'),
-                _kv('Free Look', '\${_customResult!['freeLook']}'),
+                _kv('General', '${_customResult!['general']}'),
+                _kv('Red Dot', '${_customResult!['redDot']}'),
+                _kv('2x Scope', '${_customResult!['scope2x']}'),
+                _kv('4x Scope', '${_customResult!['scope4x']}'),
+                _kv('AWM Scope', '${_customResult!['awm']}'),
+                _kv('Free Look', '${_customResult!['freeLook']}'),
                 const SizedBox(height: 6),
                 const Text('These are calculated from your real screen, not a guess. Use them as a starting point and fine-tune in Training Grounds.', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
               ],
