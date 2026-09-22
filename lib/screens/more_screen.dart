@@ -6,7 +6,6 @@ import 'package:gal/gal.dart';
 import '../services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'tournaments_screen.dart';
-import 'game_tuner_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 import 'home_screen.dart' show PromotionsTab;
@@ -14,7 +13,6 @@ import 'home_screen.dart' show PromotionsTab;
 const List<Map<String, dynamic>> _defaultTools = [
   {'key': 'ff_info', 'title': 'Free Fire Info Check', 'subtitle': 'Check any account by UID', 'icon': 'sports_esports'},
   {'key': 'tournaments', 'title': 'Tournaments', 'subtitle': 'Compete and win prizes', 'icon': 'emoji_events'},
-  {'key': 'game_tuner', 'title': 'Game DPI & Sensitivity', 'subtitle': 'Best settings for your phone', 'icon': 'tune'},
   {'key': 'events', 'title': 'Events', 'subtitle': 'Promotions and offers', 'icon': 'campaign'},
 ];
 
@@ -23,13 +21,11 @@ const Map<String, dynamic> _eventsTool = {'key': 'events', 'title': 'Events', 's
 
 const String _ffImage = 'assets/images/ff_info.jpg';
 const String _tourneyImage = 'assets/images/tournaments.jpg';
-const String _tunerImage = 'assets/images/game_tuner.jpg';
 const String _eventsImage = 'assets/images/events.jpg';
 
 const Map<String, String> _toolImages = {
   'ff_info': _ffImage,
   'tournaments': _tourneyImage,
-  'game_tuner': _tunerImage,
   'events': _eventsImage,
 };
 
@@ -110,8 +106,6 @@ List<Color> _gradientFor(String? key) {
       return const [Color(0xFF7B2FF7), Color(0xFFF107A3)];
     case 'tournaments':
       return const [Color(0xFFFFB300), Color(0xFFE65100)];
-    case 'game_tuner':
-      return const [Color(0xFF00C6FF), Color(0xFF0072FF)];
     case 'events':
       return const [Color(0xFF6C4CF1), Color(0xFFF107A3)];
     default:
@@ -250,8 +244,6 @@ class _MoreScreenState extends State<MoreScreen> {
     final link = '${t['linkUrl'] ?? ''}';
     if (link.isNotEmpty) {
       launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
-    } else if (t['key'] == 'game_tuner') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const GameTunerScreen()));
     } else if (t['key'] == 'tournaments') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const TournamentsScreen()));
     } else if (t['key'] == 'ff_info') {
@@ -293,9 +285,7 @@ class _MoreScreenState extends State<MoreScreen> {
                               ? '${t['subtitle']}'
                               : key == 'tournaments'
                                   ? 'Compete and win prizes'
-                                  : key == 'game_tuner'
-                                      ? 'Best settings for your phone'
-                                      : key == 'ff_info'
+                                  : key == 'ff_info'
                                           ? 'Get your information'
                                           : key == 'events'
                                               ? 'Promotions and offers'
