@@ -298,6 +298,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                     amount: (tx['amount'] as num?)?.toDouble() ?? 0,
                                     status: tx['status'] ?? 'pending',
                                     createdAt: tx['createdAt'],
+                                    paymentMethod: tx['paymentMethod'],
                                   )),
                           ],
                         ),
@@ -694,12 +695,14 @@ class _TransactionTile extends StatelessWidget {
   final double amount;
   final String status;
   final String? createdAt;
+  final String? paymentMethod;
 
-  const _TransactionTile({this.id, required this.type, required this.amount, required this.status, this.createdAt});
+  const _TransactionTile({this.id, required this.type, required this.amount, required this.status, this.createdAt, this.paymentMethod});
 
   Map<String, dynamic> get _display {
     switch (type) {
       case 'topup':
+        if (paymentMethod == 'binance') return {'label': 'Binance Top-Up (USDT)', 'icon': Icons.currency_bitcoin};
         return {'label': 'Wallet Top-Up', 'icon': Icons.add_circle_outline};
       case 'withdrawal':
         return {'label': 'Withdrawal', 'icon': Icons.arrow_circle_up_outlined};
@@ -786,7 +789,7 @@ class _TransactionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = _display;
     final positive = amount >= 0;
-    final color = positive ? Colors.greenAccent : Colors.redAccent;
+    final color = paymentMethod == 'binance' ? Colors.amber : (positive ? Colors.greenAccent : Colors.redAccent);
     return ListTile(
       onTap: () => _showDetails(context),
       leading: CircleAvatar(
