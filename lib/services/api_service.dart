@@ -853,6 +853,23 @@ class ApiService {
     return await _handle(res);
   }
 
+  // ---------- BINANCE DEPOSIT ----------
+  static Future<Map<String, dynamic>> getBinanceDepositInfo() async {
+    final res = await http.get(Uri.parse('$baseUrl/binance/info'), headers: await _headers());
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
+  }
+
+  static Future<Map<String, dynamic>> verifyBinanceDeposit(String orderId) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/binance/verify'),
+      headers: await _headers(),
+      body: jsonEncode({'orderId': orderId}),
+    );
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
+  }
+
   static Future<bool> checkNicExists(String nic) async {
     final res = await http.get(
       Uri.parse('$baseUrl/verification/check-nic?nic=${Uri.encodeQueryComponent(nic)}'),

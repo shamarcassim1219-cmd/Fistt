@@ -309,6 +309,49 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   void _showTopUpSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(AppLocalizations.t('top_up_wallet'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.account_balance_outlined, color: AppColors.primary),
+                title: const Text('Bank Transfer', style: TextStyle(color: Colors.white)),
+                subtitle: const Text('Upload a payment slip, reviewed by our team', style: TextStyle(color: AppColors.hint, fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showBankTopUpSheet(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.currency_bitcoin, color: Colors.amber),
+                title: const Text('Binance (USDT)', style: TextStyle(color: Colors.white)),
+                subtitle: const Text('Instant, converted at the current rate', style: TextStyle(color: AppColors.hint, fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: AppColors.surface,
+                    builder: (_) => _BinanceDepositSheet(onDone: _load),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showBankTopUpSheet(BuildContext context) {
     final amountCtrl = TextEditingController();
     final referenceCtrl = TextEditingController();
     XFile? slipFile;
@@ -753,6 +796,185 @@ class _TransactionTile extends StatelessWidget {
       title: Text(d['label'] as String, style: const TextStyle(color: Colors.white)),
       subtitle: Text('$_txCode · $status', style: TextStyle(color: _statusColor(), fontSize: 12)),
       trailing: Text('${positive ? '+' : ''} LKR ${amount.toStringAsFixed(2)}', style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+    );
+  }
+}
+
+
+// ======================= Binance (USDT) top up =======================
+
+class _BinanceDepositSheet extends StatefulWidget {
+  final VoidCallback onDone;
+  const _BinanceDepositSheet({required this.onDone});
+
+  @override
+  State<_BinanceDepositSheet> createState() => _BinanceDepositSheetState();
+}
+
+class _BinanceDepositSheetState extends State<_BinanceDepositSheet> {
+  final _usdtCtrl = TextEditingController();
+  final _orderIdCtrl = TextEditingController();
+  bool _loading = true;
+  bool _submitting = false;
+  String? _loadError;
+  String? _formError;
+  Map<String, dynamic>? _info;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _usdtCtrl.dispose();
+    _orderIdCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    try {
+      final d = await ApiService.getBinanceDepositInfo();
+      if (!mounted) return;
+      setState(() {
+        _info = d;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = e.toString().replaceFirst('Exception: ', '');
+        _loading = false;
+      });
+    }
+  }
+
+  double get _rate => double.tryParse('${_info?['rate'] ?? 0}') ?? 0;
+  double get _feePercent => double.tryParse('${_info?['feePercent'] ?? 0}') ?? 0;
+
+  String _fmt(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2);
+
+  Future<void> _submit() async {
+    final orderId = _orderIdCtrl.text.trim();
+    if (orderId.isEmpty) {
+      setState(() => _formError = 'Enter the Order ID from Binance');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+      _formError = null;
+    });
+    try {
+      final r = await ApiService.verifyBinanceDeposit(orderId);
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${r['message'] ?? 'Deposit confirmed'}')));
+      widget.onDone();
+    } catch (e) {
+      setState(() {
+        _submitting = false;
+        _formError = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Top up with Binance (USDT)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 16),
+            if (_loading)
+              const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: AppColors.primary)))
+            else if (_loadError != null)
+              Text(_loadError!, style: const TextStyle(color: Colors.redAccent))
+            else if (_info?['enabled'] != true)
+              const Text('Binance deposits are not available right now. Please use Bank Transfer.', style: TextStyle(color: AppColors.hint))
+            else ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('1. Send USDT to this Binance Pay ID', style: TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('${_info!['binanceId']}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy, color: AppColors.primary, size: 20),
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: '${_info!['binanceId']}'));
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Binance ID copied')));
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Rate: 1 USDT = LKR ${_fmt(_rate)}${_feePercent > 0 ? ' (fee ${_fmt(_feePercent)}%)' : ''}', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                    Text('Minimum: ${_info!['minUsdt']} USDT', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                    if ('${_info!['note'] ?? ''}'.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text('${_info!['note']}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text('Estimate how much you will receive (optional)', style: TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _usdtCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(color: Colors.white),
+                onChanged: (_) => setState(() {}),
+                decoration: const InputDecoration(labelText: 'Amount you sent (USDT)'),
+              ),
+              if ((double.tryParse(_usdtCtrl.text.trim()) ?? 0) > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    'You will receive about LKR ${_fmt((double.tryParse(_usdtCtrl.text.trim()) ?? 0) * _rate * (1 - _feePercent / 100))}',
+                    style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              const Text('2. After sending, enter the Order ID shown in Binance', style: TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _orderIdCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(labelText: 'Binance Order ID'),
+              ),
+              if (_formError != null) ...[
+                const SizedBox(height: 10),
+                Text(_formError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _submitting ? null : _submit,
+                  child: _submitting
+                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      : const Text('Continue'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

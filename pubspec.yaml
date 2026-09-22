@@ -1,7 +1,7 @@
 name: mygame_app
 description: MYGame Marketplace - Buy & Sell Game Accounts Safely
 publish_to: 'none'
-version: 1.1.48+150
+version: 1.1.49+151
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
