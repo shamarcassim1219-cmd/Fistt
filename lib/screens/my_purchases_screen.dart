@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import '../widgets/rental_info_card.dart';
 import 'purchase_detail_screen.dart';
 
 class MyPurchasesScreen extends StatefulWidget {
@@ -62,6 +63,7 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen> {
                               final screenshots = (o['screenshots'] as List?) ?? [];
                               final status = o['status'];
                               final installment = o['installment'] as Map<String, dynamic>?;
+                              final rental = o['rental'] as Map<String, dynamic>?;
                               String? nextDueLabel;
                               if (installment != null && installment['nextDueDate'] != null) {
                                 try {
@@ -102,6 +104,8 @@ class _MyPurchasesScreenState extends State<MyPurchasesScreen> {
                                       subtitle: Text('LKR ${(o['price'] as num).toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
                                       trailing: _StatusBadge(status: status),
                                     ),
+                                    if (rental != null)
+                                      RentalInfoCard(rental: rental, createdAt: o['createdAt']),
                                     if (installment != null)
                                       Container(
                                         width: double.infinity,

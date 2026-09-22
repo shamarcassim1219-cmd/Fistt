@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.1.60+162",
+      "version": "1.1.62+164",
       "dependencies": [
         "android_intent_plus",
         "background_downloader",
@@ -436,6 +436,15 @@
         "meta",
         "nm",
         "web"
+      ]
+    },
+    {
+      "name": "android_intent_plus",
+      "version": "5.3.1",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "platform"
       ]
     },
     {
@@ -1194,6 +1203,13 @@
       ]
     },
     {
+      "name": "platform",
+      "version": "3.2.0",
+      "dependencies": [
+        "meta"
+      ]
+    },
+    {
       "name": "string_scanner",
       "version": "1.4.1",
       "dependencies": [
@@ -1262,13 +1278,6 @@
         "collection",
         "meta",
         "petitparser"
-      ]
-    },
-    {
-      "name": "platform",
-      "version": "3.2.0",
-      "dependencies": [
-        "meta"
       ]
     },
     {
@@ -1443,15 +1452,6 @@
         "collection",
         "meta",
         "pub_semver"
-      ]
-    },
-    {
-      "name": "android_intent_plus",
-      "version": "5.3.1",
-      "dependencies": [
-        "flutter",
-        "meta",
-        "platform"
       ]
     }
   ],

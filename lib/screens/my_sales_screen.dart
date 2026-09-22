@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import '../widgets/rental_info_card.dart';
 import 'sale_detail_screen.dart';
 
 class MySalesScreen extends StatefulWidget {
@@ -101,25 +102,7 @@ class _MySalesScreenState extends State<MySalesScreen> {
                                       trailing: _StatusBadge(status: status),
                                     ),
                                     if (rental != null)
-                                      Container(
-                                        width: double.infinity,
-                                        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: rental['expired'] == true ? Colors.redAccent.withOpacity(0.1) : AppColors.primary.withOpacity(0.08),
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: Text(
-                                          rental['expired'] == true
-                                              ? AppLocalizations.t('rental_ended_remind')
-                                              : "${AppLocalizations.t('buyer_rented_for')} ${rental['quantity']} ${rental['unit']}(s) · ${rental['daysRemaining']} ${AppLocalizations.t('days_remaining_suffix')}",
-                                          style: TextStyle(
-                                            color: rental['expired'] == true ? Colors.redAccent : Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
+                                      RentalInfoCard(rental: rental, createdAt: o['createdAt']),
                                     if (installment != null)
                                       Container(
                                         width: double.infinity,
