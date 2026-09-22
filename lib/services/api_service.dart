@@ -86,7 +86,12 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> _handle(http.Response res) async {
-    final body = jsonDecode(utf8.decode(res.bodyBytes));
+    dynamic body;
+    try {
+      body = jsonDecode(utf8.decode(res.bodyBytes));
+    } catch (_) {
+      throw Exception('Server is temporarily unavailable. Please try again shortly.');
+    }
     if (res.statusCode >= 200 && res.statusCode < 300) {
       return body;
     } else {
