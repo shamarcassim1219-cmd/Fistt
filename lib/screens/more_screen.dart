@@ -24,6 +24,14 @@ const Map<String, dynamic> _eventsTool = {'key': 'events', 'title': 'Events', 's
 const String _ffImage = 'assets/images/ff_info.jpg';
 const String _tourneyImage = 'assets/images/tournaments.jpg';
 const String _tunerImage = 'assets/images/game_tuner.jpg';
+const String _eventsImage = 'assets/images/events.jpg';
+
+const Map<String, String> _toolImages = {
+  'ff_info': _ffImage,
+  'tournaments': _tourneyImage,
+  'game_tuner': _tunerImage,
+  'events': _eventsImage,
+};
 
 Widget _ffBanner({double? height, String asset = _ffImage}) {
   return Image.asset(
@@ -152,6 +160,60 @@ Widget _toolBox({
   );
 }
 
+Widget _photoToolBox({
+  required String title,
+  required String subtitle,
+  required IconData icon,
+  required String asset,
+  required VoidCallback onTap,
+}) {
+  return InkWell(
+    borderRadius: BorderRadius.circular(16),
+    onTap: onTap,
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _ffBanner(asset: asset),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Color(0xCC000000)],
+              ),
+            ),
+          ),
+          Positioned(
+            right: 10,
+            top: 10,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.black.withOpacity(0.35), shape: BoxShape.circle),
+              child: Icon(icon, size: 20, color: Colors.white),
+            ),
+          ),
+          Positioned(
+            left: 14,
+            right: 14,
+            bottom: 12,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+                const SizedBox(height: 3),
+                Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
 
@@ -250,13 +312,21 @@ class _MoreScreenState extends State<MoreScreen> {
                             child: child,
                           ),
                         ),
-                        child: _toolBox(
-                          title: '${t['title'] ?? ''}',
-                          subtitle: subtitle,
-                          icon: _iconFor(t['icon']?.toString()),
-                          gradient: _gradientFor(key),
-                          onTap: () => _open(t),
-                        ),
+                        child: _toolImages.containsKey(key)
+                            ? _photoToolBox(
+                                title: '${t['title'] ?? ''}',
+                                subtitle: subtitle,
+                                icon: _iconFor(t['icon']?.toString()),
+                                asset: _toolImages[key]!,
+                                onTap: () => _open(t),
+                              )
+                            : _toolBox(
+                                title: '${t['title'] ?? ''}',
+                                subtitle: subtitle,
+                                icon: _iconFor(t['icon']?.toString()),
+                                gradient: _gradientFor(key),
+                                onTap: () => _open(t),
+                              ),
                       );
                     },
                   ),
