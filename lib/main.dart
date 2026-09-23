@@ -115,6 +115,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
   DateTime? _pausedAt;
   AppVersionInfo? _forceUpdateInfo;
   bool _versionCheckDone = false;
+  final GlobalKey _splashKey = GlobalKey();
 
   @override
   void initState() {
@@ -429,12 +430,12 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
       ),
       themeMode: ThemeMode.dark,
       home: !_versionCheckDone
-          ? const SplashScreen()
+          ? SplashScreen(key: _splashKey)
           : _forceUpdateInfo != null
               ? ForceUpdateScreen(info: _forceUpdateInfo!)
               : Stack(
         children: [
-          const SplashScreen(),
+          SplashScreen(key: _splashKey),
           if (_isLocked)
             Positioned.fill(
               child: Container(
