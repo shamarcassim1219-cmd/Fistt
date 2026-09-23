@@ -148,7 +148,36 @@ class FancyNavBar extends StatelessWidget {
               ),
               if (hasCenter)
                 Positioned(
-                  top: 24,
+                  left: 0,
+                  right: 0,
+                  bottom: 14,
+                  child: Center(
+                    child: FractionallySizedBox(
+                      widthFactor: 1 / items.length,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onSelected(centerIndex!);
+                        },
+                        child: Text(
+                          items[centerIndex!].label,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: selectedIndex == centerIndex ? FontWeight.w700 : FontWeight.w500,
+                            color: selectedIndex == centerIndex ? Colors.white : AppColors.hint,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              if (hasCenter)
+                Positioned(
+                  top: 10,
                   left: 0,
                   right: 0,
                   child: Center(
@@ -159,8 +188,8 @@ class FancyNavBar extends StatelessWidget {
                       },
                       child: AnimatedContainer(
                         duration: dur,
-                        width: 58,
-                        height: 58,
+                        width: 54,
+                        height: 54,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: selectedIndex == centerIndex ? null : AppColors.surface,
