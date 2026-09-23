@@ -885,6 +885,15 @@ class ApiService {
   }
 
   // ---------- MORE TOOLS ----------
+  static Future<void> deleteAccount(String secret) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/account/delete'),
+      headers: await _headers(),
+      body: jsonEncode({'password': secret, 'confirm': secret}),
+    );
+    await _handle(res);
+  }
+
   static Future<List<dynamic>> getMoreTools() async {
     final res = await http.get(Uri.parse('$baseUrl/tools/list'), headers: await _headers());
     final data = await _handle(res);
