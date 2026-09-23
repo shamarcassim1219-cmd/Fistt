@@ -213,6 +213,67 @@ Widget _photoToolBox({
   );
 }
 
+class _MoreItem {
+  final String key;
+  final String emoji;
+  final List<Color> colors;
+  final bool soon;
+  const _MoreItem(this.key, this.emoji, this.colors, {this.soon = false});
+}
+
+const List<_MoreItem> _moreItems = [
+  _MoreItem('tournaments', '🏆', [Color(0xFF3A2BB8), Color(0xFF1B1447)]),
+  _MoreItem('ff_dpi_sensi', '🎯', [Color(0xFFA3245F), Color(0xFF2A1240)]),
+  _MoreItem('game_tools', '🛠️', [Color(0xFF2A3F9E), Color(0xFF101A45)], soon: true),
+  _MoreItem('ff_info', '🪪', [Color(0xFF0F8F86), Color(0xFF08262E)]),
+  _MoreItem('top_up', '👛', [Color(0xFF9A5A1A), Color(0xFF2B1A12)], soon: true),
+  _MoreItem('rewards', '🎁', [Color(0xFF8A2BB0), Color(0xFF22103A)], soon: true),
+  _MoreItem('events', '📣', [Color(0xFF6C4CF1), Color(0xFF3A1A6B)]),
+];
+
+const Map<String, Map<String, List<String>>> _moreText = {
+  'en': {
+    'header': ['More', '🎮 Your gaming tools & resources'],
+    'soon': ['Coming soon', 'is coming soon!'],
+    'tournaments': ['Tournaments', 'Join & win amazing prizes'],
+    'ff_dpi_sensi': ['Free Fire DPI & Sensitivity', 'Best settings for better gameplay'],
+    'game_tools': ['Game Tools', 'Useful tools for all games'],
+    'ff_info': ['UID Checker', 'Check player info instantly'],
+    'top_up': ['Top Up', 'Fast & secure top ups'],
+    'rewards': ['Rewards', 'Claim your daily rewards'],
+    'events': ['Events', 'Promotions and offers'],
+  },
+  'si': {
+    'header': ['තව', '🎮 ඔබේ ගේමින් මෙවලම් සහ සම්පත්'],
+    'soon': ['ඉක්මනින් එයි', 'ඉක්මනින් එනවා!'],
+    'tournaments': ['තරඟාවලි', 'එකතු වී ත්‍යාග දිනන්න'],
+    'ff_dpi_sensi': ['Free Fire DPI සහ සංවේදීතාව', 'වඩා හොඳ ගේම් එකකට හොඳම සැකසුම්'],
+    'game_tools': ['ගේම් මෙවලම්', 'සියලු ගේම් සඳහා ප්‍රයෝජනවත් මෙවලම්'],
+    'ff_info': ['UID පරීක්ෂකය', 'ක්‍රීඩක තොරතුරු ක්ෂණිකව බලන්න'],
+    'top_up': ['ටොප් අප්', 'වේගවත් සහ සුරක්ෂිත ටොප් අප්'],
+    'rewards': ['ත්‍යාග', 'ඔබේ දෛනික ත්‍යාග ලබාගන්න'],
+    'events': ['සිදුවීම්', 'ප්‍රවර්ධන සහ දීමනා'],
+  },
+  'ta': {
+    'header': ['மேலும்', '🎮 உங்கள் கேமிங் கருவிகள் & வளங்கள்'],
+    'soon': ['விரைவில் வருகிறது', 'விரைவில் வருகிறது!'],
+    'tournaments': ['போட்டிகள்', 'சேர்ந்து அருமையான பரிசுகளை வெல்லுங்கள்'],
+    'ff_dpi_sensi': ['Free Fire DPI & உணர்திறன்', 'சிறந்த விளையாட்டுக்கான அமைப்புகள்'],
+    'game_tools': ['கேம் கருவிகள்', 'அனைத்து கேம்களுக்கும் பயனுள்ள கருவிகள்'],
+    'ff_info': ['UID சரிபார்ப்பு', 'வீரர் தகவலை உடனே பாருங்கள்'],
+    'top_up': ['டாப் அப்', 'வேகமான, பாதுகாப்பான டாப் அப்'],
+    'rewards': ['வெகுமதிகள்', 'தினசரி வெகுமதிகளைப் பெறுங்கள்'],
+    'events': ['நிகழ்வுகள்', 'விளம்பரங்கள் & சலுகைகள்'],
+  },
+};
+
+String _langCode(String l) {
+  final s = l.toLowerCase();
+  if (s.startsWith('si') || l.contains('සිං')) return 'si';
+  if (s.startsWith('ta') || l.contains('தம')) return 'ta';
+  return 'en';
+}
+
 class MoreScreen extends StatefulWidget {
   const MoreScreen({super.key});
 
@@ -221,8 +282,8 @@ class MoreScreen extends StatefulWidget {
 }
 
 class _MoreScreenState extends State<MoreScreen> {
-  List<dynamic> _tools = _defaultTools;
-  bool _loading = true;
+  List<Map> _extras = []; // tools added from the server that are not built in
+  static const _bg = Color(0xFF070918);
 
   @override
   void initState() {
@@ -233,109 +294,161 @@ class _MoreScreenState extends State<MoreScreen> {
   Future<void> _load() async {
     try {
       final list = await ApiService.getMoreTools();
-      // the Events box is always shown, even when the server list does not include it
-      final tools = List<dynamic>.from(list);
-      if (!tools.any((t) => t is Map && t['key'] == 'events')) tools.add(_eventsTool);
-      if (mounted) setState(() => _tools = tools);
-    } catch (_) {
-      // backend route not ready or offline: show default tools
-      if (mounted) setState(() => _tools = _defaultTools);
-    } finally {
-      if (mounted) setState(() => _loading = false);
+      final known = _moreItems.map((e) => e.key).toSet();
+      final extras = list
+          .whereType<Map>()
+          .where((t) => !known.contains(t['key']?.toString()) && '${t['linkUrl'] ?? ''}'.isNotEmpty)
+          .toList();
+      if (mounted) setState(() => _extras = extras);
+    } catch (_) {}
+  }
+
+  void _open(String key, String title, String soonMsg, bool soon, {String link = ''}) {
+    if (link.isNotEmpty) {
+      launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+    } else if (soon) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$title $soonMsg')));
+    } else if (key == 'ff_dpi_sensi') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const FfDpiSensiScreen()));
+    } else if (key == 'tournaments') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const TournamentsScreen()));
+    } else if (key == 'ff_info') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const FfInfoScreen()));
+    } else if (key == 'events') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const EventsPage()));
     }
   }
 
-  void _open(Map t) {
-    final link = '${t['linkUrl'] ?? ''}';
-    if (link.isNotEmpty) {
-      launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
-    } else if (t['key'] == 'ff_dpi_sensi') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const FfDpiSensiScreen()));
-    } else if (t['key'] == 'tournaments') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const TournamentsScreen()));
-    } else if (t['key'] == 'ff_info') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const FfInfoScreen()));
-    } else if (t['key'] == 'events') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const EventsPage()));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Coming soon')),
-      );
-    }
+  Widget _tile({
+    required String emoji,
+    required String title,
+    required String sub,
+    required List<Color> colors,
+    required bool soon,
+    required String badge,
+    required VoidCallback onTap,
+  }) {
+    final radius = BorderRadius.circular(22);
+    return Opacity(
+      opacity: soon ? 0.6 : 1,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: colors),
+            border: Border.all(color: Colors.white.withOpacity(0.10)),
+            borderRadius: radius,
+          ),
+          child: InkWell(
+            onTap: onTap,
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 34)),
+                      const Spacer(),
+                      Text(title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15, height: 1.35)),
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: EdgeInsets.only(right: soon ? 0 : 18),
+                        child: Text(sub,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.45)),
+                      ),
+                    ],
+                  ),
+                ),
+                if (soon)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.16),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(badge, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                    ),
+                  )
+                else
+                  const Positioned(right: 10, bottom: 10, child: Icon(Icons.chevron_right, color: Colors.white70, size: 20)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('More')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _tools.isEmpty
-              ? const Center(child: Text('No tools available'))
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ValueListenableBuilder<String>(
-                    valueListenable: AppLocalizations.currentLanguage,
-                    builder: (context, lang, _) => GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 1,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: 1.6,
-                    ),
-                    itemCount: _tools.length,
-                    itemBuilder: (_, i) {
-                      final t = _tools[i] as Map;
-                      final key = t['key']?.toString();
-
-                      final subtitle = key == 'ff_dpi_sensi'
-                          ? AppLocalizations.t('ff_dpi_sensi_subtitle')
-                          : (t['subtitle'] ?? '').toString().isNotEmpty
-                              ? '${t['subtitle']}'
-                              : key == 'tournaments'
-                                  ? 'Compete and win prizes'
-                                  : key == 'ff_info'
-                                          ? 'Get your information'
-                                          : key == 'events'
-                                              ? 'Promotions and offers'
-                                              : '';
-
-                      final title = key == 'ff_dpi_sensi'
-                          ? AppLocalizations.t('ff_dpi_sensi_title')
-                          : '${t['title'] ?? ''}';
-
-                      return TweenAnimationBuilder<double>(
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        duration: Duration(milliseconds: 350 + (i * 80)),
-                        curve: Curves.easeOut,
-                        builder: (context, value, child) => Opacity(
-                          opacity: value,
-                          child: Transform.translate(
-                            offset: Offset(0, (1 - value) * 20),
-                            child: child,
-                          ),
-                        ),
-                        child: _toolImages.containsKey(key)
-                            ? _photoToolBox(
-                                title: title,
-                                subtitle: subtitle,
-                                icon: _iconFor(t['icon']?.toString()),
-                                asset: _toolImages[key]!,
-                                onTap: () => _open(t),
-                              )
-                            : _toolBox(
-                                title: title,
-                                subtitle: subtitle,
-                                icon: _iconFor(t['icon']?.toString()),
-                                gradient: _gradientFor(key),
-                                onTap: () => _open(t),
-                              ),
-                      );
-                    },
-                  ),
-                  ),
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        final L = _moreText[_langCode(lang)]!;
+        final tiles = <Widget>[
+          for (final it in _moreItems)
+            _tile(
+              emoji: it.emoji,
+              title: L[it.key]![0],
+              sub: L[it.key]![1],
+              colors: it.colors,
+              soon: it.soon,
+              badge: L['soon']![0],
+              onTap: () => _open(it.key, L[it.key]![0], L['soon']![1], it.soon),
+            ),
+          for (final t in _extras)
+            _tile(
+              emoji: '✨',
+              title: '${t['title'] ?? ''}',
+              sub: '${t['subtitle'] ?? ''}',
+              colors: const [Color(0xFF3A3A55), Color(0xFF1E1E30)],
+              soon: false,
+              badge: '',
+              onTap: () => _open('${t['key']}', '', '', false, link: '${t['linkUrl']}'),
+            ),
+        ];
+        return Scaffold(
+          backgroundColor: _bg,
+          appBar: AppBar(
+            backgroundColor: _bg,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            title: Text(L['header']![0], style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 26)),
+          ),
+          body: RefreshIndicator(
+            onRefresh: _load,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Text(L['header']![1], style: const TextStyle(color: Color(0xFFA9A6C8), fontSize: 14, height: 1.5)),
                 ),
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 14,
+                  crossAxisSpacing: 14,
+                  childAspectRatio: 0.88,
+                  children: tiles,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
