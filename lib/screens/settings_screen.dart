@@ -104,20 +104,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     final secret = ctrl.text;
     if (ok != true || secret.isEmpty) return;
+    setState(() => _deleting = true);
     try {
       await ApiService.deleteAccount(secret);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t['done']!)));
-      await _logout();
+      await _logoutCore();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
+    } finally {
+      if (mounted) setState(() => _deleting = false);
     }
   }
 
+  bool _loggingOut = false;
+  bool _deleting = false;
+
   Future<void> _logout() async {
+    if (_loggingOut) return;
+    setState(() => _loggingOut = true);
+    try {
+      await Future.delayed(const Duration(milliseconds: 700));
+      await _logoutCore();
+    } finally {
+      if (mounted) setState(() => _loggingOut = false);
+    }
+  }
+
+  Future<void> _logoutCore() async {
     // Clear the server-side FCM token first (while we still have a valid
     // auth token) so this device stops receiving this account's push
     // notifications, and invalidate the local FCM token too so a fresh
@@ -399,13 +416,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           children: [
                             SizedBox(
                               width: double.infinity,
-                              child: OutlinedButton.icon(onPressed: _confirmLogout, icon: const Icon(Icons.logout), label: Text(AppLocalizations.t('logout'))),
+                              child: OutlinedButton.icon(
+                                onPressed: (_loggingOut || _deleting) ? null : _confirmLogout,
+                                icon: _loggingOut ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.logout),
+                                label: Text(AppLocalizations.t('logout')),
+                              ),
                             ),
                             const SizedBox(height: 8),
                             TextButton.icon(
-                              onPressed: _confirmDeleteAccount,
-                              icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
-                              label: Text(_delTxt[_delLang()]!['btn']!, style: const TextStyle(color: Colors.redAccent)),
+                              onPressed: (_loggingOut || _deleting) ? null : _confirmDeleteAccount,
+                              icon: _deleting ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.redAccent)) : const Icon(Icons.delete_forever, color: Colors.redAccent),
+                              label: Text(_deleting ? _delTxt[_delLang()]!['deleting']! : _delTxt[_delLang()]!['btn']!, style: const TextStyle(color: Colors.redAccent)),
                             ),
                           ],
                         )
@@ -634,6 +655,7 @@ String _delLang() {
 const Map<String, Map<String, String>> _delTxt = {
   'en': {
     'btn': 'Delete account',
+    'deleting': 'Deleting...',
     'title': 'Delete your account?',
     'body': 'Your account will be deleted. If you log in again within 30 days, it will be restored automatically. After 30 days it cannot be restored.',
     'hint': 'Password',
@@ -643,6 +665,7 @@ const Map<String, Map<String, String>> _delTxt = {
   },
   'si': {
     'btn': 'ගිණුම මකන්න',
+    'deleting': 'මකමින්...',
     'title': 'ඔබේ ගිණුම මකන්නද?',
     'body': 'ඔබේ ගිණුම මැකෙනු ඇත. දින 30ක් ඇතුළත නැවත ලොගින් වුවහොත් එය ස්වයංක්‍රීයව ප්‍රතිසාධනය වේ. දින 30කට පසු ප්‍රතිසාධනය කළ නොහැක.',
     'hint': 'මුරපදය',
@@ -652,6 +675,7 @@ const Map<String, Map<String, String>> _delTxt = {
   },
   'ta': {
     'btn': 'கணக்கை நீக்கு',
+    'deleting': 'நீக்குகிறது...',
     'title': 'உங்கள் கணக்கை நீக்கவா?',
     'body': 'உங்கள் கணக்கு நீக்கப்படும். 30 நாட்களுக்குள் மீண்டும் உள்நுழைந்தால் அது தானாகவே மீட்கப்படும். 30 நாட்களுக்குப் பிறகு மீட்க முடியாது.',
     'hint': 'கடவுச்சொல்',
