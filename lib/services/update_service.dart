@@ -7,17 +7,27 @@ import 'package:open_filex/open_filex.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
+enum UpdatePhase { idle, downloading, ready, failed }
+
 class UpdateService {
   static const String versionCheckUrl =
       'https://api.finbassshamar.online/app-version';
 
   static const String _fileName = 'mygame_update.apk';
   static const String _stampKey = 'update_apk_for_version';
+  static const String _doneKey = 'update_apk_complete';
+
+  /// Live state, used by the force-update screen.
+  static final ValueNotifier<UpdatePhase> phase =
+      ValueNotifier(UpdatePhase.idle);
+  static final ValueNotifier<double> progress = ValueNotifier(0);
 
   static DownloadTask _task(String url) => DownloadTask(
         url: url,
         filename: _fileName,
         baseDirectory: BaseDirectory.applicationSupport,
+        updates: Updates.statusAndProgress,
+        retries: 3,
       );
 
   static Future<File> _apkFile() async =>
@@ -35,37 +45,120 @@ class UpdateService {
     } catch (_) {}
   }
 
-  /// True when a fully downloaded APK for this app version is on disk and
-  /// its size matches the APK currently on the server.
-  static Future<bool> _isReadyFor(String apkUrl) async {
+  static void _configureNotification() {
+    FileDownloader().configureNotification(
+      running: const TaskNotification('Downloading update', '{progress}'),
+      complete: const TaskNotification('Update downloaded', 'Tap to install'),
+      error: const TaskNotification(
+          'Update download failed', 'Open the app and try again'),
+      progressBar: true,
+    );
+  }
+
+  // ---- called from the global callbacks in main.dart ----
+  static Future<void> onStatus(TaskStatus s) async {
+    if (s == TaskStatus.complete) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_doneKey, true);
+      progress.value = 1;
+      phase.value = UpdatePhase.ready;
+    } else if (s == TaskStatus.failed || s == TaskStatus.notFound) {
+      if (phase.value == UpdatePhase.downloading) phase.value = UpdatePhase.failed;
+    } else if (s == TaskStatus.canceled) {
+      if (phase.value == UpdatePhase.downloading) phase.value = UpdatePhase.idle;
+    }
+  }
+
+  static void onProgress(double p) {
+    if (p >= 0 && p <= 1) progress.value = p;
+  }
+
+  /// True when a fully finished APK for this app version is on disk.
+  static Future<bool> isReady([String? apkUrl]) async {
     try {
       final file = await _apkFile();
       if (!await file.exists()) return false;
       final prefs = await SharedPreferences.getInstance();
       if (prefs.getString(_stampKey) != await _currentVersion()) return false;
-      final res = await http
-          .head(Uri.parse(apkUrl))
-          .timeout(const Duration(seconds: 10));
-      final remote = int.tryParse(res.headers['content-length'] ?? '');
-      return remote != null && remote == await file.length();
+      if (prefs.getBool(_doneKey) != true) return false;
+      if (apkUrl != null && apkUrl.isNotEmpty) {
+        try {
+          final res = await http
+              .head(Uri.parse(apkUrl))
+              .timeout(const Duration(seconds: 10));
+          final remote = int.tryParse(res.headers['content-length'] ?? '');
+          if (remote != null && remote != await file.length()) return false;
+        } catch (_) {}
+      }
+      return true;
     } catch (_) {
       return false;
     }
   }
 
-  /// Call once after the app UI is up. If an update finished downloading
-  /// while the app was hidden/closed, offer to install it.
+  static Future<bool> isDownloading() async {
+    try {
+      final tasks = await FileDownloader().allTasks();
+      return tasks.any((t) => t.filename == _fileName);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Force-update screen calls this on open: finished? still downloading?
+  static Future<void> refreshPhase(String apkUrl) async {
+    if (await isReady(apkUrl)) {
+      progress.value = 1;
+      phase.value = UpdatePhase.ready;
+    } else if (await isDownloading()) {
+      phase.value = UpdatePhase.downloading;
+    } else if (phase.value != UpdatePhase.failed) {
+      phase.value = UpdatePhase.idle;
+    }
+  }
+
+  /// Starts a background download (no dialog). Keeps going when the app is
+  /// hidden or closed; progress shows in the notification bar.
+  static Future<void> startBackgroundDownload(String apkUrl) async {
+    await _deleteApk();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_stampKey, await _currentVersion());
+    await prefs.setBool(_doneKey, false);
+    progress.value = 0;
+    phase.value = UpdatePhase.downloading;
+    _configureNotification();
+    final ok = await FileDownloader().enqueue(_task(apkUrl));
+    if (!ok) phase.value = UpdatePhase.failed;
+  }
+
+  static Future<void> cancelDownload() async {
+    try {
+      final tasks = await FileDownloader().allTasks();
+      for (final t in tasks.where((t) => t.filename == _fileName)) {
+        await FileDownloader().cancelTaskWithId(t.taskId);
+      }
+    } catch (_) {}
+    phase.value = UpdatePhase.idle;
+  }
+
+  static Future<void> installNow() async {
+    await OpenFilex.open((await _apkFile()).path);
+  }
+
+  /// Optional-update flow: if an update finished downloading while the app
+  /// was closed, offer to install it (not used while force-update is showing).
   static Future<void> checkPendingInstall(BuildContext context) async {
     try {
       final file = await _apkFile();
       if (!await file.exists()) return;
       final prefs = await SharedPreferences.getInstance();
       if (prefs.getString(_stampKey) != await _currentVersion()) {
-        // App was updated already (or unknown file): clean up.
         await file.delete();
         await prefs.remove(_stampKey);
+        await prefs.remove(_doneKey);
         return;
       }
+      if (!await isReady()) return;
       if (!context.mounted) return;
       showDialog(
         context: context,
@@ -81,7 +174,7 @@ class UpdateService {
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(ctx);
-                await OpenFilex.open(file.path);
+                await installNow();
               },
               child: const Text('Install'),
             ),
@@ -137,34 +230,23 @@ class UpdateService {
     );
   }
 
+  /// Optional-update flow (Settings > Check for updates): dialog with progress.
   static Future<void> downloadAndInstall(
       BuildContext context, String apkUrl) async {
-    // Already downloaded earlier? Skip the download, go straight to install.
-    if (await _isReadyFor(apkUrl)) {
-      await OpenFilex.open((await _apkFile()).path);
+    if (await isReady(apkUrl)) {
+      await installNow();
       return;
     }
 
-    // Remove any old/stale file and remember which app version this
-    // download was started from (used to detect "already installed").
     await _deleteApk();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_stampKey, await _currentVersion());
+    await prefs.setBool(_doneKey, false);
 
-    final progress = ValueNotifier<double>(0);
+    final progressN = ValueNotifier<double>(0);
     var dialogOpen = true;
-
     final task = _task(apkUrl);
-
-    // Progress also shows in the notification bar, so the download keeps
-    // going when the app is hidden or closed. Tap it when done to install.
-    FileDownloader().configureNotification(
-      running: const TaskNotification('Downloading update', '{progress}'),
-      complete: const TaskNotification('Update downloaded', 'Tap to install'),
-      error: const TaskNotification(
-          'Update download failed', 'Open the app and try again'),
-      progressBar: true,
-    );
+    _configureNotification();
 
     showDialog(
       context: context,
@@ -172,7 +254,7 @@ class UpdateService {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Downloading update'),
         content: ValueListenableBuilder<double>(
-          valueListenable: progress,
+          valueListenable: progressN,
           builder: (_, p, __) {
             final known = p > 0 && p <= 1;
             final percent = (p * 100).clamp(0, 100).toStringAsFixed(0);
@@ -213,21 +295,20 @@ class UpdateService {
       result = await FileDownloader().download(
         task,
         onProgress: (p) {
-          if (p >= 0 && p <= 1) progress.value = p;
+          if (p >= 0 && p <= 1) progressN.value = p;
         },
       );
     } catch (e) {
       debugPrint('Update download error: $e');
     }
     if (dialogOpen && context.mounted) Navigator.pop(context);
-    progress.dispose();
+    progressN.dispose();
 
     if (result != null && result.status == TaskStatus.complete) {
-      // Install prompt is triggered by the global taskStatusCallback in
-      // main.dart, so it still shows even if this dialog was hidden or
-      // this screen is gone by the time the download finishes.
+      await onStatus(TaskStatus.complete);
+      // Install prompt is opened by the global callback in main.dart.
     } else if (result != null && result.status == TaskStatus.canceled) {
-      // cancelled by the user, nothing to show
+      // cancelled by the user
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Download failed. Check your internet and try again.')),

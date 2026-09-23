@@ -35,7 +35,7 @@ class AppVersionService {
       'https://buysellgame.store/downloads/version.json';
 
   // App is blocked when it is MORE than this many releases behind the latest.
-  static const int maxVersionsBehind = 5;
+  static const int maxVersionsBehind = 1;
 
   static Future<AppVersionInfo?> checkVersion() async {
     AppVersionInfo? info;

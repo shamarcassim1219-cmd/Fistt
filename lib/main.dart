@@ -61,9 +61,15 @@ void main() async {
     // backgrounded — one reliable path instead of depending on the
     // screen that started the download still being active.
     taskStatusCallback: (update) async {
-      if (update.task.filename == 'mygame_update.apk' &&
-          update.status == TaskStatus.complete) {
+      if (update.task.filename != 'mygame_update.apk') return;
+      await UpdateService.onStatus(update.status);
+      if (update.status == TaskStatus.complete) {
         await OpenFilex.open(await update.task.filePath());
+      }
+    },
+    taskProgressCallback: (update) {
+      if (update.task.filename == 'mygame_update.apk') {
+        UpdateService.onProgress(update.progress);
       }
     },
   );
