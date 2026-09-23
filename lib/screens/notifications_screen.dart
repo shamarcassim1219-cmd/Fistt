@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/auth_helper.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
@@ -20,6 +22,7 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   List<dynamic> _notifications = [];
   bool _loading = true;
+  bool _guest = false;
   String? _error;
 
   @override
@@ -29,6 +32,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('is_logged_in') ?? false)) {
+      if (mounted) setState(() { _guest = true; _loading = false; });
+      return;
+    }
     try {
       final notifications = await ApiService.getNotifications();
       await ApiService.markAllNotificationsRead();
@@ -162,8 +170,41 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  Widget _guestView() {
+    final t = _guestTxt[_gLang()]!;
+    return Scaffold(
+      appBar: Navigator.of(context).canPop() ? AppBar(title: Text(t['title']!)) : null,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.notifications_none, size: 64, color: Colors.white54),
+              const SizedBox(height: 16),
+              Text(t['msg']!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15, height: 1.5)),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: () async {
+                  if (await requireLogin(context, reason: t['msg']!)) {
+                    if (!mounted) return;
+                    setState(() { _guest = false; _loading = true; });
+                    _load();
+                  }
+                },
+                icon: const Icon(Icons.login),
+                label: Text(t['btn']!),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_guest) return _guestView();
     return ValueListenableBuilder<String>(
       valueListenable: AppLocalizations.currentLanguage,
       builder: (context, lang, _) {
@@ -213,3 +254,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 }
+
+String _gLang() {
+  final l = AppLocalizations.currentLanguage.value.toLowerCase();
+  if (l.startsWith('si') || l.contains('සිං')) return 'si';
+  if (l.startsWith('ta') || l.contains('தம')) return 'ta';
+  return 'en';
+}
+
+const Map<String, Map<String, String>> _guestTxt = {
+  'en': {'title': 'Notifications', 'msg': 'Login to see your notifications', 'btn': 'Login'},
+  'si': {'title': 'දැනුම්දීම්', 'msg': 'ඔබේ දැනුම්දීම් බැලීමට ලොගින් වන්න', 'btn': 'ලොගින් වන්න'},
+  'ta': {'title': 'அறிவிப்புகள்', 'msg': 'உங்கள் அறிவிப்புகளைப் பார்க்க உள்நுழையவும்', 'btn': 'உள்நுழை'},
+};
