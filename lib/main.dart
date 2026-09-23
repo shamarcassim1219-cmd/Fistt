@@ -15,6 +15,7 @@ import 'services/app_localizations.dart';
 import 'screens/splash_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'services/app_version_service.dart';
+import 'services/update_service.dart';
 import 'screens/force_update_screen.dart';
 import 'widgets/no_internet_overlay.dart';
 import 'screens/purchase_detail_screen.dart';
@@ -66,6 +67,8 @@ void main() async {
       }
     },
   );
+
+  if (!kIsWeb) await FileDownloader().resumeFromBackground();
 
   try {
     await AppLocalizations.loadSavedLanguage();
@@ -144,6 +147,10 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
       } else {
         setState(() {
           _versionCheckDone = true;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ctx = navigatorKey.currentContext;
+          if (ctx != null) UpdateService.checkPendingInstall(ctx);
         });
       }
     } catch (_) {

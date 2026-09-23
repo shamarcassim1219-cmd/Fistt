@@ -1,14 +1,97 @@
-import 'api_service.dart';
-import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:background_downloader/background_downloader.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'api_service.dart';
 
 class UpdateService {
   static const String versionCheckUrl =
       'https://api.finbassshamar.online/app-version';
+
+  static const String _fileName = 'mygame_update.apk';
+  static const String _stampKey = 'update_apk_for_version';
+
+  static DownloadTask _task(String url) => DownloadTask(
+        url: url,
+        filename: _fileName,
+        baseDirectory: BaseDirectory.applicationSupport,
+      );
+
+  static Future<File> _apkFile() async =>
+      File(await _task('https://placeholder').filePath());
+
+  static Future<String> _currentVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    return '${info.version}+${info.buildNumber}';
+  }
+
+  static Future<void> _deleteApk() async {
+    try {
+      final f = await _apkFile();
+      if (await f.exists()) await f.delete();
+    } catch (_) {}
+  }
+
+  /// True when a fully downloaded APK for this app version is on disk and
+  /// its size matches the APK currently on the server.
+  static Future<bool> _isReadyFor(String apkUrl) async {
+    try {
+      final file = await _apkFile();
+      if (!await file.exists()) return false;
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getString(_stampKey) != await _currentVersion()) return false;
+      final res = await http
+          .head(Uri.parse(apkUrl))
+          .timeout(const Duration(seconds: 10));
+      final remote = int.tryParse(res.headers['content-length'] ?? '');
+      return remote != null && remote == await file.length();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Call once after the app UI is up. If an update finished downloading
+  /// while the app was hidden/closed, offer to install it.
+  static Future<void> checkPendingInstall(BuildContext context) async {
+    try {
+      final file = await _apkFile();
+      if (!await file.exists()) return;
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getString(_stampKey) != await _currentVersion()) {
+        // App was updated already (or unknown file): clean up.
+        await file.delete();
+        await prefs.remove(_stampKey);
+        return;
+      }
+      if (!context.mounted) return;
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Update ready'),
+          content: const Text(
+              'The update has finished downloading. Install it now?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Later'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await OpenFilex.open(file.path);
+              },
+              child: const Text('Install'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      debugPrint('Pending install check failed: $e');
+    }
+  }
 
   static Future<void> checkForUpdate(BuildContext context) async {
     try {
@@ -56,14 +139,22 @@ class UpdateService {
 
   static Future<void> downloadAndInstall(
       BuildContext context, String apkUrl) async {
+    // Already downloaded earlier? Skip the download, go straight to install.
+    if (await _isReadyFor(apkUrl)) {
+      await OpenFilex.open((await _apkFile()).path);
+      return;
+    }
+
+    // Remove any old/stale file and remember which app version this
+    // download was started from (used to detect "already installed").
+    await _deleteApk();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_stampKey, await _currentVersion());
+
     final progress = ValueNotifier<double>(0);
     var dialogOpen = true;
 
-    final task = DownloadTask(
-      url: apkUrl,
-      filename: 'mygame_update.apk',
-      baseDirectory: BaseDirectory.applicationSupport,
-    );
+    final task = _task(apkUrl);
 
     // Progress also shows in the notification bar, so the download keeps
     // going when the app is hidden or closed. Tap it when done to install.
