@@ -60,6 +60,12 @@ class AppLocalizations {
     'wallet': {'English': 'Wallet', 'Sinhala': 'පසුම්බිය', 'Tamil': 'பணப்பை'},
     'sell': {'English': 'Sell', 'Sinhala': 'විකුණන්න', 'Tamil': 'விற்க'},
     'chats': {'English': 'Chats', 'Sinhala': 'චැට්', 'Tamil': 'அரட்டைகள்'},
+    'more': {'English': 'More', 'Sinhala': 'තවත්', 'Tamil': 'மேலும்'},
+    'alerts': {'English': 'Alerts', 'Sinhala': 'දැනුම්දීම්', 'Tamil': 'அறிவிப்புகள்'},
+    'refund_policy': {'English': 'Refund Policy', 'Sinhala': 'මුදල් ආපසු ගෙවීමේ ප්‍රතිපත්තිය', 'Tamil': 'பணத்தைத் திரும்பப் பெறும் கொள்கை'},
+    'privacy_and_data': {'English': 'Privacy & Data', 'Sinhala': 'රහස්‍යතාව සහ දත්ත', 'Tamil': 'தனியுரிமை & தரவு'},
+    'about': {'English': 'About', 'Sinhala': 'ගැන', 'Tamil': 'பற்றி'},
+    'tap_to_check_updates': {'English': 'Tap to check for updates', 'Sinhala': 'යාවත්කාලීන පරීක්ෂා කිරීමට තට්ටු කරන්න', 'Tamil': 'புதுப்பிப்புகளைச் சரிபார்க்க தட்டவும்'},
     'settings': {'English': 'Settings', 'Sinhala': 'සැකසුම්', 'Tamil': 'அமைப்புகள்'},
     'search_accounts': {'English': 'Search accounts...', 'Sinhala': 'ගිණුම් සොයන්න...', 'Tamil': 'கணக்குகளைத் தேடு...'},
 

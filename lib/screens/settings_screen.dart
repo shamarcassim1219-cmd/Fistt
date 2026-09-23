@@ -376,14 +376,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
 
-              _SectionHeader('Privacy & Data'),
+              _SectionHeader(AppLocalizations.t('privacy_and_data')),
               _tile(Icons.description_outlined, AppLocalizations.t('terms_and_conditions'), null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen(type: 'terms')));
               }),
               _tile(Icons.policy_outlined, AppLocalizations.t('privacy_policy'), null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen(type: 'privacy')));
               }),
-              _tile(Icons.currency_exchange_outlined, 'Refund Policy', null, () {
+              _tile(Icons.currency_exchange_outlined, AppLocalizations.t('refund_policy'), null, () {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LegalScreen(type: 'refund')));
               }),
 
@@ -402,9 +402,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _showReportProblemSheet();
               }),
 
-              _SectionHeader('About'),
+              _SectionHeader(AppLocalizations.t('about')),
               if (!kIsWeb)
-              _tile(Icons.info_outline, 'App Version', '$_appVersion — Tap to check for updates', _checkForUpdate),
+              _tile(Icons.info_outline, AppLocalizations.t('app_version'), '$_appVersion — ${AppLocalizations.t('tap_to_check_updates')}', _checkForUpdate),
 
               const SizedBox(height: 10),
               Padding(
