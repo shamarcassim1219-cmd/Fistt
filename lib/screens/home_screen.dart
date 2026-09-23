@@ -32,6 +32,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _tab = 0;
   bool _isLoggedIn = true;
+  int _unreadCount = 0;
 
   final List<Widget> _pages = const [
     _HomeTab(),
@@ -52,8 +53,27 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
     _checkLoginStatus();
+    _loadUnreadCount();
     if (kIsWeb == false) {
       WidgetsBinding.instance.addPostFrameCallback((_) => UpdateService.checkForUpdate(context));
+    }
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final count = await ApiService.getUnreadNotificationCount();
+      if (mounted) setState(() => _unreadCount = count);
+    } catch (_) {}
+  }
+
+  void _onTabSelected(int i) {
+    setState(() => _tab = i);
+    if (i == 3) {
+      // opened Alerts — clear the badge, then re-check shortly after in case it wasn't fully read
+      setState(() => _unreadCount = 0);
+      Future.delayed(const Duration(seconds: 2), _loadUnreadCount);
+    } else {
+      _loadUnreadCount();
     }
   }
 
@@ -132,13 +152,13 @@ class _HomeScreenState extends State<HomeScreen> {
           body: AnimatedSwitcher(duration: const Duration(milliseconds: 220), child: KeyedSubtree(key: ValueKey<int>(_tab), child: _pages[_tab])),
           bottomNavigationBar: FancyNavBar(
             selectedIndex: _tab,
-            onSelected: (i) => setState(() => _tab = i),
+            onSelected: _onTabSelected,
             centerIndex: 2,
             items: [
               FancyNavItem(icon: Icons.home_outlined, selectedIcon: Icons.home_rounded, label: AppLocalizations.t('home')),
               const FancyNavItem(icon: Icons.grid_view_outlined, selectedIcon: Icons.grid_view_rounded, label: 'More'),
               FancyNavItem(icon: Icons.sell_outlined, selectedIcon: Icons.sell, label: AppLocalizations.t('sell')),
-              const FancyNavItem(icon: Icons.notifications_outlined, selectedIcon: Icons.notifications_rounded, label: 'Alerts'),
+              FancyNavItem(icon: Icons.notifications_outlined, selectedIcon: Icons.notifications_rounded, label: 'Alerts', showBadge: _unreadCount > 0),
               FancyNavItem(icon: Icons.settings_outlined, selectedIcon: Icons.settings, label: AppLocalizations.t('settings')),
             ],
           ),

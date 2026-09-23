@@ -6,7 +6,8 @@ class FancyNavItem {
   final IconData icon;
   final IconData selectedIcon;
   final String label;
-  const FancyNavItem({required this.icon, required this.selectedIcon, required this.label});
+  final bool showBadge;
+  const FancyNavItem({required this.icon, required this.selectedIcon, required this.label, this.showBadge = false});
 }
 
 /// Floating bottom navigation bar. The selected tab gets a glowing gradient pill,
@@ -98,10 +99,29 @@ class FancyNavBar extends StatelessWidget {
                                       scale: selected ? 1.14 : 1.0,
                                       duration: dur,
                                       curve: Curves.easeOutBack,
-                                      child: Icon(
-                                        selected ? item.selectedIcon : item.icon,
-                                        size: 24,
-                                        color: selected ? Colors.white : AppColors.hint,
+                                      child: Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          Icon(
+                                            selected ? item.selectedIcon : item.icon,
+                                            size: 24,
+                                            color: selected ? Colors.white : AppColors.hint,
+                                          ),
+                                          if (item.showBadge)
+                                            Positioned(
+                                              right: -2,
+                                              top: -2,
+                                              child: Container(
+                                                width: 9,
+                                                height: 9,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFFF3B30),
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(color: AppColors.surface, width: 1.5),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
                                       ),
                                     ),
                                     const SizedBox(height: 3),
@@ -143,19 +163,25 @@ class FancyNavBar extends StatelessWidget {
                         height: 58,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [AppColors.primary, Color(0xFF9B7BFF)],
+                          color: selectedIndex == centerIndex ? null : AppColors.surface,
+                          gradient: selectedIndex == centerIndex
+                              ? const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [AppColors.primary, Color(0xFF9B7BFF)],
+                                )
+                              : null,
+                          border: Border.all(
+                            color: selectedIndex == centerIndex ? AppColors.bg : AppColors.border,
+                            width: selectedIndex == centerIndex ? 4 : 1,
                           ),
-                          border: Border.all(color: AppColors.bg, width: 4),
-                          boxShadow: const [
-                            BoxShadow(color: Color(0x996C4CF1), blurRadius: 18, offset: Offset(0, 6)),
-                          ],
+                          boxShadow: selectedIndex == centerIndex
+                              ? const [BoxShadow(color: Color(0x996C4CF1), blurRadius: 18, offset: Offset(0, 6))]
+                              : null,
                         ),
                         child: Icon(
                           selectedIndex == centerIndex ? items[centerIndex!].selectedIcon : items[centerIndex!].icon,
-                          color: Colors.white,
+                          color: selectedIndex == centerIndex ? Colors.white : AppColors.hint,
                           size: 26,
                         ),
                       ),
