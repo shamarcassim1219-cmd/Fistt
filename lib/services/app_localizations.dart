@@ -85,6 +85,8 @@ class AppLocalizations {
     'support': {'English': 'Support', 'Sinhala': 'සහාය', 'Tamil': 'ஆதரவு'},
     'report_problem': {'English': 'Report a Problem / Contact Admin', 'Sinhala': 'ගැටළුවක් වාර්තා කරන්න', 'Tamil': 'சிக்கலைப் புகாரளிக்கவும்'},
     'delete_account': {'English': 'Delete Account', 'Sinhala': 'ගිණුම මකන්න', 'Tamil': 'கணக்கை நீக்கு'},
+    'ff_dpi_sensi_title': {'English': 'Free Fire DPI & Sensi', 'Sinhala': 'Free Fire DPI සහ සංවේදීතාව', 'Tamil': 'Free Fire DPI & உணர்திறன்'},
+    'ff_dpi_sensi_subtitle': {'English': 'Best settings for your phone', 'Sinhala': 'ඔයාගේ phone එකට හොදම settings', 'Tamil': 'உங்கள் மொபைலுக்கு சிறந்த அமைப்புகள்'},
 
     'welcome_back': {'English': 'Welcome back', 'Sinhala': 'නැවත සාදරයෙන් පිළිගනිමු', 'Tamil': 'மீண்டும் வரவேற்கிறோம்'},
     'login_to_continue': {'English': 'Login to continue', 'Sinhala': 'ඉදිරියට යාමට පිවිසෙන්න', 'Tamil': 'தொடர உள்நுழையவும்'},

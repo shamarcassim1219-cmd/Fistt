@@ -6,6 +6,8 @@ import 'package:gal/gal.dart';
 import '../services/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'tournaments_screen.dart';
+import 'ff_dpi_sensi_screen.dart';
+import '../services/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 import 'home_screen.dart' show PromotionsTab;
@@ -13,6 +15,7 @@ import 'home_screen.dart' show PromotionsTab;
 const List<Map<String, dynamic>> _defaultTools = [
   {'key': 'ff_info', 'title': 'Free Fire Info Check', 'subtitle': 'Check any account by UID', 'icon': 'sports_esports'},
   {'key': 'tournaments', 'title': 'Tournaments', 'subtitle': 'Compete and win prizes', 'icon': 'emoji_events'},
+  {'key': 'ff_dpi_sensi', 'title': 'Free Fire DPI & Sensi', 'subtitle': 'Best settings for your phone', 'icon': 'tune'},
   {'key': 'events', 'title': 'Events', 'subtitle': 'Promotions and offers', 'icon': 'campaign'},
 ];
 
@@ -106,6 +109,8 @@ List<Color> _gradientFor(String? key) {
       return const [Color(0xFF7B2FF7), Color(0xFFF107A3)];
     case 'tournaments':
       return const [Color(0xFFFFB300), Color(0xFFE65100)];
+    case 'ff_dpi_sensi':
+      return const [Color(0xFF00C6FF), Color(0xFF0072FF)];
     case 'events':
       return const [Color(0xFF6C4CF1), Color(0xFFF107A3)];
     default:
@@ -244,6 +249,8 @@ class _MoreScreenState extends State<MoreScreen> {
     final link = '${t['linkUrl'] ?? ''}';
     if (link.isNotEmpty) {
       launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+    } else if (t['key'] == 'ff_dpi_sensi') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const FfDpiSensiScreen()));
     } else if (t['key'] == 'tournaments') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const TournamentsScreen()));
     } else if (t['key'] == 'ff_info') {
@@ -267,7 +274,9 @@ class _MoreScreenState extends State<MoreScreen> {
               ? const Center(child: Text('No tools available'))
               : RefreshIndicator(
                   onRefresh: _load,
-                  child: GridView.builder(
+                  child: ValueListenableBuilder<String>(
+                    valueListenable: AppLocalizations.currentLanguage,
+                    builder: (context, lang, _) => GridView.builder(
                     padding: const EdgeInsets.all(16),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 1,
@@ -280,8 +289,9 @@ class _MoreScreenState extends State<MoreScreen> {
                       final t = _tools[i] as Map;
                       final key = t['key']?.toString();
 
-                      final subtitle =
-                          (t['subtitle'] ?? '').toString().isNotEmpty
+                      final subtitle = key == 'ff_dpi_sensi'
+                          ? AppLocalizations.t('ff_dpi_sensi_subtitle')
+                          : (t['subtitle'] ?? '').toString().isNotEmpty
                               ? '${t['subtitle']}'
                               : key == 'tournaments'
                                   ? 'Compete and win prizes'
@@ -290,6 +300,10 @@ class _MoreScreenState extends State<MoreScreen> {
                                           : key == 'events'
                                               ? 'Promotions and offers'
                                               : '';
+
+                      final title = key == 'ff_dpi_sensi'
+                          ? AppLocalizations.t('ff_dpi_sensi_title')
+                          : '${t['title'] ?? ''}';
 
                       return TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0.0, end: 1.0),
@@ -304,14 +318,14 @@ class _MoreScreenState extends State<MoreScreen> {
                         ),
                         child: _toolImages.containsKey(key)
                             ? _photoToolBox(
-                                title: '${t['title'] ?? ''}',
+                                title: title,
                                 subtitle: subtitle,
                                 icon: _iconFor(t['icon']?.toString()),
                                 asset: _toolImages[key]!,
                                 onTap: () => _open(t),
                               )
                             : _toolBox(
-                                title: '${t['title'] ?? ''}',
+                                title: title,
                                 subtitle: subtitle,
                                 icon: _iconFor(t['icon']?.toString()),
                                 gradient: _gradientFor(key),
@@ -319,6 +333,7 @@ class _MoreScreenState extends State<MoreScreen> {
                               ),
                       );
                     },
+                  ),
                   ),
                 ),
     );
