@@ -92,6 +92,7 @@ faqh=lambda n:"".join(f"<details><summary>{q}</summary><p>{a}</p></details>" for
 faqs={"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":q,"acceptedAnswer":{"@type":"Answer","text":a}} for q,a in FAQ]}
 games=[("Free Fire","Accounts with rare bundles, high ranks and diamonds."),("PUBG Mobile","Conqueror-tier accounts, skins and UC."),("Mobile Legends","Accounts with skins, heroes and high ranks."),("Call of Duty","COD Mobile accounts and items.")]
 import re,urllib.request,html
+_HERE=os.path.dirname(os.path.abspath(__file__))
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","landing"))
 P={}
 P["index.html"]=page("index.html","BuySellGame | Buy & Sell Game Accounts in Sri Lanka","Buy and sell Free Fire, PUBG, Mobile Legends and Call of Duty accounts in Sri Lanka. Verified sellers, wallet payments and tournaments.",
@@ -134,3 +135,4 @@ for f,h in P.items():open(f,"w").write(h)
 open("sitemap.xml","w").write('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'+"".join(f"<url><loc>{D}/{'' if f=='index.html' else f}</loc></url>" for f in P)+"</urlset>")
 open("robots.txt","w").write(f"User-agent: *\nAllow: /\n\nSitemap: {D}/sitemap.xml\n")
 open(".htaccess","w").write("DirectoryIndex index.html\nOptions -Indexes\n")
+exec(open(os.path.join(_HERE,"seo_pages.py"),encoding="utf-8").read())
