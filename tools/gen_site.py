@@ -2,7 +2,7 @@ import json,os
 D="https://buysellgame.store"
 APK=D+"/downloads/app-release.apk"
 WA="https://wa.me/94753536394"
-NAV=[("listings.html","Browse accounts"),("sell-game-account-sri-lanka.html","Sell an account"),("tournaments-sri-lanka.html","Tournaments"),("faq.html","FAQ"),("contact.html","Contact"),("account.html","My account")]
+NAV=[("listings.html","Browse accounts"),("sell-game-account-sri-lanka.html","Sell an account"),("tournaments-sri-lanka.html","Tournaments"),("faq.html","FAQ"),("contact.html","Contact"),("https://api.buysellgame.store/","Open web app")]
 CSS="""
 :root{--ink:#14183a;--gold:#ffb627;--bg:#f2f4f8;--card:#fff;--txt:#23263f;--mut:#5d6280;--line:#dfe2ee}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1128;--card:#171b3d;--txt:#eceffc;--mut:#a4a9cc;--line:#2a2f5c}}
@@ -30,6 +30,23 @@ details{background:var(--card);border:1px solid var(--line);border-radius:12px;p
 footer{background:var(--ink);color:#b9bee3;padding:36px 0;font-size:.93rem}footer a{color:#fff;margin-right:16px}
 :focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 """
+EXTRA="""
+:root{--ink:#1a0f3d;--gold:#ffc42e;--v:#7c5cff;--pk:#ff4f9a;--mint:#6ef3c5;--bg:#f5f2ff;--line:#e2dbff;--mut:#5f5a80}
+@media(prefers-color-scheme:dark){:root{--bg:#120a2e;--card:#1e1445;--line:#3a2b7a;--mut:#b3aad9}}
+header{background:rgba(26,15,61,.92);backdrop-filter:blur(8px)}
+.hero{background:radial-gradient(90% 120% at 85% 40%,#4b2fb8 0,#2a1668 45%,#1a0f3d 100%);overflow:hidden}
+.hg{display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:center}
+.art{position:relative;text-align:center}.art img{max-width:100%;height:auto;filter:drop-shadow(0 20px 40px rgba(0,0,0,.35))}
+.fc{position:absolute;background:#fff;color:#1a0f3d;font-weight:700;font-size:.85rem;padding:9px 14px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.f1{top:12%;left:-4%;border-left:5px solid var(--mint)}.f2{bottom:22%;right:-2%;border-left:5px solid var(--pk)}
+@media(max-width:760px){.hg{grid-template-columns:1fr}.art{max-width:260px;margin:0 auto}.f1{left:0}.f2{right:0}}
+.b{background:var(--gold);box-shadow:0 6px 0 #c48f00;transition:transform .1s}.b:active{transform:translateY(4px);box-shadow:0 2px 0 #c48f00}
+.b.o{background:none;box-shadow:none}
+.c{border-radius:20px}a.c{border-left:0;border-top:5px solid var(--v)}a.c:nth-child(2n){border-color:var(--pk)}a.c:nth-child(3n){border-color:var(--mint)}
+.t{padding:0;overflow:hidden}.t img{width:100%;height:170px;object-fit:cover;display:block}.t h3,.t p{padding:0 20px}.t h3{margin-top:16px}.t p{padding-bottom:20px}
+.cta{background:linear-gradient(135deg,#7c5cff,#ff4f9a);color:#fff;border-radius:26px}.cta .b{background:var(--gold);color:#1a0f3d}
+"""
+CSS+=EXTRA
 FAQ=[("How do I buy a game account in Sri Lanka?","Create a BuySellGame account, verify your identity, pick a listing and chat with the seller. Pay from your in-app wallet and confirm once the account is yours. The seller is paid only after you confirm."),
 ("Is it safe to buy a game account online?","Every seller is identity-verified, payments are held through the wallet until the trade is confirmed, and you can open a dispute if something goes wrong. Our team reviews disputes."),
 ("How do I sell my game account?","Verify your identity, tap Add listing in the app, add screenshots and a price, and reply to buyers in chat. Once the buyer confirms, the money reaches your wallet and you can withdraw it."),
@@ -39,9 +56,9 @@ FAQ=[("How do I buy a game account in Sri Lanka?","Create a BuySellGame account,
 ("What if a trade goes wrong?","Raise a dispute from the trade page. Our team reviews it and, where the buyer is right, the commission on that sale is reversed."),
 ("Can I use BuySellGame on a browser?","Yes. Browse, buy and manage your account on buysellgame.store, or download the Android APK.")]
 def page(fn,title,desc,h1,lead,body,schema=None,app=None):
-    nav="".join(f'<a href="/{u}"{" aria-current=page" if u==fn else ""}>{t}</a>' for u,t in NAV)
+    nav="".join(f'<a href="{u if u.startswith("http") else "/"+u}"{" aria-current=page" if u==fn else ""}>{t}</a>' for u,t in NAV)
     url=D+("/" if fn=="index.html" else "/"+fn)
-    hero=f'<div class="hero" style="padding:34px 0"><div class="w"><h1>{h1}</h1></div></div>' if app else f'<div class="hero"><div class="w"><h1>{h1}</h1><p>{lead}</p><div class="btns"><a class="b" href="/login.html?mode=register">Create free account</a><a class="b o" href="{APK}">Download Android APK</a></div></div></div>'
+    hero=f'<div class="hero" style="padding:34px 0"><div class="w"><h1>{h1}</h1></div></div>' if app else f'<div class="hero"><div class="w hg"><div><h1>{h1}</h1><p>{lead}</p><div class="btns"><a class="b" href="https://api.buysellgame.store/">Open web app</a><a class="b o" href="{APK}">Download Android APK</a></div></div><div class="art"><img src="/img/mascot.png" alt="BuySellGame mascot" width="300" height="364"><div class="fc f1">Verified sellers</div><div class="fc f2">Wallet-protected payment</div></div></div></div>'
     if app: body=f'<section><div class="w"><div id="root" data-view="{app}"></div></div></section>'
     script='<script src="/app.js" defer></script>' if app else ''
     sc=f'<script type="application/ld+json">{json.dumps(schema)}</script>' if schema else ""
@@ -55,9 +72,9 @@ def page(fn,title,desc,h1,lead,body,schema=None,app=None):
 <header><div class="w"><a class="logo" href="/"><img src="/logo.png" alt="BuySellGame logo" width="34" height="34">BuySellGame</a><nav>{nav}</nav></div></header>
 {hero}
 <main>{body}</main>{script}
-<footer><div class="w"><p><b>BuySellGame</b> is Sri Lanka's marketplace for game accounts and tournaments.</p><p>{"".join(f'<a href="/{u}">{t}</a>' for u,t in NAV)}<a href="{WA}">WhatsApp</a><a href="mailto:support@buysell.store">Email</a></p></div></footer></body></html>"""
+<footer><div class="w"><p><b>BuySellGame</b> is Sri Lanka's marketplace for game accounts and tournaments.</p><p>{"".join(f'<a href="{u if u.startswith("http") else "/"+u}">{t}</a>' for u,t in NAV)}<a href="{WA}">WhatsApp</a><a href="mailto:support@buysell.store">Email</a></p></div></footer></body></html>"""
 def sec(inner):return f'<section><div class="w">{inner}</div></section>'
-def cta(t="Ready to trade?"):return f'<div class="cta"><h2>{t}</h2><p>Sign up free on the web or Android app. Identity verification keeps every trade accountable.</p><a class="b" href="/login.html?mode=register">Start on BuySellGame</a></div>'
+def cta(t="Ready to trade?"):return f'<div class="cta"><h2>{t}</h2><p>Sign up free on the web or Android app. Identity verification keeps every trade accountable.</p><a class="b" href="https://api.buysellgame.store/">Open the web app</a></div>'
 faqh=lambda n:"".join(f"<details><summary>{q}</summary><p>{a}</p></details>" for q,a in FAQ[:n])
 faqs={"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":q,"acceptedAnswer":{"@type":"Answer","text":a}} for q,a in FAQ]}
 games=[("Free Fire","Accounts with rare bundles, high ranks and diamonds."),("PUBG Mobile","Conqueror-tier accounts, skins and UC."),("Mobile Legends","Accounts with skins, heroes and high ranks."),("Call of Duty","COD Mobile accounts and items.")]
@@ -67,7 +84,7 @@ P={}
 P["index.html"]=page("index.html","BuySellGame | Buy & Sell Game Accounts in Sri Lanka","Buy and sell Free Fire, PUBG, Mobile Legends and Call of Duty accounts in Sri Lanka. Verified sellers, wallet payments and tournaments.",
 "Buy and sell game accounts in Sri Lanka, without the risk.","Free Fire, PUBG Mobile, Mobile Legends and Call of Duty accounts from verified Sri Lankan sellers. Pay through your wallet, chat live and join tournaments.",
 sec("<h2>Pick your game</h2><div class='g'>"+"".join(f"<a class='c' href='/listings.html?game={g}'><h3>{g} accounts</h3><p>{d}</p></a>" for g,d in games)+"</div>")
-+sec("<h2>How a trade works</h2><ol class='s'><li><b>Verify your account.</b> A quick identity check keeps every seller accountable.</li><li><b>Find or list.</b> Browse listings or post your own account, items or currency.</li><li><b>Chat, pay and confirm.</b> Agree details in live chat and pay from your wallet. The seller is paid after you confirm.</li></ol>")
++sec("<h2>More than a marketplace</h2><div class='g'><div class='c t'><img src='/img/tournaments.jpg' alt='Tournament trophy' loading='lazy'><h3>Tournaments</h3><p>Register for Sri Lankan community tournaments and follow prizes and results.</p></div><div class='c t'><img src='/img/ff_info.jpg' alt='Free Fire info checker' loading='lazy'><h3>Free Fire info checker</h3><p>Look up a Free Fire account by UID before you buy.</p></div><div class='c t'><img src='/img/game_tuner.jpg' alt='Game sensitivity tuner' loading='lazy'><h3>Sensitivity tuner</h3><p>Get DPI and sensitivity settings for your game and device.</p></div></div>")+sec("<h2>How a trade works</h2><ol class='s'><li><b>Verify your account.</b> A quick identity check keeps every seller accountable.</li><li><b>Find or list.</b> Browse listings or post your own account, items or currency.</li><li><b>Chat, pay and confirm.</b> Agree details in live chat and pay from your wallet. The seller is paid after you confirm.</li></ol>")
 +sec("<h2>Why Sri Lankan gamers use BuySellGame</h2><div class='g'><div class='c'><h3>Verified sellers</h3><p>Sellers pass an identity check before they can list.</p></div><div class='c'><h3>Wallet payments</h3><p>Your money stays protected until the trade is confirmed.</p></div><div class='c'><h3>Dispute support</h3><p>If a trade goes wrong, our team reviews it and helps fix it.</p></div><div class='c'><h3>Sri Lankan tournaments</h3><p>Join community events and track results in the app.</p></div></div>")
 +sec("<h2>Common questions</h2>"+faqh(4)+"<p><a href='/faq.html'>Read all questions</a></p>"+cta()),
 {"@context":"https://schema.org","@type":"WebSite","name":"BuySellGame","url":D+"/"})

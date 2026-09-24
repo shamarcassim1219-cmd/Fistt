@@ -1,4 +1,4 @@
-name: Deploy Website
+name: Build and Deploy Web
 
 on:
   push:
@@ -6,15 +6,58 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Generate website pages (SEO game pages + sitemap)
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.0'
+          channel: 'stable'
+
+      - name: Generate missing web platform folder
+        run: flutter create --platforms=web --project-name mygame_app --org com.mygame.app .
+
+      - name: Create missing asset folders
+        run: |
+          mkdir -p assets/images
+          mkdir -p assets/lang
+          touch assets/images/.gitkeep
+          touch assets/lang/.gitkeep
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Add Google Sign-In meta tag to web/index.html
+        run: python3 fix_web_index.py
+
+      - name: Add lightweight loading screen to web/index.html
+        run: python3 fix_web_loading.py
+
+      - name: Fix SEO title and description
+        run: python3 fix_web_seo.py
+
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+
+      - name: Generate web favicon and icons from app logo
+        run: |
+          convert assets/icon/app_icon.png -resize 32x32 web/favicon.png
+          convert assets/icon/app_icon.png -resize 192x192 web/icons/Icons-192.png
+          convert assets/icon/app_icon.png -resize 512x512 web/icons/Icons-512.png
+          convert assets/icon/app_icon.png -resize 192x192 web/icons/Icons-maskable-192.png
+          convert assets/icon/app_icon.png -resize 512x512 web/icons/Icons-maskable-512.png
+
+      - name: Build web
+        run: flutter build web --release --base-href /
+
+      - name: Generate website pages (SEO + sitemap)
         run: python3 tools/gen_site.py
 
-      - name: Upload website to cPanel root
+      - name: Deploy website to cPanel root
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
@@ -22,3 +65,12 @@ jobs:
           password: ${{ secrets.FTP_PASS }}
           local-dir: ./landing/
           server-dir: ./
+
+      - name: Deploy Flutter web app to api.buysellgame.store
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir: ./build/web/
+          server-dir: ./api/
