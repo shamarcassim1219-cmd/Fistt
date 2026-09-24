@@ -107,6 +107,7 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
       if (displayName != null && displayName.isNotEmpty) {
         await prefs.setString('pending_welcome_name', displayName);
         await prefs.setBool('pending_welcome_is_new', isNewAccount);
+        await prefs.setBool('pending_welcome_restored', userData['restored'] == true);
       }
 
       if (!mounted) return;

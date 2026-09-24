@@ -89,11 +89,15 @@ class _HomeScreenState extends State<HomeScreen> {
     if (name == null || name.isEmpty) return;
     final isNew = prefs.getBool('pending_welcome_is_new') ?? false;
     final viaGoogle = prefs.getBool('pending_welcome_via_google') ?? false;
+    final restored = prefs.getBool('pending_welcome_restored') ?? false;
     await prefs.remove('pending_welcome_name');
     await prefs.remove('pending_welcome_is_new');
     await prefs.remove('pending_welcome_via_google');
+    await prefs.remove('pending_welcome_restored');
     if (!mounted) return;
-    final message = isNew ? 'Welcome, $name!' : 'Welcome back, $name!';
+    final message = restored
+        ? 'Welcome back, $name! Your account has been restored.'
+        : (isNew ? 'Welcome, $name!' : 'Welcome back, $name!');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
     );

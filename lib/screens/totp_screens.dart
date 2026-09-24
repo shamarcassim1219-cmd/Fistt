@@ -239,6 +239,7 @@ class _TotpLoginScreenState extends State<TotpLoginScreen> {
       if (displayName != null && displayName.isNotEmpty) {
         await prefs.setString('pending_welcome_name', displayName);
         await prefs.setBool('pending_welcome_is_new', false);
+        await prefs.setBool('pending_welcome_restored', userData['restored'] == true);
       }
 
       if (!mounted) return;
