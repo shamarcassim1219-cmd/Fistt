@@ -3,3 +3,9 @@ test-apk.apk
 android/key.properties
 android/keystore/
 functions/node_modules/
+*.bak
+*.backup
+*.log
+*.pid
+build/
+.dart_tool/
