@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.1.62+164",
+      "version": "1.1.82+184",
       "dependencies": [
         "android_intent_plus",
         "background_downloader",

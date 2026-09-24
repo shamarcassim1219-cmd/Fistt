@@ -1,3 +1,6 @@
+import 'socket_service.dart';
+import 'dart:typed_data';
+import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -22,6 +25,7 @@ class ApiService {
   }
 
   static Future<void> clearToken() async {
+    SocketService.disconnect(); // drop the old user's realtime connection
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
   }
@@ -59,8 +63,35 @@ class ApiService {
     _forcingLogout = false;
   }
 
+  static Future<void> _forceLogoutExpired() async {
+    if (_forcingLogout) return;
+    _forcingLogout = true;
+    await clearToken();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_logged_in', false);
+    final nav = navigatorKey.currentState;
+    if (nav != null) {
+      nav.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+      final ctx = navigatorKey.currentContext;
+      if (ctx != null) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          const SnackBar(content: Text('Your session expired. Please log in again.'), duration: Duration(seconds: 4)),
+        );
+      }
+    }
+    _forcingLogout = false;
+  }
+
   static Future<Map<String, dynamic>> _handle(http.Response res) async {
-    final body = jsonDecode(utf8.decode(res.bodyBytes));
+    dynamic body;
+    try {
+      body = jsonDecode(utf8.decode(res.bodyBytes));
+    } catch (_) {
+      throw Exception('Server is temporarily unavailable. Please try again shortly.');
+    }
     if (res.statusCode >= 200 && res.statusCode < 300) {
       return body;
     } else {
@@ -71,6 +102,10 @@ class ApiService {
       if (errorMsg.toString().startsWith('ACCOUNT_DELETED:')) {
         _forceLogoutDeleted();
         throw Exception('Your account no longer exists.');
+      }
+      if (errorMsg.toString().contains('Invalid or expired token') && await getToken() != null) {
+        _forceLogoutExpired();
+        throw Exception('Your session expired. Please log in again.');
       }
       throw Exception(errorMsg);
     }
@@ -102,13 +137,14 @@ class ApiService {
     return data['user'];
   }
 
-  static Future<void> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(String email, String password) async {
     final res = await http.post(
       Uri.parse('$baseUrl/auth/login'),
       headers: await _headers(withAuth: false),
       body: jsonEncode({'email': email, 'password': password}),
     );
-    await _handle(res);
+    // {requiresTotp: true, ticket} when two-step verification is on, otherwise {message, email}
+    return await _handle(res);
   }
 
   static Future<Map<String, dynamic>> verifyLogin(String email, String code) async {
@@ -145,7 +181,7 @@ class ApiService {
     await _handle(res);
   }
 
-  static Future<Map<String, dynamic>> googleSignIn(String idToken) async {
+  static Future<Map<String, dynamic>> googleSignIn(String idToken, {String? totpCode}) async {
     final deviceFingerprint = await DeviceService.getFingerprint();
     final deviceModel = await DeviceService.getModel();
     final res = await http.post(
@@ -153,10 +189,12 @@ class ApiService {
       headers: await _headers(withAuth: false),
       body: jsonEncode({
         'idToken': idToken,
+        if (totpCode != null) 'totpCode': totpCode,
         'deviceFingerprint': deviceFingerprint, 'deviceModel': deviceModel,
       }),
     );
     final data = await _handle(res);
+    if (data['requiresTotp'] == true) return data; // needs the authenticator code first
     await saveToken(data['token']);
     return data;
   }
@@ -578,6 +616,46 @@ class ApiService {
     return data['isFavorite'] ?? false;
   }
 
+  // ---------- TOP-UP STORE ----------
+  static Future<List<dynamic>> getTopupGames() async {
+    final res = await http.get(Uri.parse('$baseUrl/topup/games'), headers: await _headers());
+    final data = await _handle(res);
+    return data['games'];
+  }
+
+  static Future<List<dynamic>> getTopupPackages(int gameId) async {
+    final res = await http.get(Uri.parse('$baseUrl/topup/games/$gameId/packages'), headers: await _headers());
+    final data = await _handle(res);
+    return data['packages'];
+  }
+
+  static Future<Map<String, dynamic>> submitTopupOrder({
+    required int gameId,
+    required int packageId,
+    required String playerId,
+    String? zoneId,
+    String? region,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/topup/order'),
+      headers: await _headers(),
+      body: jsonEncode({
+        'gameId': gameId,
+        'packageId': packageId,
+        'playerId': playerId,
+        'zoneId': zoneId,
+        'region': region,
+      }),
+    );
+    return await _handle(res);
+  }
+
+  static Future<List<dynamic>> getMyTopupOrders() async {
+    final res = await http.get(Uri.parse('$baseUrl/topup/my-orders'), headers: await _headers());
+    final data = await _handle(res);
+    return data['orders'];
+  }
+
   // ---------- PROMOTIONS ----------
   static Future<List<dynamic>> getPromotions() async {
     final res = await http.get(Uri.parse('$baseUrl/promotions'), headers: await _headers(withAuth: false));
@@ -742,43 +820,12 @@ class ApiService {
   }
 
   // ---------- VERIFICATION ----------
-  static Future<void> submitVerification({
-    required String fullName,
-    required String nicNumber,
-    required String address,
-    required String province,
-    required String district,
-    required String documentType,
-    required String frontImageUrl,
-    String? backImageUrl,
-    String? selfieImageUrl,
-    String? selfieVideoUrl,
-  }) async {
-    final res = await http.post(
-      Uri.parse('$baseUrl/verification'),
-      headers: await _headers(),
-      body: jsonEncode({
-        'fullName': fullName,
-        'nicNumber': nicNumber,
-        'address': address,
-        'province': province,
-        'district': district,
-        'documentType': documentType,
-        'frontImageUrl': frontImageUrl,
-        'backImageUrl': backImageUrl,
-        'selfieImageUrl': selfieImageUrl,
-        'selfieVideoUrl': selfieVideoUrl,
-      }),
-    );
-    await _handle(res);
-  }
-
   static Future<Map<String, dynamic>> getVerificationStatusFull() async {
     final res = await http.get(Uri.parse('$baseUrl/verification/status'), headers: await _headers());
     return await _handle(res);
   }
 
-  static Future<Map<String, dynamic>> submitVerification({
+  static Future<Map<String, dynamic>> submitVerificationFiles({
     required Map<String, String> fields,
     required Map<String, String> filePaths,
   }) async {
@@ -787,11 +834,45 @@ class ApiService {
     if (token != null) request.headers['Authorization'] = 'Bearer $token';
     request.fields.addAll(fields);
     for (final e in filePaths.entries) {
-      request.files.add(await http.MultipartFile.fromPath(e.key, e.value));
+      request.files.add(await http.MultipartFile.fromPath(e.key, e.value, contentType: MediaType('image', 'jpeg')));
     }
     final streamed = await request.send().timeout(const Duration(seconds: 180));
     final res = await http.Response.fromStream(streamed);
     return await _handle(res);
+  }
+
+  // web: photos live in memory (no files), so they are uploaded from bytes
+  static Future<Map<String, dynamic>> submitVerificationBytes({
+    required Map<String, String> fields,
+    required Map<String, Uint8List> files,
+  }) async {
+    final token = await getToken();
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/verification/submit'));
+    if (token != null) request.headers['Authorization'] = 'Bearer $token';
+    request.fields.addAll(fields);
+    for (final e in files.entries) {
+      request.files.add(http.MultipartFile.fromBytes(e.key, e.value, filename: '${e.key}.jpg', contentType: MediaType('image', 'jpeg')));
+    }
+    final streamed = await request.send().timeout(const Duration(seconds: 180));
+    final res = await http.Response.fromStream(streamed);
+    return await _handle(res);
+  }
+
+  // ---------- BINANCE DEPOSIT ----------
+  static Future<Map<String, dynamic>> getBinanceDepositInfo() async {
+    final res = await http.get(Uri.parse('$baseUrl/binance/info'), headers: await _headers());
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
+  }
+
+  static Future<Map<String, dynamic>> verifyBinanceDeposit(String orderId) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/binance/verify'),
+      headers: await _headers(),
+      body: jsonEncode({'orderId': orderId}),
+    );
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
   }
 
   static Future<bool> checkNicExists(String nic) async {
@@ -801,6 +882,106 @@ class ApiService {
     );
     final data = await _handle(res);
     return data['exists'] == true;
+  }
+
+  // ---------- MORE TOOLS ----------
+  static Future<List<dynamic>> getMoreTools() async {
+    final res = await http.get(Uri.parse('$baseUrl/tools/list'), headers: await _headers());
+    final data = await _handle(res);
+    return (data['tools'] as List?) ?? [];
+  }
+
+  static Future<Map<String, dynamic>> ffInfoCheck(String uid, String region) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/tools/ff-info'),
+      headers: await _headers(),
+      body: jsonEncode({'uid': uid, 'region': region}),
+    );
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
+  }
+
+  // ---------- TOURNAMENTS ----------
+  static Future<Map<String, dynamic>> getTournaments() async {
+    final res = await http.get(Uri.parse('$baseUrl/tournaments'), headers: await _headers());
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
+  }
+
+  static Future<Map<String, dynamic>> getTournament(int id) async {
+    final res = await http.get(Uri.parse('$baseUrl/tournaments/$id'), headers: await _headers());
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
+  }
+
+  static Future<String> registerTournament(int id, {required String guildName, String? guildImageUrl, required String gameId, required String gameName}) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/tournaments/$id/register'),
+      headers: await _headers(),
+      body: jsonEncode({'guildName': guildName, 'guildImageUrl': guildImageUrl ?? '', 'gameId': gameId, 'gameName': gameName}),
+    );
+    final data = await _handle(res);
+    return '${data['message'] ?? 'Registered'}';
+  }
+
+  static Future<List<dynamic>> searchTournamentUsers(String q) async {
+    final res = await http.get(Uri.parse('$baseUrl/tournaments/users/search?q=${Uri.encodeQueryComponent(q)}'), headers: await _headers());
+    final data = await _handle(res);
+    return (data['users'] as List?) ?? [];
+  }
+
+  static Future<void> inviteTournamentPlayer(int teamId, int userId) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/tournaments/teams/$teamId/invite'),
+      headers: await _headers(),
+      body: jsonEncode({'userId': userId}),
+    );
+    await _handle(res);
+  }
+
+  static Future<void> acceptTournamentInvite(int memberId, String gameId, String gameName) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/tournaments/invites/$memberId/accept'),
+      headers: await _headers(),
+      body: jsonEncode({'gameId': gameId, 'gameName': gameName}),
+    );
+    await _handle(res);
+  }
+
+  static Future<void> rejectTournamentInvite(int memberId) async {
+    final res = await http.post(Uri.parse('$baseUrl/tournaments/invites/$memberId/reject'), headers: await _headers());
+    await _handle(res);
+  }
+
+  static Future<void> removeTournamentMember(int teamId, int memberId) async {
+    final res = await http.delete(Uri.parse('$baseUrl/tournaments/teams/$teamId/members/$memberId'), headers: await _headers());
+    await _handle(res);
+  }
+
+  static Future<void> leaveTournamentTeam(int teamId) async {
+    final res = await http.post(Uri.parse('$baseUrl/tournaments/teams/$teamId/leave'), headers: await _headers());
+    await _handle(res);
+  }
+
+  static Future<String> dissolveTournamentTeam(int teamId) async {
+    final res = await http.post(Uri.parse('$baseUrl/tournaments/teams/$teamId/dissolve'), headers: await _headers());
+    final data = await _handle(res);
+    return '${data['message'] ?? 'Team dissolved'}';
+  }
+
+  static Future<void> updateTournamentTeam(int teamId, {String? guildName, String? guildImageUrl}) async {
+    final body = <String, dynamic>{};
+    if (guildName != null) body['guildName'] = guildName;
+    if (guildImageUrl != null) body['guildImageUrl'] = guildImageUrl;
+    final res = await http.put(Uri.parse('$baseUrl/tournaments/teams/$teamId'), headers: await _headers(), body: jsonEncode(body));
+    await _handle(res);
+  }
+
+  // ---------- GAME DPI & SENSITIVITY ----------
+  static Future<Map<String, dynamic>> getGameTunerConfig(String game) async {
+    final res = await http.get(Uri.parse('$baseUrl/gamedpi/config?game=${Uri.encodeQueryComponent(game)}'), headers: await _headers());
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
   }
 
   // ---------- APP UPDATE CHECK ----------
@@ -852,5 +1033,61 @@ class ApiService {
       if (lv < cv) return false;
     }
     return false;
+  }
+
+  // ---------- TWO-STEP VERIFICATION (Google Authenticator) ----------
+  static Future<Map<String, dynamic>> verifyTotpLogin(String ticket, String code) async {
+    final deviceFingerprint = await DeviceService.getFingerprint();
+    final deviceModel = await DeviceService.getModel();
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/verify-totp-login'),
+      headers: await _headers(withAuth: false),
+      body: jsonEncode({
+        'ticket': ticket, 'code': code,
+        'deviceFingerprint': deviceFingerprint, 'deviceModel': deviceModel,
+      }),
+    );
+    final data = await _handle(res);
+    await saveToken(data['token']);
+    return data['user'];
+  }
+
+  static Future<bool> totpStatus() async {
+    final res = await http.get(Uri.parse('$baseUrl/auth/totp/status'), headers: await _headers());
+    final data = await _handle(res);
+    return data['enabled'] == true;
+  }
+
+  static Future<Map<String, dynamic>> totpGenerate() async {
+    final res = await http.post(Uri.parse('$baseUrl/auth/totp/generate'), headers: await _headers());
+    return await _handle(res);
+  }
+
+  static Future<void> totpConfirm(String secret, String code) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/totp/confirm'),
+      headers: await _headers(),
+      body: jsonEncode({'secret': secret, 'code': code}),
+    );
+    await _handle(res);
+  }
+
+  static Future<void> totpDisable(String code) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/totp/disable'),
+      headers: await _headers(),
+      body: jsonEncode({'code': code}),
+    );
+    await _handle(res);
+  }
+
+  static Future<bool> totpVerifyUnlock(String code) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/auth/totp/verify'),
+      headers: await _headers(),
+      body: jsonEncode({'code': code}),
+    );
+    final data = await _handle(res);
+    return data['enabled'] == true;
   }
 }
