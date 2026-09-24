@@ -40,6 +40,23 @@ jobs:
       - name: Fix SEO title and description
         run: python3 fix_web_seo.py
 
+      - name: Ensure base href placeholder exists in web/index.html
+        run: |
+          python3 - <<'PY'
+          import re
+          p = 'web/index.html'
+          c = open(p, encoding='utf-8').read()
+          if '$FLUTTER_BASE_HREF' not in c:
+              if re.search(r'<base\s+href="[^"]*"\s*/?>', c):
+                  c = re.sub(r'<base\s+href="[^"]*"\s*/?>', '<base href="$FLUTTER_BASE_HREF">', c, count=1)
+              else:
+                  c = c.replace('<head>', '<head>\n  <base href="$FLUTTER_BASE_HREF">', 1)
+              open(p, 'w', encoding='utf-8').write(c)
+              print('base href placeholder fixed')
+          else:
+              print('placeholder already present')
+          PY
+
       - name: Install ImageMagick
         run: sudo apt-get update && sudo apt-get install -y imagemagick
 
