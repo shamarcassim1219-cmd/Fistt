@@ -45,6 +45,19 @@ header{background:rgba(26,15,61,.92);backdrop-filter:blur(8px)}
 .c{border-radius:20px}a.c{border-left:0;border-top:5px solid var(--v)}a.c:nth-child(2n){border-color:var(--pk)}a.c:nth-child(3n){border-color:var(--mint)}
 .t{padding:0;overflow:hidden}.t img{width:100%;height:170px;object-fit:cover;display:block}.t h3,.t p{padding:0 20px}.t h3{margin-top:16px}.t p{padding-bottom:20px}
 .cta{background:linear-gradient(135deg,#7c5cff,#ff4f9a);color:#fff;border-radius:26px}.cta .b{background:var(--gold);color:#1a0f3d}
+/*MOBILEFIX*/
+@media(max-width:760px){
+header{position:static}
+header .w{gap:6px;min-height:0;padding-top:12px;padding-bottom:4px}
+nav{margin-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;gap:18px;font-size:.92rem;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+nav::-webkit-scrollbar{display:none}
+nav a{white-space:nowrap;padding:8px 0}
+.hero{padding:36px 0 44px}
+main section{padding:34px 0}
+.btns .b{flex:1 1 100%;text-align:center}
+.cta{padding:26px 22px}
+footer a{display:inline-block;margin:0 14px 8px 0}
+}
 """
 CSS+=EXTRA
 FAQ=[("How do I buy a game account in Sri Lanka?","Create a BuySellGame account, verify your identity, pick a listing and chat with the seller. Pay from your in-app wallet and confirm once the account is yours. The seller is paid only after you confirm."),
