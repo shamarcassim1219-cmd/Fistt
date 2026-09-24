@@ -1033,7 +1033,7 @@ class ApiService {
         throw Exception('Could not check for updates right now');
       }
 
-      final data = jsonDecode(res.body);
+      final data = jsonDecode(utf8.decode(res.bodyBytes));
       final latestVersion = (data['version'] ?? '').toString();
       final downloadUrl = data['downloadUrl'];
 

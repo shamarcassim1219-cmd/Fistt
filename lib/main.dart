@@ -351,6 +351,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
       title: 'MyGame',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        fontFamilyFallback: const ['NotoSansSinhala'],
         useMaterial3: true,
         pageTransitionsTheme: PageTransitionsTheme(builders: {
           TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
