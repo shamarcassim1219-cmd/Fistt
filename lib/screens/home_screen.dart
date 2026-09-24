@@ -153,7 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
           bottomNavigationBar: FancyNavBar(
             selectedIndex: _tab,
             onSelected: _onTabSelected,
-            centerIndex: 2,
             items: [
               FancyNavItem(icon: Icons.home_outlined, selectedIcon: Icons.home_rounded, label: AppLocalizations.t('home')),
               FancyNavItem(icon: Icons.grid_view_outlined, selectedIcon: Icons.grid_view_rounded, label: AppLocalizations.t('more')),
