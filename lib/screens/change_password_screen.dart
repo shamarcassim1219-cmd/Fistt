@@ -35,12 +35,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }
 
   Future<String?> _findEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    for (final k in prefs.getKeys()) {
-      final v = prefs.get(k);
-      if (v is String && k.toLowerCase().contains('email') && v.contains('@')) return v;
+    try {
+      final profile = await ApiService.getProfile();
+      final email = profile['email'];
+      if (email is String && email.contains('@')) return email;
+      return null;
+    } catch (e) {
+      return null;
     }
-    return null;
   }
 
   Future<void> _sendCode() async {
