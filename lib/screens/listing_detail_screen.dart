@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
@@ -69,6 +70,15 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
   }
 
   Future<void> _toggleFavorite() async {
+    final prefs = await SharedPreferences.getInstance();
+    final wasGuest = !(prefs.getBool('is_logged_in') ?? false);
+    if (!mounted) return;
+    if (!await requireLogin(context, reason: 'Login to save favorites')) return;
+    if (!mounted) return;
+    if (wasGuest) {
+      await _loadFavoriteStatus();
+      if (_isFavorite) return; // already saved on this account
+    }
     setState(() => _favoriteLoading = true);
     try {
       if (_isFavorite) {
@@ -448,7 +458,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
               IconButton(
                 icon: const Icon(Icons.flag_outlined, color: Colors.white),
                 tooltip: 'Report Listing',
-                onPressed: () => showReportDialog(context, targetType: 'listing', targetId: widget.listingId),
+                onPressed: () async {
+                  if (!await requireLogin(context, reason: 'Login to report this listing')) return;
+                  if (!mounted) return;
+                  showReportDialog(context, targetType: 'listing', targetId: widget.listingId);
+                },
               ),
             ],
           ),
@@ -707,7 +721,11 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
             width: double.infinity,
             height: 50,
             child: OutlinedButton.icon(
-              onPressed: () => _showMakeOfferSheet(currentPrice),
+              onPressed: () async {
+                if (!await requireLogin(context, reason: 'Login to make an offer')) return;
+                if (!mounted) return;
+                _showMakeOfferSheet(currentPrice);
+              },
               icon: const Icon(Icons.local_offer_outlined, size: 18),
               label: Text(AppLocalizations.t('make_an_offer')),
             ),
