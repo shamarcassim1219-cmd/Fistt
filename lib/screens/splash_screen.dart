@@ -96,6 +96,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final topInset = MediaQuery.of(context).viewPadding.top;
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return Scaffold(
       backgroundColor: const Color(0xFF160B2E),
@@ -122,7 +124,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   child: SlideTransition(
                     position: _characterSlide,
                     child: SizedBox(
-                      height: size.height * 0.55,
+                      height: size.height * 0.5,
                       width: size.width,
                       child: Image.asset(
                         'assets/images/splash_character.png',
@@ -136,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
               // ---- Logo + title ----
               Padding(
-                padding: const EdgeInsets.only(top: 70),
+                padding: EdgeInsets.only(top: topInset + size.height * 0.05),
                 child: Column(
                   children: [
                     FadeTransition(
@@ -171,7 +173,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               Positioned(
                 left: 32,
                 right: 32,
-                bottom: 40,
+                bottom: 32 + bottomInset,
                 child: Column(
                   children: [
                     ClipRRect(
@@ -196,7 +198,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     _readyFade.value > 0.5
                         ? FadeTransition(
                             opacity: _readyFade,
-                            child: const Text('Welcome to MyGame ❤',
+                            child: const Text('Welcome to MyGame',
                                 style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                           )
                         : const Text('Loading...', style: TextStyle(color: Colors.white70, fontSize: 12)),
@@ -227,7 +229,7 @@ class _MiamiBackgroundPainter extends CustomPainter {
     canvas.drawRect(rect, skyPaint);
 
     // Glowing sun
-    final sunCenter = Offset(size.width / 2, size.height * 0.34);
+    final sunCenter = Offset(size.width / 2, size.height * 0.36);
     final sunPaint = Paint()
       ..shader = RadialGradient(
         colors: [const Color(0xFFFFD36E).withOpacity(0.9), const Color(0xFFFF7A5C).withOpacity(0.0)],
