@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'device_service.dart';
@@ -85,6 +86,23 @@ class ApiService {
     _forcingLogout = false;
   }
 
+  static void _showRestoredMessage() {
+    final l = AppLocalizations.currentLanguage.value.toLowerCase();
+    final msg = (l.startsWith('si') || l.contains('සිං'))
+        ? 'ආයුබෝවන්! ඔබේ ගිණුම නැවත ප්‍රතිසාධනය කරන ලදී.'
+        : (l.startsWith('ta') || l.contains('தம'))
+            ? 'மீண்டும் வருக! உங்கள் கணக்கு மீட்டெடுக்கப்பட்டது.'
+            : 'Welcome back! Your account has been restored.';
+    Future.delayed(const Duration(milliseconds: 700), () {
+      final ctx = navigatorKey.currentContext;
+      if (ctx != null) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          SnackBar(content: Text(msg), duration: const Duration(seconds: 6)),
+        );
+      }
+    });
+  }
+
   static Future<Map<String, dynamic>> _handle(http.Response res) async {
     dynamic body;
     try {
@@ -93,6 +111,7 @@ class ApiService {
       throw Exception('Server is temporarily unavailable. Please try again shortly.');
     }
     if (res.statusCode >= 200 && res.statusCode < 300) {
+      if (body is Map && body['accountRestored'] == true) _showRestoredMessage();
       return body;
     } else {
       final errorMsg = body['error'] ?? 'Request failed (${res.statusCode})';
