@@ -1,0 +1,734 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import '../main.dart';
+import '../services/api_service.dart';
+import '../services/app_localizations.dart';
+import '../services/auth_helper.dart';
+import '../widgets/report_dialog.dart';
+import 'seller_profile_screen.dart';
+
+class ListingDetailScreen extends StatefulWidget {
+  final int listingId;
+  const ListingDetailScreen({super.key, required this.listingId});
+
+  @override
+  State<ListingDetailScreen> createState() => _ListingDetailScreenState();
+}
+
+class _ListingDetailScreenState extends State<ListingDetailScreen> {
+  Map<String, dynamic>? _listing;
+  List<dynamic> _bids = [];
+  bool _loading = true;
+  String? _error;
+  Timer? _countdownTimer;
+  Duration _remaining = Duration.zero;
+  int? _myUserId;
+  bool _isFavorite = false;
+  bool _favoriteLoading = false;
+  int _myPoints = 0;
+
+  final _bidCtrl = TextEditingController();
+  bool _placingBid = false;
+  String? _bidError;
+  bool _buying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMyId();
+    _load();
+    _loadFavoriteStatus();
+    _loadPoints();
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadMyId() async {
+    try {
+      final profile = await ApiService.getProfile();
+      if (mounted) setState(() => _myUserId = profile['id']);
+    } catch (_) {}
+  }
+
+  Future<void> _loadPoints() async {
+    try {
+      final points = await ApiService.getReferralPoints();
+      if (mounted) setState(() => _myPoints = points);
+    } catch (_) {}
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    try {
+      final isFav = await ApiService.checkFavorite(widget.listingId);
+      if (mounted) setState(() => _isFavorite = isFav);
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFavorite() async {
+    setState(() => _favoriteLoading = true);
+    try {
+      if (_isFavorite) {
+        await ApiService.removeFavorite(widget.listingId);
+      } else {
+        await ApiService.addFavorite(widget.listingId);
+      }
+      if (mounted) setState(() => _isFavorite = !_isFavorite);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _favoriteLoading = false);
+    }
+  }
+
+  Future<void> _load() async {
+    try {
+      final data = await ApiService.getListingDetail(widget.listingId);
+      setState(() {
+        _listing = data['listing'];
+        _bids = data['bids'];
+        _loading = false;
+      });
+      _startCountdownIfNeeded();
+    } catch (e) {
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _loading = false;
+      });
+    }
+  }
+
+  void _startCountdownIfNeeded() {
+    _countdownTimer?.cancel();
+    final endsAtStr = _listing?['biddingEndsAt'];
+    if (endsAtStr == null) return;
+
+    final endsAt = DateTime.parse(endsAtStr).toLocal();
+    void tick() {
+      final now = DateTime.now();
+      final diff = endsAt.difference(now);
+      setState(() => _remaining = diff.isNegative ? Duration.zero : diff);
+    }
+    tick();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) => tick());
+  }
+
+  String _formatDuration(Duration d) {
+    if (d.inSeconds <= 0) return 'Bidding ended';
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    final s = d.inSeconds % 60;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')} left';
+  }
+
+  Future<void> _placeBid() async {
+    if (!await requireLogin(context, reason: 'Login to place a bid')) return;
+    final amount = double.tryParse(_bidCtrl.text.trim());
+    if (amount == null || amount <= 0) {
+      setState(() => _bidError = 'Enter a valid amount');
+      return;
+    }
+    setState(() {
+      _placingBid = true;
+      _bidError = null;
+    });
+    try {
+      await ApiService.placeBid(widget.listingId, amount);
+      _bidCtrl.clear();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bid placed! Amount held from your wallet.')));
+      await _load();
+    } catch (e) {
+      setState(() => _bidError = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _placingBid = false);
+    }
+  }
+
+  Future<void> _confirmAndBuy(double price) async {
+    if (!await requireLogin(context, reason: 'Login to complete your purchase')) return;
+    int pointsToUse = 0;
+    final maxAffordablePoints = (price / 1.5).floor();
+    final usablePoints = _myPoints > maxAffordablePoints ? maxAffordablePoints : _myPoints;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final discount = pointsToUse * 1.5;
+          final payable = (price - discount).clamp(0, price);
+          return AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: Text(AppLocalizations.t('confirm_purchase'), style: const TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'LKR ${price.toStringAsFixed(2)} will be deducted from your wallet. Admin will verify and share credentials shortly.',
+                  style: const TextStyle(color: AppColors.hint, fontSize: 13),
+                ),
+                if (usablePoints > 0) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.fieldFill,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.stars, size: 16, color: Colors.amber),
+                            const SizedBox(width: 6),
+                            Text('You have $_myPoints points (LKR ${(_myPoints * 1.5).toStringAsFixed(2)})',
+                                style: const TextStyle(color: Colors.white, fontSize: 12)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Slider(
+                                value: pointsToUse.toDouble(),
+                                min: 0,
+                                max: usablePoints.toDouble(),
+                                divisions: usablePoints > 0 ? usablePoints : 1,
+                                label: '$pointsToUse pts',
+                                activeColor: AppColors.primary,
+                                onChanged: (v) => setDialogState(() => pointsToUse = v.round()),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Using $pointsToUse points → LKR ${discount.toStringAsFixed(2)} discount',
+                          style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        const Divider(color: AppColors.border, height: 16),
+                        Text(
+                          'You pay: LKR ${payable.toStringAsFixed(2)}',
+                          style: const TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.t('cancel'))),
+              ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.t('confirm_pay'))),
+            ],
+          );
+        },
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _buying = true);
+    try {
+      await ApiService.createOrder(widget.listingId, pointsToUse: pointsToUse);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Purchase successful! Admin is verifying — check My Purchases.')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _buying = false);
+    }
+  }
+
+
+  Future<void> _confirmAndRent(double pricePerUnit, String unit) async {
+    if (!await requireLogin(context, reason: AppLocalizations.t('login_to_rent'))) return;
+    int quantity = 1;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final total = pricePerUnit * quantity;
+          return AlertDialog(
+            backgroundColor: AppColors.surface,
+            title: Text(AppLocalizations.t('rent_this_account'), style: const TextStyle(color: Colors.white)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('LKR ${pricePerUnit.toStringAsFixed(2)} per $unit', style: const TextStyle(color: AppColors.hint, fontSize: 13)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: quantity > 1 ? () => setDialogState(() => quantity--) : null,
+                      icon: const Icon(Icons.remove_circle_outline, color: Colors.white),
+                    ),
+                    Text('$quantity $unit${quantity > 1 ? 's' : ''}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      onPressed: quantity < 30 ? () => setDialogState(() => quantity++) : null,
+                      icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+                    ),
+                  ],
+                ),
+                const Divider(color: AppColors.border, height: 16),
+                Text("${AppLocalizations.t('total_colon')} LKR ${total.toStringAsFixed(2)}", style: const TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.t('cancel'))),
+              ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.t('confirm_pay'))),
+            ],
+          );
+        },
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _buying = true);
+    try {
+      await ApiService.createOrder(widget.listingId, purchaseType: 'rental', rentalQuantity: quantity);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rental confirmed! Admin is verifying — check My Purchases.')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _buying = false);
+    }
+  }
+
+  Future<void> _confirmAndBuyInstallment(double totalPrice, int installmentCount, String frequency) async {
+    if (!await requireLogin(context, reason: AppLocalizations.t('login_to_start_installment'))) return;
+    final firstAmount = totalPrice / installmentCount;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(AppLocalizations.t('pay_in_installments_title'), style: const TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("${AppLocalizations.t('total_price_colon')} LKR ${totalPrice.toStringAsFixed(2)}", style: const TextStyle(color: AppColors.hint, fontSize: 13)),
+            Text("${AppLocalizations.t('split_into')} $installmentCount $frequency ${AppLocalizations.t('installments_suffix')}", style: const TextStyle(color: AppColors.hint, fontSize: 13)),
+            const SizedBox(height: 12),
+            Text("${AppLocalizations.t('first_installment_paid_now')} LKR ${firstAmount.toStringAsFixed(2)}", style: const TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.t('cancel'))),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.t('confirm_pay'))),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _buying = true);
+    try {
+      await ApiService.createOrder(widget.listingId, purchaseType: 'installment');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('First installment paid! Admin is verifying — check My Purchases.')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _buying = false);
+    }
+  }
+  void _showMakeOfferSheet(double currentPrice) {
+    final offerCtrl = TextEditingController();
+    bool sending = false;
+    String? sheetError;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Padding(
+          padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(AppLocalizations.t('make_an_offer'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 6),
+              Text('${AppLocalizations.t('listing_price')}: LKR ${currentPrice.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: offerCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(labelText: AppLocalizations.t('your_offer')),
+              ),
+              if (sheetError != null) ...[
+                const SizedBox(height: 8),
+                Text(sheetError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: sending ? null : () async {
+                    final amount = double.tryParse(offerCtrl.text.trim());
+                    if (amount == null || amount <= 0) {
+                      setModalState(() => sheetError = 'Enter a valid amount');
+                      return;
+                    }
+                    setModalState(() {
+                      sending = true;
+                      sheetError = null;
+                    });
+                    try {
+                      await ApiService.sendOffer(widget.listingId, amount);
+                      if (!ctx.mounted) return;
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Offer sent to seller')));
+                    } catch (e) {
+                      setModalState(() {
+                        sending = false;
+                        sheetError = e.toString().replaceFirst('Exception: ', '');
+                      });
+                    }
+                  },
+                  child: sending
+                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      : Text(AppLocalizations.t('send_offer')),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(
+            title: Text(AppLocalizations.t('listing_details')),
+            actions: [
+              IconButton(
+                icon: _favoriteLoading
+                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary))
+                    : Icon(_isFavorite ? Icons.favorite : Icons.favorite_border, color: _isFavorite ? Colors.redAccent : Colors.white),
+                onPressed: _favoriteLoading ? null : _toggleFavorite,
+              ),
+              IconButton(
+                icon: const Icon(Icons.flag_outlined, color: Colors.white),
+                tooltip: 'Report Listing',
+                onPressed: () => showReportDialog(context, targetType: 'listing', targetId: widget.listingId),
+              ),
+            ],
+          ),
+          body: _loading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : _error != null
+                  ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
+                  : _buildContent(),
+        );
+      },
+    );
+  }
+
+  Widget _buildContent() {
+    final l = _listing!;
+    final screenshots = (l['screenshots'] as List?) ?? [];
+    final stats = (l['stats'] as Map?) ?? {};
+    final allowBidding = l['allowBidding'] == true;
+    final highestBid = l['highestBid'] != null ? (l['highestBid'] as num).toDouble() : null;
+    final basePrice = (l['price'] as num).toDouble();
+    final currentPrice = highestBid ?? basePrice;
+    final biddingActive = allowBidding && l['biddingEndsAt'] != null && _remaining.inSeconds > 0;
+    final biddingNotStarted = allowBidding && l['biddingEndsAt'] == null;
+    final biddingEnded = allowBidding && l['biddingEndsAt'] != null && _remaining.inSeconds <= 0;
+
+    final isOwnListing = _myUserId != null && _myUserId == l['sellerId'];
+
+    final saleType = l['saleType'] ?? 'full';
+    final canBuyNow = l['status'] == 'active' && !isOwnListing && saleType != 'rental' && (!allowBidding || biddingEnded || biddingNotStarted);
+    final canRent = l['status'] == 'active' && !isOwnListing && saleType == 'rental';
+    final canInstallment = l['status'] == 'active' && !isOwnListing && saleType == 'installment';
+    final canMakeOffer = l['status'] == 'active' && !isOwnListing && saleType == 'full';
+    final canBid = allowBidding && !isOwnListing && saleType != 'rental' && (biddingActive || biddingNotStarted);
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        if (screenshots.isNotEmpty)
+          SizedBox(
+            height: 220,
+            child: PageView(
+              children: screenshots.map<Widget>((url) => ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(url, fit: BoxFit.cover, width: double.infinity),
+                  )).toList(),
+            ),
+          ),
+        const SizedBox(height: 16),
+        Text(l['title'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Chip(
+              label: Text(l['game'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 12)),
+              backgroundColor: AppColors.fieldFill,
+              side: const BorderSide(color: AppColors.border),
+            ),
+            if (isOwnListing) ...[
+              const SizedBox(width: 8),
+              Chip(
+                label: Text(AppLocalizations.t('your_listing'), style: const TextStyle(color: AppColors.primary, fontSize: 12)),
+                backgroundColor: AppColors.primary.withOpacity(0.15),
+                side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (!isOwnListing && l['sellerId'] != null)
+          InkWell(
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => SellerProfileScreen(sellerId: l['sellerId'])));
+            },
+            child: Row(
+              children: [
+                const Icon(Icons.person_outline, size: 16, color: AppColors.primary),
+                const SizedBox(width: 4),
+                Text(AppLocalizations.t('view_seller_profile'), style: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        const SizedBox(height: 12),
+        Text(l['description'] ?? '', style: const TextStyle(color: AppColors.hint, fontSize: 14, height: 1.4)),
+
+        if (stats.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: stats.entries.map<Widget>((e) => Chip(
+                  label: Text('${e.key}: ${e.value}', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  backgroundColor: AppColors.primary.withOpacity(0.15),
+                  side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                  avatar: const Icon(Icons.bar_chart, size: 14, color: AppColors.primary),
+                )).toList(),
+          ),
+        ],
+
+        const SizedBox(height: 20),
+
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                allowBidding ? (highestBid != null ? AppLocalizations.t('current_highest_bid') : AppLocalizations.t('starting_price')) : AppLocalizations.t('price'),
+                style: const TextStyle(color: AppColors.hint, fontSize: 12),
+              ),
+              const SizedBox(height: 4),
+              Text('LKR ${currentPrice.toStringAsFixed(2)}',
+                  style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+              if (allowBidding) ...[
+                const SizedBox(height: 8),
+                if (biddingActive)
+                  Row(
+                    children: [
+                      const Icon(Icons.timer_outlined, size: 14, color: Colors.orangeAccent),
+                      const SizedBox(width: 4),
+                      Text(_formatDuration(_remaining), style: const TextStyle(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+                    ],
+                  )
+                else if (biddingNotStarted)
+                  const Text('Bidding opens with the first bid — 12 hours to win', style: TextStyle(color: AppColors.hint, fontSize: 12))
+                else
+                  const Text('Bidding has ended — you can buy at the final price', style: TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+              ],
+            ],
+          ),
+        ),
+
+        if (l['status'] != 'active') ...[
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppColors.fieldFill, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.border)),
+            child: Text(
+              l['status'] == 'sold' ? 'This account has been sold.' : 'This listing is no longer available.',
+              style: const TextStyle(color: AppColors.hint, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+
+        if (isOwnListing) ...[
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, size: 18, color: AppColors.primary),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'This is your own listing. Manage it from My Listings in Settings.',
+                    style: TextStyle(fontSize: 12, color: AppColors.hint),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        if (canBid) ...[
+          const SizedBox(height: 20),
+          Text(AppLocalizations.t('place_a_bid'), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _bidCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'More than LKR ${currentPrice.toStringAsFixed(0)}',
+                    prefixText: 'LKR ',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: _placingBid ? null : _placeBid,
+                child: _placingBid
+                    ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                    : const Text('Bid'),
+              ),
+            ],
+          ),
+          if (_bidError != null) ...[
+            const SizedBox(height: 8),
+            Text(_bidError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+          ],
+        ],
+
+        if (canBuyNow) ...[
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: _buying ? null : () => _confirmAndBuy(currentPrice),
+              child: _buying
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  : Text('${AppLocalizations.t('buy_now')} — LKR ${currentPrice.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+
+        if (canRent) ...[
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: _buying ? null : () => _confirmAndRent((l['rentalPricePerUnit'] as num).toDouble(), l['rentalUnit'] ?? 'day'),
+              child: _buying
+                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  : Text("${AppLocalizations.t('rent_dash')} LKR ${(l['rentalPricePerUnit'] as num).toStringAsFixed(2)} / ${l['rentalUnit'] ?? 'day'}", style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+
+        if (canInstallment) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: OutlinedButton(
+              onPressed: _buying ? null : () => _confirmAndBuyInstallment(
+                basePrice,
+                (l['installmentCount'] as num).toInt(),
+                l['installmentFrequency'] ?? 'weekly',
+              ),
+              child: Text("${AppLocalizations.t('pay_in_prefix')} ${(l['installmentCount'] as num).toInt()} ${AppLocalizations.t('installments_suffix')}", style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+            ),
+          ),
+        ],
+
+        if (canMakeOffer) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: OutlinedButton.icon(
+              onPressed: () => _showMakeOfferSheet(currentPrice),
+              icon: const Icon(Icons.local_offer_outlined, size: 18),
+              label: Text(AppLocalizations.t('make_an_offer')),
+            ),
+          ),
+        ],
+
+        if (_bids.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Text(AppLocalizations.t('bid_history'), style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+          const SizedBox(height: 8),
+          ..._bids.map((b) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.gavel_outlined, color: AppColors.hint, size: 20),
+                title: Text(b['bidderEmail'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                trailing: Text('LKR ${(b['amount'] as num).toStringAsFixed(2)}',
+                    style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold)),
+              )),
+        ],
+
+        const SizedBox(height: 30),
+      ],
+    );
+  }
+}

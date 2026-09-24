@@ -1,0 +1,24 @@
+name: Deploy Website
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate website pages (SEO game pages + sitemap)
+        run: python3 tools/gen_site.py
+
+      - name: Upload website to cPanel root
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir: ./landing/
+          server-dir: ./

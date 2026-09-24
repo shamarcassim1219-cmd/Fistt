@@ -1,0 +1,269 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/auth_helper.dart';
+import '../main.dart';
+import '../services/api_service.dart';
+import '../services/app_localizations.dart';
+import 'my_purchases_screen.dart';
+import 'my_sales_screen.dart';
+import 'offers_screen.dart';
+import 'wallet_screen.dart';
+import 'verification_screen.dart';
+import 'chat_conversation_screen.dart';
+import 'tournaments_screen.dart';
+
+class NotificationsScreen extends StatefulWidget {
+  const NotificationsScreen({super.key});
+
+  @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  List<dynamic> _notifications = [];
+  bool _loading = true;
+  bool _guest = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('is_logged_in') ?? false)) {
+      if (mounted) setState(() { _guest = true; _loading = false; });
+      return;
+    }
+    try {
+      final notifications = await ApiService.getNotifications();
+      await ApiService.markAllNotificationsRead();
+      setState(() {
+        _notifications = notifications;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _loading = false;
+      });
+    }
+  }
+
+  IconData _iconFor(String type) {
+    switch (type) {
+      case 'offer_received': return Icons.local_offer_outlined;
+      case 'offer_accepted': return Icons.check_circle_outline;
+      case 'offer_rejected': return Icons.cancel_outlined;
+      case 'order_completed': return Icons.shopping_bag_outlined;
+      case 'sale_paid': return Icons.attach_money;
+      case 'topup_confirmed': return Icons.add_circle_outline;
+      case 'topup_rejected': return Icons.remove_circle_outline;
+      case 'withdrawal_confirmed': return Icons.arrow_circle_up_outlined;
+      case 'withdrawal_rejected': return Icons.arrow_circle_down_outlined;
+      case 'verification_approved': return Icons.verified_outlined;
+      case 'verification_rejected': return Icons.error_outline;
+      case 'new_message': return Icons.chat_bubble_outline;
+      case 'dispute_resolved':
+      case 'dispute_raised': return Icons.gavel_outlined;
+      case 'account_banned': return Icons.block;
+      case 'account_unbanned': return Icons.check_circle_outline;
+      case 'wallet_adjusted': return Icons.account_balance_wallet_outlined;
+      case 'referral_bonus': return Icons.card_giftcard;
+      case 'promotion': return Icons.campaign_outlined;
+      case 'outbid': return Icons.gavel_outlined;
+      case 'admin_message': return Icons.support_agent_outlined;
+      case 'credentials_shared': return Icons.lock_open_outlined;
+      case 'tournament_new': return Icons.emoji_events_outlined;
+      case 'tool_new': return Icons.new_releases_outlined;
+      case 'tournament_invite': return Icons.mail_outline;
+      case 'tournament_invite_response': return Icons.how_to_reg_outlined;
+      case 'tournament_room': return Icons.meeting_room_outlined;
+      case 'tournament_reminder': return Icons.alarm;
+      case 'tournament_prize': return Icons.emoji_events;
+      case 'tournament_suspended': return Icons.block;
+      case 'tournament_cancelled':
+      case 'tournament_team_dissolved': return Icons.cancel_outlined;
+      default: return Icons.notifications_outlined;
+    }
+  }
+
+  String _timeAgo(String isoString) {
+    final dt = DateTime.parse(isoString).toLocal();
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
+
+  void _handleTap(Map<String, dynamic> n) {
+    final type = n['type'] ?? '';
+    final relatedId = n['relatedId'];
+
+    switch (type) {
+      case 'offer_received':
+      case 'offer_accepted':
+      case 'offer_rejected':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const OffersScreen()));
+        break;
+
+      case 'order_completed':
+      case 'dispute_resolved':
+      case 'credentials_shared':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const MyPurchasesScreen()));
+        break;
+
+      case 'sale_paid':
+      case 'dispute_raised':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const MySalesScreen()));
+        break;
+
+      case 'topup_confirmed':
+      case 'topup_rejected':
+      case 'withdrawal_confirmed':
+      case 'withdrawal_rejected':
+      case 'wallet_adjusted':
+      case 'referral_bonus':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen()));
+        break;
+
+      case 'verification_approved':
+      case 'verification_rejected':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
+        break;
+
+      case 'new_message':
+        if (relatedId != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChatConversationScreen(
+                conversationId: relatedId,
+                otherPartyEmail: '',
+                listingTitle: '',
+              ),
+            ),
+          );
+        }
+        break;
+
+      case 'tournament_invite':
+      case 'tournament_new':
+      case 'tournament_invite_response':
+      case 'tournament_room':
+      case 'tournament_reminder':
+      case 'tournament_prize':
+      case 'tournament_suspended':
+      case 'tournament_cancelled':
+      case 'tournament_team_dissolved':
+        final tid = int.tryParse('$relatedId');
+        if (tid != null) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => TournamentDetailScreen(id: tid)));
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  Widget _guestView() {
+    final t = _guestTxt[_gLang()]!;
+    return Scaffold(
+      appBar: Navigator.of(context).canPop() ? AppBar(title: Text(t['title']!)) : null,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.notifications_none, size: 64, color: Colors.white54),
+              const SizedBox(height: 16),
+              Text(t['msg']!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15, height: 1.5)),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: () async {
+                  if (await requireLogin(context, reason: t['msg']!)) {
+                    if (!mounted) return;
+                    setState(() { _guest = false; _loading = true; });
+                    _load();
+                  }
+                },
+                icon: const Icon(Icons.login),
+                label: Text(t['btn']!),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_guest) return _guestView();
+    return ValueListenableBuilder<String>(
+      valueListenable: AppLocalizations.currentLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: AppColors.bg,
+          appBar: AppBar(title: Text(AppLocalizations.t('notifications'))),
+          body: _loading
+              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              : _error != null
+                  ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
+                  : _notifications.isEmpty
+                      ? Center(child: Text(AppLocalizations.t('no_notifications_yet'), style: const TextStyle(color: AppColors.hint)))
+                      : RefreshIndicator(
+                          onRefresh: _load,
+                          color: AppColors.primary,
+                          child: ListView.builder(
+                            itemCount: _notifications.length,
+                            itemBuilder: (context, i) {
+                              final n = _notifications[i];
+                              return ListTile(
+                                onTap: () => _handleTap(n),
+                                leading: (n['imageUrl'] != null && n['imageUrl'].toString().isNotEmpty)
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(24),
+                                        child: Image.network(
+                                          n['imageUrl'],
+                                          width: 44, height: 44, fit: BoxFit.cover,
+                                          errorBuilder: (c, e, s) => CircleAvatar(
+                                            backgroundColor: AppColors.primary.withOpacity(0.15),
+                                            child: Icon(_iconFor(n['type'] ?? ''), color: AppColors.primary, size: 20),
+                                          ),
+                                        ),
+                                      )
+                                    : CircleAvatar(
+                                        backgroundColor: AppColors.primary.withOpacity(0.15),
+                                        child: Icon(_iconFor(n['type'] ?? ''), color: AppColors.primary, size: 20),
+                                      ),
+                                title: Text(n['title'] ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                                subtitle: Text(n['body'] ?? '', style: const TextStyle(color: AppColors.hint, fontSize: 12)),
+                                trailing: Text(_timeAgo(n['createdAt']), style: const TextStyle(color: AppColors.hint, fontSize: 10)),
+                              );
+                            },
+                          ),
+                        ),
+        );
+      },
+    );
+  }
+}
+
+String _gLang() {
+  final l = AppLocalizations.currentLanguage.value.toLowerCase();
+  if (l.startsWith('si') || l.contains('සිං')) return 'si';
+  if (l.startsWith('ta') || l.contains('தம')) return 'ta';
+  return 'en';
+}
+
+const Map<String, Map<String, String>> _guestTxt = {
+  'en': {'title': 'Notifications', 'msg': 'Login to see your notifications', 'btn': 'Login'},
+  'si': {'title': 'දැනුම්දීම්', 'msg': 'ඔබේ දැනුම්දීම් බැලීමට ලොගින් වන්න', 'btn': 'ලොගින් වන්න'},
+  'ta': {'title': 'அறிவிப்புகள்', 'msg': 'உங்கள் அறிவிப்புகளைப் பார்க்க உள்நுழையவும்', 'btn': 'உள்நுழை'},
+};

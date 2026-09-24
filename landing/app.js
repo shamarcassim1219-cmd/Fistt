@@ -1,0 +1,38 @@
+(()=>{
+const API='https://api.finbassshamar.online',R=document.getElementById('root'),V=R.dataset.view,Q=new URLSearchParams(location.search);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';'),rs=n=>'Rs '+Number(n||0).toLocaleString('en-LK');
+const img=s=>s?(/^https?:/.test(s)?s:API+s):'/logo.png',tok=()=>localStorage.getItem('bsg_token');
+const dt=ms=>ms?new Date(+ms).toLocaleString('en-LK',{dateStyle:'medium',timeStyle:'short'}):'-';
+async function api(p,o={}){const h={'Content-Type':'application/json'};if(tok())h.Authorization='Bearer '+tok();
+ const r=await fetch(API+p,{method:o.method||'GET',headers:h,body:o.body?JSON.stringify(o.body):undefined});let d;
+ try{d=await r.json()}catch{throw Error('Server is unavailable. Try again shortly.')}
+ if(!r.ok)throw Error(d.error||'Request failed ('+r.status+')');return d}
+const fp=()=>localStorage.bsg_fp||(localStorage.bsg_fp='web-'+crypto.randomUUID());
+const msg=(t,ok)=>{let m=document.getElementById('msg');if(!m){m=document.createElement('p');m.id='msg';m.setAttribute('role','alert');R.prepend(m)}m.textContent=t;m.style.color=ok?'#0a7d3b':'#c0392b'};
+const card=l=>`<a class="c" href="/listing.html?id=${l.id}"><img src="${esc(img((l.screenshots||[])[0]))}" alt="${esc(l.title)}" loading="lazy" style="width:100%;height:140px;object-fit:cover;border-radius:8px"><h3>${esc(l.title)}</h3><p>${esc(l.game)} · ${rs(l.price)}${l.sellerVerified?' · Verified seller':''}</p></a>`;
+const V_={
+async listings(){const games=['PUBG Mobile','Free Fire','Call of Duty Mobile','Mobile Legends: Bang Bang','Fortnite','Valorant','Roblox','Minecraft','Genshin Impact','Clash of Clans'];
+ R.innerHTML=`<form id="f" class="g" style="margin-bottom:20px"><input name="search" placeholder="Search accounts" value="${esc(Q.get('search')||'')}"><select name="game"><option value="">All games</option>${games.map(g=>`<option ${Q.get('game')==g?'selected':''}>${g}</option>`).join('')}</select><select name="sort"><option value="newest">Newest</option><option value="price_low">Price: low to high</option><option value="price_high">Price: high to low</option></select><button class="b">Search</button></form><div id="out" class="g">Loading…</div>`;
+ const p=new URLSearchParams();for(const k of['game','search','sort'])if(Q.get(k))p.set(k,Q.get(k));
+ try{const d=await api('/listings'+(p.size?'?'+p:''));document.getElementById('out').innerHTML=d.listings.length?d.listings.map(card).join(''):'<p>No accounts match. Try another game or search.</p>'}catch(e){msg(e.message)}},
+async listing(){try{const d=await api('/listings/'+encodeURIComponent(Q.get('id')));const l=d.listing||d;document.title=l.title+' | BuySellGame';
+ R.innerHTML=`<h2>${esc(l.title)}</h2><p><b>${rs(l.price)}</b> · ${esc(l.game)} · Seller: ${esc(l.sellerDisplayName)}${l.sellerVerified?' (verified)':''}</p><div class="g">${(l.screenshots||[]).map(s=>`<img src="${esc(img(s))}" alt="${esc(l.title)}" style="width:100%;border-radius:10px">`).join('')}</div><p style="white-space:pre-wrap">${esc(l.description)}</p><div id="act"></div>`;
+ document.getElementById('act').innerHTML=tok()?`<button class="b" id="buy">Buy now with wallet</button> <button class="b o" id="fav">Save</button>`:`<a class="b" href="/login.html?next=${encodeURIComponent(location.pathname+location.search)}">Log in to buy</a>`;
+ const buy=document.getElementById('buy');if(buy){buy.onclick=async()=>{if(!confirm('Pay '+rs(l.price)+' from your wallet?'))return;try{await api('/orders',{method:'POST',body:{listingId:l.id}});location='/account.html'}catch(e){msg(e.message)}};
+ document.getElementById('fav').onclick=async()=>{try{await api('/favorites',{method:'POST',body:{listingId:l.id}});msg('Saved',1)}catch(e){msg(e.message)}}}}catch(e){msg(e.message)}},
+async tournaments(){const el=document.getElementById('root');el.innerHTML='Loading…';try{const d=await api('/tournaments');const T=d.tournaments||[];
+ el.innerHTML=T.length?`<div class="g">${T.map(t=>`<div class="c"><h3>${esc(t.title)}</h3><p>${esc(t.game)} · ${esc(t.mode||'')} · Team size ${esc(t.teamSize)}<br>Entry: ${t.isFree?'Free':rs(t.entryFee)} · Prize pool: ${rs(t.prizePool)}<br>Registration: ${dt(t.regOpenAt)} to ${dt(t.regCloseAt)}<br>Starts: ${dt(t.startAt)} · Status: ${esc(t.phase)}</p></div>`).join('')}</div><p>Register for a tournament in the <a href="/login.html">web account</a> or the Android app.</p>`:'<p>No tournaments right now. Check back soon.</p>'}catch(e){msg(e.message)}},
+login(){const m=Q.get('mode')||'login';R.innerHTML=`<form id="f" style="max-width:380px;display:grid;gap:12px"><h2>${m=='register'?'Create account':'Log in'}</h2>${m=='register'?'<input name="displayName" placeholder="Display name" required>':''}<input name="email" type="email" placeholder="Email" required autocomplete="email"><input name="password" type="password" placeholder="Password" required autocomplete="current-password"><button class="b">${m=='register'?'Sign up':'Log in'}</button><a href="/login.html?mode=${m=='register'?'login':'register'}">${m=='register'?'I have an account':'Create an account'}</a></form>`;
+ const f=document.getElementById('f');f.onsubmit=async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(f));try{
+  if(m=='register'){await api('/auth/register',{method:'POST',body:v})}else{const d=await api('/auth/login',{method:'POST',body:v});if(d.requiresTotp){v.ticket=d.ticket;v.totp=1}}
+  f.innerHTML=`<h2>Enter your code</h2><p>${v.totp?'Enter the code from your authenticator app.':'We emailed you a code.'}</p><input name="code" inputmode="numeric" required autofocus><button class="b">Continue</button>`;
+  f.onsubmit=async e=>{e.preventDefault();const code=new FormData(f).get('code');try{const b=v.totp?{ticket:v.ticket,code}:{email:v.email,code,deviceFingerprint:fp(),deviceModel:'Web'};
+   const d=await api(m=='register'?'/auth/verify-registration':v.totp?'/auth/verify-totp-login':'/auth/verify-login',{method:'POST',body:b});localStorage.bsg_token=d.token;location=Q.get('next')||'/account.html'}catch(e){msg(e.message)}}}catch(e){msg(e.message)}}},
+async account(){if(!tok()){location='/login.html?next=/account.html';return}try{const[u,w,o,s]=await Promise.all([api('/user/me'),api('/wallet/balance'),api('/orders/my-purchases'),api('/orders/my-sales')]);const me=u.user||u;
+ const row=x=>`<div class="c"><h3>${esc(x.title||'Order #'+x.id)}</h3><p>${rs(x.price)} · ${esc(x.status)}</p></div>`;
+ R.innerHTML=`<h2>Hi, ${esc(me.displayName)}</h2><p>${esc(me.email)} · Wallet: <b>${rs(w.walletBalance)}</b></p><p>Top ups, withdrawals and identity verification are available in the Android app.</p><h3>My purchases</h3><div class="g">${(o.orders||[]).map(row).join('')||'<p>None yet.</p>'}</div><h3>My sales</h3><div class="g">${(s.orders||[]).map(row).join('')||'<p>None yet.</p>'}</div><p><button class="b o" id="out">Log out</button></p>`;
+ document.getElementById('out').onclick=()=>{localStorage.removeItem('bsg_token');location='/'}}catch(e){if(/token|session/i.test(e.message)){localStorage.removeItem('bsg_token');location='/login.html'}else msg(e.message)}}};
+document.querySelectorAll('input,select').forEach(i=>Object.assign(i.style,{padding:'12px',borderRadius:'10px',border:'1px solid var(--line)',background:'var(--card)',color:'inherit',font:'inherit'}));
+(V_[V]||(()=>{}))();
+new MutationObserver(()=>document.querySelectorAll('#root input,#root select').forEach(i=>Object.assign(i.style,{padding:'12px',borderRadius:'10px',border:'1px solid var(--line)',background:'var(--card)',color:'inherit',font:'inherit'}))).observe(R,{childList:true,subtree:true});
+})();
