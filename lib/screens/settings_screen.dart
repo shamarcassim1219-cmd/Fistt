@@ -273,8 +273,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return Scaffold(
           backgroundColor: AppColors.bg,
           appBar: AppBar(title: Text(AppLocalizations.t('settings'))),
-          body: ListView(
-            children: [
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: ListView(
+                children: [
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -440,7 +443,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-            ],
+                ],
+              ),
+            ),
           ),
         );
       },
