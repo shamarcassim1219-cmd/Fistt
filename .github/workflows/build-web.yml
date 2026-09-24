@@ -90,5 +90,4 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           local-dir: ./build/web/
-          server-dir: ./buysellgame.store/api/
-          dangerous-clean-slate: true
+          server-dir: ./api/
