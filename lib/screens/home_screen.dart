@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../widgets/fancy_nav_bar.dart';
 import '../widgets/anim.dart';
+import '../widgets/skeleton_loader.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -458,7 +459,7 @@ class _HomeTabState extends State<_HomeTab> {
           const SizedBox(height: 8),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                ? const SkeletonListingList()
                 : _error != null
                     ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
                     : _listings.isEmpty
@@ -684,7 +685,7 @@ class _PromotionsTabState extends State<PromotionsTab> {
               ),
               Expanded(
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                    ? const SkeletonListingList()
                     : _error != null
                         ? Center(child: Text(_error!, style: const TextStyle(color: Colors.redAccent)))
                         : _promotions.isEmpty
