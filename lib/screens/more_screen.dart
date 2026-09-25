@@ -583,6 +583,32 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
     );
   }
 
+  Widget _chip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.6)),
+      ),
+      child: Text(text, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+    );
+  }
+
+  Widget _infoLine(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: const Color(0xFF9AA0B4)),
+        const SizedBox(width: 8),
+        Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 13))),
+      ],
+    );
+  }
+
+  Widget _corner() {
+    return const SizedBox(width: 22, height: 22, child: CustomPaint(painter: _CornerPainter()));
+  }
+
   Widget _card() {
     final info = _info!;
     final b = (info['basicInfo'] as Map?) ?? {};
@@ -593,46 +619,187 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
     final prime = (b['primePrivilegeDetail'] as Map?) ?? {};
     final sig = '${social['signature'] ?? ''}'.replaceAll(RegExp(r'\[[^\]]*\]'), '').trim();
 
+    final createdTs = int.tryParse('${b['createAt'] ?? ''}');
+    int ageYears = 0;
+    int ageDays = 0;
+    if (createdTs != null && createdTs > 0) {
+      final createdDate = DateTime.fromMillisecondsSinceEpoch(createdTs * 1000);
+      final diff = DateTime.now().difference(createdDate);
+      ageYears = (diff.inDays / 365).floor();
+      ageDays = diff.inDays - (ageYears * 365);
+    }
+
     return RepaintBoundary(
       key: _cardKey,
       child: Container(
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: const Color(0xFF14172B),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1A1730), Color(0xFF10131F)],
+          ),
           borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFC9A24B), width: 1.2),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            Text('${b['nickname'] ?? 'Unknown'}', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 2),
-            Text('UID ${b['accountId'] ?? ''}  |  ${b['region'] ?? ''}', style: const TextStyle(color: Color(0xFF9AA0B4), fontSize: 12)),
-            if (sig.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(sig, style: const TextStyle(color: Color(0xFFFFBA00), fontSize: 13)),
-            ],
-            const Divider(color: Color(0xFF2A2E48), height: 24),
-            _row('Level', b['level']),
-            _row('EXP', b['exp']),
-            _row('Likes', b['liked']),
-            _row('BR rank points', b['rankingPoints']),
-            _row('CS rank points', b['csRankingPoints']),
-            _row('Badges', b['badgeCnt']),
-            _row('Prime level', prime['primeLevel']),
-            _row('Credit score', credit['creditScore']),
-            _row('Account created', _date(b['createAt'])),
-            _row('Last login', _date(b['lastLoginAt'])),
-            _row('Game version', b['releaseVersion']),
-            if (clan.isNotEmpty) ...[
-              const Divider(color: Color(0xFF2A2E48), height: 24),
-              _row('Guild', clan['clanName']),
-              _row('Guild level', clan['clanLevel']),
-              _row('Members', '${clan['memberNum'] ?? '-'} / ${clan['capacity'] ?? '-'}'),
-            ],
-            if (pet.isNotEmpty) ...[
-              const Divider(color: Color(0xFF2A2E48), height: 24),
-              _row('Pet level', pet['level']),
-            ],
+            const Positioned(top: 0, left: 0, child: _CornerMark(angle: 0)),
+            const Positioned(top: 0, right: 0, child: _CornerMark(angle: 1.5707963267948966)),
+            const Positioned(bottom: 0, left: 0, child: _CornerMark(angle: -1.5707963267948966)),
+            const Positioned(bottom: 0, right: 0, child: _CornerMark(angle: 3.141592653589793)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ShaderMask(
+                      shaderCallback: (r) => const LinearGradient(colors: [Color(0xFFFF7A7A), Color(0xFFFFC46B)]).createShader(r),
+                      child: const Text('MYGame', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic)),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFC9A24B)),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text('FREE FIRE PROFILE', style: TextStyle(color: Color(0xFFC9A24B), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 72,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0D0F1A),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF2A2E48)),
+                        ),
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.sports_esports, color: Color(0xFFC9A24B), size: 30),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('${b['nickname'] ?? 'Unknown'}', overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                                  Text('Lv.${b['level'] ?? '-'}', style: const TextStyle(color: Color(0xFF9AA0B4), fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFFC9A24B), width: 1.5),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text('$ageYears', style: const TextStyle(color: Color(0xFFC9A24B), fontSize: 22, fontWeight: FontWeight.w900)),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text('YEARS', style: TextStyle(color: Color(0xFF9AA0B4), fontSize: 9, letterSpacing: 1)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Align(alignment: Alignment.centerRight, child: Text('ACCOUNT AGE', style: TextStyle(color: Color(0xFF9AA0B4), fontSize: 9))),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _chip('Lv.${b['level'] ?? '-'}', const Color(0xFFC9A24B)),
+                    _chip('ID: ${b['accountId'] ?? '-'}', const Color(0xFF6C7A94)),
+                    _chip('Region: ${'${b['region'] ?? '-'}'.toUpperCase()}', const Color(0xFF3B8FD6)),
+                    _chip('\u2764 ${b['liked'] ?? '-'}', const Color(0xFF7A3B6B)),
+                    _chip('$ageYears Years Old', const Color(0xFF3B7A5B)),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D0F1A),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF2A2E48)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _infoLine(Icons.calendar_today, 'Account created on ${_date(b['createAt'])}'),
+                      const SizedBox(height: 8),
+                      _infoLine(Icons.calendar_month, '$ageYears years and $ageDays days old'),
+                      const SizedBox(height: 8),
+                      _infoLine(Icons.access_time, 'Last login ${_date(b['lastLoginAt'])}'),
+                    ],
+                  ),
+                ),
+                if (sig.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D0F1A),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF2A2E48)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('BIO', style: TextStyle(color: Color(0xFF9AA0B4), fontSize: 10, letterSpacing: 1)),
+                        const SizedBox(height: 4),
+                        Text(sig, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                const Divider(color: Color(0xFF2A2E48), height: 1),
+                const SizedBox(height: 10),
+                _row('EXP', b['exp']),
+                _row('BR rank points', b['rankingPoints']),
+                _row('CS rank points', b['csRankingPoints']),
+                _row('Badges', b['badgeCnt']),
+                _row('Prime level', prime['primeLevel']),
+                _row('Credit score', credit['creditScore']),
+                _row('Game version', b['releaseVersion']),
+                if (clan.isNotEmpty) ...[
+                  const Divider(color: Color(0xFF2A2E48), height: 24),
+                  _row('Guild', clan['clanName']),
+                  _row('Guild level', clan['clanLevel']),
+                  _row('Members', '${clan['memberNum'] ?? '-'} / ${clan['capacity'] ?? '-'}'),
+                ],
+                if (pet.isNotEmpty) ...[
+                  const Divider(color: Color(0xFF2A2E48), height: 24),
+                  _row('Pet level', pet['level']),
+                ],
+                const SizedBox(height: 14),
+                const Align(
+                  alignment: Alignment.centerRight,
+                  child: Text('MYGame Marketplace', style: TextStyle(color: Color(0xFF6C7A94), fontSize: 10, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -695,6 +862,34 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
       ),
     );
   }
+}
+
+class _CornerMark extends StatelessWidget {
+  final double angle;
+  const _CornerMark({required this.angle});
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: angle,
+      child: const SizedBox(width: 22, height: 22, child: CustomPaint(painter: _CornerPainter())),
+    );
+  }
+}
+
+class _CornerPainter extends CustomPainter {
+  const _CornerPainter();
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFC9A24B)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(const Offset(0, 6), const Offset(0, 0), paint);
+    canvas.drawLine(const Offset(0, 0), const Offset(14, 0), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ======================= EVENTS (moved from the bottom bar) =======================
