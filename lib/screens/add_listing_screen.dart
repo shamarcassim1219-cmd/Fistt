@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/safe_picker.dart';
 import '../widgets/anim.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
+import '../widgets/simple_cropper.dart';
 import 'dart:io';
 import '../main.dart';
 import '../services/api_service.dart';
@@ -206,9 +208,17 @@ class _AddListingScreenState extends State<AddListingScreen> {
       final picker = ImagePicker();
       final picked = await picker.pickMultiImageSafe(imageQuality: 80);
       if (picked.isEmpty) return;
+      final room = 6 - _screenshots.length;
+      final toAdd = room > 0 ? picked.take(room).toList() : <XFile>[];
+      final cropped = <XFile>[];
+      for (final img in toAdd) {
+        if (!mounted) break;
+        final result = await _cropPickedImage(img);
+        cropped.add(result);
+      }
       if (!mounted) return;
       setState(() {
-        _screenshots.addAll(picked);
+        _screenshots.addAll(cropped);
         if (_screenshots.length > 6) {
           _screenshots.removeRange(6, _screenshots.length);
         }
@@ -219,6 +229,27 @@ class _AddListingScreenState extends State<AddListingScreen> {
         SnackBar(content: Text('Failed to pick images: $e')),
       );
     }
+  }
+
+  Future<XFile> _cropPickedImage(XFile img) async {
+    try {
+      final bytes = await img.readAsBytes();
+      if (!mounted) return img;
+      final result = await Navigator.push<Uint8List>(
+        context,
+        MaterialPageRoute(builder: (_) => SimpleImageCropper(bytes: bytes), fullscreenDialog: true),
+      );
+      if (result == null) return img;
+      return await saveCroppedImage(result, img.name);
+    } catch (_) {
+      return img;
+    }
+  }
+
+  Future<void> _recropAt(int index) async {
+    final result = await _cropPickedImage(_screenshots[index]);
+    if (!mounted) return;
+    setState(() => _screenshots[index] = result);
   }
 
   Future<List<String>> _uploadScreenshots() async {
@@ -301,7 +332,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
         vaultEmail: _vaultEmailCtrl.text.trim(),
         vaultPassword: _vaultPasswordCtrl.text.trim(),
         vaultRecoveryCodes: _vaultRecoveryCtrl.text.trim(),
-        allowBidding: _allowBidding,
+        allowBidding: _saleType == 'rental' ? false : _allowBidding,
         saleType: _saleType,
         rentalUnit: _saleType == 'rental' ? _rentalUnit : null,
         rentalPricePerUnit: _saleType == 'rental' && _rentalPriceCtrl.text.trim().isNotEmpty ? double.tryParse(_rentalPriceCtrl.text.trim()) : null,
@@ -568,6 +599,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                     ),
                   ],
 
+                  if (_saleType != 'rental') ...[
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -587,6 +619,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
                       ),
                     ),
                   ),
+                  ],
 
                   const SizedBox(height: 20),
                   const Text('Sale Type', style: TextStyle(color: AppColors.hint, fontSize: 12, fontWeight: FontWeight.bold)),
@@ -708,6 +741,16 @@ if (_saleType == 'rental') ...[
                               child: const CircleAvatar(
                                 radius: 10, backgroundColor: Colors.black54,
                                 child: Icon(Icons.close, size: 14, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 2, right: 2,
+                            child: GestureDetector(
+                              onTap: () => _recropAt(i),
+                              child: const CircleAvatar(
+                                radius: 10, backgroundColor: Colors.black54,
+                                child: Icon(Icons.crop, size: 12, color: Colors.white),
                               ),
                             ),
                           ),
