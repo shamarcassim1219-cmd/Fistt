@@ -347,7 +347,10 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
-      builder: (context, child) => NoInternetOverlay(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) {
+        final app = NoInternetOverlay(child: child ?? const SizedBox.shrink());
+        return kIsWeb ? WebFrame(child: app) : app;
+      },
       title: 'MyGame',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -469,6 +472,38 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// On wide (desktop) browser windows, shows the app in a centered phone-width column.
+class WebFrame extends StatelessWidget {
+  final Widget child;
+  const WebFrame({super.key, required this.child});
+
+  static const double maxWidth = 480;
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    if (mq.size.width <= maxWidth + 40) return child;
+    return ColoredBox(
+      color: const Color(0xFF050508),
+      child: Center(
+        child: SizedBox(
+          width: maxWidth,
+          height: mq.size.height,
+          child: MediaQuery(
+            data: mq.copyWith(size: Size(maxWidth, mq.size.height)),
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                border: Border.symmetric(vertical: BorderSide(color: AppColors.border)),
+              ),
+              child: ClipRect(child: child),
+            ),
+          ),
+        ),
       ),
     );
   }
