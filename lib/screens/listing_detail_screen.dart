@@ -5,6 +5,7 @@ import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
 import '../services/auth_helper.dart';
+import 'verification_screen.dart';
 import '../widgets/report_dialog.dart';
 import 'seller_profile_screen.dart';
 
@@ -161,8 +162,40 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
     }
   }
 
+  Future<bool> _requireVerification() async {
+    try {
+      final data = await ApiService.getVerificationStatusFull();
+      final status = data['verifiedStatus'] ?? 'not_verified';
+      if (status == 'verified') return true;
+    } catch (_) {
+      return true;
+    }
+
+    if (!mounted) return false;
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(AppLocalizations.t('verify_to_purchase_title'), style: const TextStyle(color: Colors.white)),
+        content: Text(
+          AppLocalizations.t('verify_to_purchase_message'),
+          style: const TextStyle(color: AppColors.hint, fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.t('cancel'))),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.t('go_to_verification'))),
+        ],
+      ),
+    );
+    if (go == true && mounted) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const VerificationScreen()));
+    }
+    return false;
+  }
+
   Future<void> _confirmAndBuy(double price) async {
     if (!await requireLogin(context, reason: 'Login to complete your purchase')) return;
+    if (!await _requireVerification()) return;
     int pointsToUse = 0;
     final maxAffordablePoints = (price / 1.5).floor();
     final usablePoints = _myPoints > maxAffordablePoints ? maxAffordablePoints : _myPoints;
@@ -266,6 +299,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   Future<void> _confirmAndRent(double pricePerUnit, String unit) async {
     if (!await requireLogin(context, reason: AppLocalizations.t('login_to_rent'))) return;
+    if (!await _requireVerification()) return;
     int quantity = 1;
 
     final confirmed = await showDialog<bool>(
@@ -329,6 +363,7 @@ class _ListingDetailScreenState extends State<ListingDetailScreen> {
 
   Future<void> _confirmAndBuyInstallment(double totalPrice, int installmentCount, String frequency) async {
     if (!await requireLogin(context, reason: AppLocalizations.t('login_to_start_installment'))) return;
+    if (!await _requireVerification()) return;
     final firstAmount = totalPrice / installmentCount;
 
     final confirmed = await showDialog<bool>(
