@@ -22,12 +22,17 @@ class UpdateService {
       ValueNotifier(UpdatePhase.idle);
   static final ValueNotifier<double> progress = ValueNotifier(0);
 
-  static DownloadTask _task(String url) => DownloadTask(
+  // ParallelDownloadTask splits the file into chunks and downloads them
+  // over several connections at once, instead of one connection start-to-
+  // finish. This is what was making updates slow -- a single connection was
+  // capped by the server's per-connection speed limit.
+  static ParallelDownloadTask _task(String url) => ParallelDownloadTask(
         url: url,
         filename: _fileName,
         baseDirectory: BaseDirectory.applicationSupport,
         updates: Updates.statusAndProgress,
         retries: 3,
+        chunks: 6,
       );
 
   static Future<File> _apkFile() async =>
