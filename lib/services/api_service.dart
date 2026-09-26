@@ -1,6 +1,7 @@
 import 'socket_service.dart';
 import 'dart:typed_data';
 import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -225,7 +226,13 @@ class ApiService {
     final request = http.MultipartRequest('POST', uri);
     if (token != null) request.headers['Authorization'] = 'Bearer $token';
     final bytes = await file.readAsBytes();
-    request.files.add(http.MultipartFile.fromBytes('file', bytes, filename: file.name));
+    // MultipartFile.fromBytes defaults to application/octet-stream unless a
+    // contentType is given explicitly -- the server validates the real
+    // mimetype, so without this every upload was being rejected regardless
+    // of the actual file type.
+    final mimeType = lookupMimeType(file.name) ?? 'application/octet-stream';
+    final mediaType = MediaType.parse(mimeType);
+    request.files.add(http.MultipartFile.fromBytes('file', bytes, filename: file.name, contentType: mediaType));
 
     final streamedRes = await request.send();
     final resBody = await streamedRes.stream.bytesToString();
