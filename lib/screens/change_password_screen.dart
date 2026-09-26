@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
@@ -22,11 +23,28 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool _codeMode = false; // false: current password form, true: email code form
   String? _error;
   String? _email;
+  int _resendSecondsLeft = 0;
+  Timer? _resendTimer;
 
   Map<String, String> get _t => _txt[_lc()]!;
 
+  void _startResendCountdown() {
+    _resendTimer?.cancel();
+    setState(() => _resendSecondsLeft = 30);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) { timer.cancel(); return; }
+      if (_resendSecondsLeft <= 1) {
+        timer.cancel();
+        setState(() => _resendSecondsLeft = 0);
+      } else {
+        setState(() => _resendSecondsLeft -= 1);
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _resendTimer?.cancel();
     _currentPassCtrl.dispose();
     _newPassCtrl.dispose();
     _confirmPassCtrl.dispose();
@@ -60,6 +78,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         _codeMode = true;
         _formKey.currentState?.reset();
       });
+      _startResendCountdown();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${_t['sent']} $email')),
       );
@@ -194,8 +213,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       alignment: WrapAlignment.center,
                       children: [
                         TextButton(
-                          onPressed: _sending ? null : _sendCode,
-                          child: Text(_sending ? t['sending']! : t['resend']!),
+                          onPressed: (_sending || _resendSecondsLeft > 0) ? null : () { _sendCode(); _startResendCountdown(); },
+                          child: Text(_sending
+                              ? t['sending']!
+                              : (_resendSecondsLeft > 0 ? '${t['resend']!} (${_resendSecondsLeft}s)' : t['resend']!)),
                         ),
                         TextButton(
                           onPressed: () => setState(() {

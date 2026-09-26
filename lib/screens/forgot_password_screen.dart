@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
@@ -19,6 +20,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool _loading = false;
   String? _error;
   String? _success;
+  int _resendSecondsLeft = 0;
+  Timer? _resendTimer;
+
+  void _startResendCountdown() {
+    _resendTimer?.cancel();
+    setState(() => _resendSecondsLeft = 30);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) { timer.cancel(); return; }
+      if (_resendSecondsLeft <= 1) {
+        timer.cancel();
+        setState(() => _resendSecondsLeft = 0);
+      } else {
+        setState(() => _resendSecondsLeft -= 1);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _resendTimer?.cancel();
+    _emailCtrl.dispose();
+    _codeCtrl.dispose();
+    _newPassCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _sendCode() async {
     if (!_emailCtrl.text.contains('@')) {
@@ -35,6 +61,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _codeSent = true;
         _success = 'If this email is registered, a code has been sent.';
       });
+      _startResendCountdown();
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -139,8 +166,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     const SizedBox(height: 12),
                     Center(
                       child: TextButton(
-                        onPressed: _loading ? null : _sendCode,
-                        child: Text(AppLocalizations.t('resend_code')),
+                        onPressed: (_loading || _resendSecondsLeft > 0) ? null : () { _sendCode(); _startResendCountdown(); },
+                        child: Text(_resendSecondsLeft > 0
+                            ? '${AppLocalizations.t('resend_code')} (${_resendSecondsLeft}s)'
+                            : AppLocalizations.t('resend_code')),
                       ),
                     ),
                   ],
