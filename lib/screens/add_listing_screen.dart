@@ -483,6 +483,28 @@ class _AddListingScreenState extends State<AddListingScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.info_outline, color: AppColors.primary, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            AppLocalizations.t('rent_only_ff_pubg_notice'),
+                            style: const TextStyle(color: Colors.white, fontSize: 12.5, height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   _SectionLabel(AppLocalizations.t('game')),
                   InkWell(
                     onTap: _showGameSelector,

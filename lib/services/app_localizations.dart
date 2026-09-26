@@ -21,6 +21,7 @@ class AppLocalizations {
   }
 
   static final Map<String, Map<String, String>> _translations = {
+    'rent_only_ff_pubg_notice': {'English': 'Rent option is only available for Free Fire and PUBG accounts.', 'Sinhala': 'කුලියට දීමේ විකල්පය ලබා ගත හැක්කේ Free Fire සහ PUBG ගිණුම් සඳහා පමණි.', 'Tamil': 'வாடகை விருப்பம் Free Fire மற்றும் PUBG கணக்குகளுக்கு மட்டுமே கிடைக்கும்.'},
     'app_name': {'English': 'MYGame Marketplace', 'Sinhala': 'MYGame වෙළඳපොළ', 'Tamil': 'MYGame சந்தை'},
     'login': {'English': 'Login', 'Sinhala': 'පිවිසෙන්න', 'Tamil': 'உள்நுழைய'},
     'help_and_faq': {'English': 'Help & FAQ', 'Sinhala': 'උදව් සහ නිතර අසන පැන', 'Tamil': 'உதவி மற்றும் அடிக்கடி கேட்கப்படும் கேள்விகள்'},
