@@ -431,6 +431,12 @@ class ApiService {
   }
 
   // ---------- LISTINGS ----------
+  static Future<double> getCommissionRate() async {
+    final res = await http.get(Uri.parse('$baseUrl/listings/commission-rate'), headers: await _headers());
+    final data = await _handle(res);
+    return (data['commissionRate'] as num?)?.toDouble() ?? 0.15;
+  }
+
   static Future<List<dynamic>> getListings({String? game, String? search, String? sort, String? saleType}) async {
     final params = <String, String>{};
     if (game != null) params['game'] = game;

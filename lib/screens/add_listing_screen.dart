@@ -28,6 +28,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
   final _descCtrl = TextEditingController();
   final _uidCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
+  double? _commissionRate; // platform fee, fraction e.g. 0.15 = 15%
 
   final Map<String, TextEditingController> _statControllers = {};
   final List<String> _customStatKeys = [];
@@ -58,6 +59,29 @@ class _AddListingScreenState extends State<AddListingScreen> {
   void initState() {
     super.initState();
     _checkVerification();
+    _loadCommissionRate();
+  }
+
+  Future<void> _loadCommissionRate() async {
+    try {
+      final rate = await ApiService.getCommissionRate();
+      if (mounted) setState(() => _commissionRate = rate);
+    } catch (_) {}
+  }
+
+  Widget _feePreview(TextEditingController ctrl) {
+    if (_commissionRate == null) return const SizedBox.shrink();
+    final price = double.tryParse(ctrl.text.trim());
+    if (price == null || price <= 0) return const SizedBox.shrink();
+    final fee = price * _commissionRate!;
+    final youReceive = price - fee;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        'Platform fee (${(_commissionRate! * 100).toStringAsFixed(0)}%): LKR ${fee.toStringAsFixed(2)}  ·  You receive: LKR ${youReceive.toStringAsFixed(2)}',
+        style: const TextStyle(color: AppColors.hint, fontSize: 12),
+      ),
+    );
   }
 
   @override
@@ -553,11 +577,12 @@ class _AddListingScreenState extends State<AddListingScreen> {
                     validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 12),
-                  if (_saleType != 'rental')
+                  if (_saleType != 'rental') ...[
                     TextFormField(
                       controller: _priceCtrl,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       style: const TextStyle(color: Colors.white),
+                      onChanged: (_) => setState(() {}),
                       decoration: InputDecoration(
                         labelText: _saleType == 'installment'
                             ? 'Total Price (LKR)'
@@ -570,6 +595,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
                         return null;
                       },
                     ),
+                    _feePreview(_priceCtrl),
+                  ],
 
                   if (_selectedGame != null) ...[
                     const SizedBox(height: 20),
@@ -691,11 +718,13 @@ if (_saleType == 'rental') ...[
                             controller: _rentalPriceCtrl,
                             keyboardType: TextInputType.number,
                             style: const TextStyle(color: Colors.white),
+                            onChanged: (_) => setState(() {}),
                             decoration: const InputDecoration(labelText: 'Price per unit (LKR)'),
                           ),
                         ),
                       ],
                     ),
+                    _feePreview(_rentalPriceCtrl),
                     const SizedBox(height: 6),
                     const Text(
                       'Buyer picks how many units to rent for. After time expires, you\'ll get a reminder to change the account password.',
