@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/api_service.dart';
@@ -15,6 +16,30 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
   bool _codeSent = false;
   bool _submitting = false;
   String? _error;
+  int _resendSecondsLeft = 0;
+  Timer? _resendTimer;
+
+  void _startResendCountdown() {
+    _resendTimer?.cancel();
+    setState(() => _resendSecondsLeft = 30);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) { timer.cancel(); return; }
+      if (_resendSecondsLeft <= 1) {
+        timer.cancel();
+        setState(() => _resendSecondsLeft = 0);
+      } else {
+        setState(() => _resendSecondsLeft -= 1);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _resendTimer?.cancel();
+    _codeCtrl.dispose();
+    _newPassCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _requestCode() async {
     setState(() {
@@ -24,6 +49,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
     try {
       await ApiService.requestSetPassword();
       setState(() => _codeSent = true);
+      _startResendCountdown();
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -93,6 +119,13 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                 obscureText: true,
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(labelText: 'New Password'),
+              ),
+              const SizedBox(height: 6),
+              Center(
+                child: TextButton(
+                  onPressed: (_submitting || _resendSecondsLeft > 0) ? null : _requestCode,
+                  child: Text(_resendSecondsLeft > 0 ? 'Resend code (${_resendSecondsLeft}s)' : 'Resend code'),
+                ),
               ),
             ],
 
