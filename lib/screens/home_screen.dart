@@ -200,6 +200,7 @@ class _HomeTab extends StatefulWidget {
 class _HomeTabState extends State<_HomeTab> {
   String? _selectedGame;
   String _sort = 'newest';
+  String? _saleTypeFilter; // null = all, 'rental' = Rent Account, 'buy' = Buy Account
   List<dynamic> _listings = [];
   bool _loading = true;
   String? _error;
@@ -262,6 +263,7 @@ class _HomeTabState extends State<_HomeTab> {
         game: _selectedGame,
         search: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
         sort: _sort,
+        saleType: _saleTypeFilter,
       );
       if (!mounted) return;
       setState(() {
@@ -286,6 +288,31 @@ class _HomeTabState extends State<_HomeTab> {
       builder: (ctx) => SafeArea(
         child: Wrap(
           children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
+              child: Text('Account Type', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14)),
+            ),
+            ListTile(
+              leading: Icon(Icons.calendar_month_outlined, color: _saleTypeFilter == 'rental' ? AppColors.primary : AppColors.hint),
+              title: Text('Rent Account', style: TextStyle(color: _saleTypeFilter == 'rental' ? AppColors.primary : Colors.white)),
+              trailing: _saleTypeFilter == 'rental' ? const Icon(Icons.check, color: AppColors.primary) : null,
+              onTap: () {
+                setState(() => _saleTypeFilter = _saleTypeFilter == 'rental' ? null : 'rental');
+                Navigator.pop(ctx);
+                _loadListings();
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.shopping_bag_outlined, color: _saleTypeFilter == 'buy' ? AppColors.primary : AppColors.hint),
+              title: Text('Buy Account', style: TextStyle(color: _saleTypeFilter == 'buy' ? AppColors.primary : Colors.white)),
+              trailing: _saleTypeFilter == 'buy' ? const Icon(Icons.check, color: AppColors.primary) : null,
+              onTap: () {
+                setState(() => _saleTypeFilter = _saleTypeFilter == 'buy' ? null : 'buy');
+                Navigator.pop(ctx);
+                _loadListings();
+              },
+            ),
+            const Divider(color: AppColors.border),
             const Padding(
               padding: EdgeInsets.all(16),
               child: Text('Sort By', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 14)),
