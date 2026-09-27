@@ -1012,7 +1012,7 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const AppBar(title: Text('UID Checker')),
+      appBar: AppBar(title: const Text('UID Checker')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
