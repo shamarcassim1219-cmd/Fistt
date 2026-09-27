@@ -227,6 +227,7 @@ const List<_MoreItem> _moreItems = [
   _MoreItem('ff_dpi_sensi', '🎯', [Color(0xFFA3245F), Color(0xFF2A1240)]),
   _MoreItem('game_tools', '🛠️', [Color(0xFF2A3F9E), Color(0xFF101A45)], soon: true),
   _MoreItem('ff_info', '🪪', [Color(0xFF0F8F86), Color(0xFF08262E)]),
+  _MoreItem('pubg_info', '🎯', [Color(0xFF3B8FD6), Color(0xFF08262E)]),
   _MoreItem('top_up', '👛', [Color(0xFF9A5A1A), Color(0xFF2B1A12)], soon: true),
   _MoreItem('rewards', '🎁', [Color(0xFF8A2BB0), Color(0xFF22103A)]),
   _MoreItem('events', '📣', [Color(0xFF6C4CF1), Color(0xFF3A1A6B)]),
@@ -240,6 +241,7 @@ const Map<String, Map<String, List<String>>> _moreText = {
     'ff_dpi_sensi': ['Free Fire DPI & Sensitivity', 'Best settings for better gameplay'],
     'game_tools': ['Game Tools', 'Useful tools for all games'],
     'ff_info': ['UID Checker', 'Check player info instantly'],
+    'pubg_info': ['PUBG PC Checker', 'Check Steam player info'],
     'top_up': ['Top Up', 'Fast & secure top ups'],
     'rewards': ['Rewards', 'Claim your daily rewards'],
     'events': ['Events', 'Promotions and offers'],
@@ -251,6 +253,7 @@ const Map<String, Map<String, List<String>>> _moreText = {
     'ff_dpi_sensi': ['Free Fire DPI සහ සංවේදීතාව', 'වඩා හොඳ ගේම් එකකට හොඳම සැකසුම්'],
     'game_tools': ['ගේම් මෙවලම්', 'සියලු ගේම් සඳහා ප්‍රයෝජනවත් මෙවලම්'],
     'ff_info': ['UID පරීක්ෂකය', 'ක්‍රීඩක තොරතුරු ක්ෂණිකව බලන්න'],
+    'pubg_info': ['PUBG PC පරීක්ෂකය', 'Steam ක්‍රීඩක තොරතුරු බලන්න'],
     'top_up': ['ටොප් අප්', 'වේගවත් සහ සුරක්ෂිත ටොප් අප්'],
     'rewards': ['ත්‍යාග', 'ඔබේ දෛනික ත්‍යාග ලබාගන්න'],
     'events': ['සිදුවීම්', 'ප්‍රවර්ධන සහ දීමනා'],
@@ -262,6 +265,7 @@ const Map<String, Map<String, List<String>>> _moreText = {
     'ff_dpi_sensi': ['Free Fire DPI & உணர்திறன்', 'சிறந்த விளையாட்டுக்கான அமைப்புகள்'],
     'game_tools': ['கேம் கருவிகள்', 'அனைத்து கேம்களுக்கும் பயனுள்ள கருவிகள்'],
     'ff_info': ['UID சரிபார்ப்பு', 'வீரர் தகவலை உடனே பாருங்கள்'],
+    'pubg_info': ['PUBG PC சரிபார்ப்பு', 'ஸ்டீம் வீரர் தகவலைப் பாருங்கள்'],
     'top_up': ['டாப் அப்', 'வேகமான, பாதுகாப்பான டாப் அப்'],
     'rewards': ['வெகுமதிகள்', 'தினசரி வெகுமதிகளைப் பெறுங்கள்'],
     'events': ['நிகழ்வுகள்', 'விளம்பரங்கள் & சலுகைகள்'],
@@ -315,6 +319,8 @@ class _MoreScreenState extends State<MoreScreen> {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const TournamentsScreen()));
     } else if (key == 'ff_info') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const FfInfoScreen()));
+    } else if (key == 'pubg_info') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const PubgInfoScreen()));
     } else if (key == 'events') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const EventsPage()));
     } else if (key == 'rewards') {
@@ -951,5 +957,289 @@ class EventsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(appBar: AppBar(), body: const PromotionsTab());
+  }
+}
+
+class PubgInfoScreen extends StatefulWidget {
+  const PubgInfoScreen({super.key});
+
+  @override
+  State<PubgInfoScreen> createState() => _PubgInfoScreenState();
+}
+
+class _PubgInfoScreenState extends State<PubgInfoScreen> {
+  static const _platforms = ['steam', 'kakao', 'psn', 'xbox'];
+
+  final _nameCtrl = TextEditingController();
+  final _cardKey = GlobalKey();
+  String _platform = 'steam';
+  bool _loading = false;
+  bool _saving = false;
+  String? _error;
+  Map? _player;
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _askLogin() async {
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Login required'),
+        content: const Text('Please login to use this tool.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Login')),
+        ],
+      ),
+    );
+    if (go == true && mounted) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+    }
+  }
+
+  Future<void> _check() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('is_logged_in') ?? false)) {
+      await _askLogin();
+      return;
+    }
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Enter a valid PUBG PC player name');
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await ApiService.pubgInfoCheck(name, _platform);
+      if (!mounted) return;
+      final list = (data['data'] as List?) ?? [];
+      if (list.isEmpty) {
+        setState(() {
+          _player = null;
+          _error = 'Player not found';
+        });
+      } else {
+        setState(() => _player = Map<String, dynamic>.from(list.first as Map));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _player = null;
+        _error = e.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _download() async {
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Download is available in the mobile app')),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      final boundary = _cardKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      final image = await boundary.toImage(pixelRatio: 3);
+      final bd = await image.toByteData(format: ui.ImageByteFormat.png);
+      await Gal.putImageBytes(bd!.buffer.asUint8List());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saved to gallery')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Widget _chip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.6)),
+      ),
+      child: Text(text, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+    );
+  }
+
+  Widget _card() {
+    final p = _player!;
+    final attrs = (p['attributes'] as Map?) ?? {};
+    final name = '${attrs['name'] ?? 'Unknown'}';
+    final id = '${p['id'] ?? '-'}';
+    final shard = '${attrs['shardId'] ?? _platform}'.toUpperCase();
+    final banType = '${attrs['banType'] ?? 'Unknown'}';
+    final isClean = banType.toLowerCase() == 'innocent';
+
+    return RepaintBoundary(
+      key: _cardKey,
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1A1730), Color(0xFF10131F)],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFC9A24B), width: 1.2),
+        ),
+        child: Stack(
+          children: [
+            const Positioned(top: 0, left: 0, child: _CornerMark(angle: 0)),
+            const Positioned(top: 0, right: 0, child: _CornerMark(angle: 1.5707963267948966)),
+            const Positioned(bottom: 0, left: 0, child: _CornerMark(angle: -1.5707963267948966)),
+            const Positioned(bottom: 0, right: 0, child: _CornerMark(angle: 3.141592653589793)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ShaderMask(
+                      shaderCallback: (r) => const LinearGradient(colors: [Color(0xFFFF7A7A), Color(0xFFFFC46B)]).createShader(r),
+                      child: const Text('MYGame', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic)),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFC9A24B)),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text('PUBG PC PROFILE', style: TextStyle(color: Color(0xFFC9A24B), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  height: 72,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D0F1A),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF2A2E48)),
+                  ),
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.sports_esports, color: Color(0xFFC9A24B), size: 30),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(name, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                            Text(shard, style: const TextStyle(color: Color(0xFF9AA0B4), fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _chip('Platform: $shard', const Color(0xFF3B8FD6)),
+                    _chip(isClean ? 'Status: Clean' : 'Status: $banType', isClean ? const Color(0xFF3B7A5B) : const Color(0xFFB03A3A)),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D0F1A),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF2A2E48)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('ACCOUNT ID', style: TextStyle(color: Color(0xFF9AA0B4), fontSize: 10, letterSpacing: 1)),
+                      const SizedBox(height: 4),
+                      Text(id, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Align(
+                  alignment: Alignment.centerRight,
+                  child: Text('MYGame Marketplace', style: TextStyle(color: Color(0xFF6C7A94), fontSize: 10, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('PUBG PC Info Check')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const SizedBox(height: 4),
+          TextField(
+            controller: _nameCtrl,
+            decoration: const InputDecoration(labelText: 'PUBG Player Name (Steam)', border: OutlineInputBorder()),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: _platform,
+            decoration: const InputDecoration(labelText: 'Platform', border: OutlineInputBorder()),
+            items: _platforms.map((p) => DropdownMenuItem(value: p, child: Text(p.toUpperCase()))).toList(),
+            onChanged: (v) => setState(() => _platform = v ?? 'steam'),
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: _loading ? null : _check,
+            icon: _loading
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.search),
+            label: Text(_loading ? 'Checking...' : 'Check'),
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+            ),
+          if (_player != null) ...[
+            const SizedBox(height: 18),
+            _card(),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _saving ? null : _download,
+              icon: const Icon(Icons.download),
+              label: Text(_saving ? 'Saving...' : 'Download'),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }

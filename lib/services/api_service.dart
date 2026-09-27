@@ -962,6 +962,15 @@ class ApiService {
     return (data['tools'] as List?) ?? [];
   }
 
+  static Future<Map<String, dynamic>> pubgInfoCheck(String playerName, String platform) async {
+    final res = await http.get(
+      Uri.parse('$baseUrl/pubg/player/${Uri.encodeComponent(playerName)}?platform=$platform'),
+      headers: await _headers(),
+    );
+    final data = await _handle(res);
+    return Map<String, dynamic>.from(data);
+  }
+
   static Future<Map<String, dynamic>> ffInfoCheck(String uid, String region) async {
     final res = await http.post(
       Uri.parse('$baseUrl/tools/ff-info'),
