@@ -63,7 +63,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       });
       _startResendCountdown();
     } catch (e) {
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      final msg = e.toString().replaceFirst('Exception: ', ''); final isRateLimited = msg.toLowerCase().contains('too many') || msg.contains('429'); setState(() => _error = isRateLimited ? 'Please try again later.' : msg);
     } finally {
       if (mounted) setState(() => _loading = false);
     }

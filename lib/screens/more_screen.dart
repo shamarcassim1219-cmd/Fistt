@@ -11,6 +11,7 @@ import '../services/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 import 'home_screen.dart' show PromotionsTab;
+import 'rewards_screen.dart';
 
 const List<Map<String, dynamic>> _defaultTools = [
   {'key': 'ff_info', 'title': 'Free Fire Info Check', 'subtitle': 'Check any account by UID', 'icon': 'sports_esports'},
@@ -227,7 +228,7 @@ const List<_MoreItem> _moreItems = [
   _MoreItem('game_tools', '🛠️', [Color(0xFF2A3F9E), Color(0xFF101A45)], soon: true),
   _MoreItem('ff_info', '🪪', [Color(0xFF0F8F86), Color(0xFF08262E)]),
   _MoreItem('top_up', '👛', [Color(0xFF9A5A1A), Color(0xFF2B1A12)], soon: true),
-  _MoreItem('rewards', '🎁', [Color(0xFF8A2BB0), Color(0xFF22103A)], soon: true),
+  _MoreItem('rewards', '🎁', [Color(0xFF8A2BB0), Color(0xFF22103A)]),
   _MoreItem('events', '📣', [Color(0xFF6C4CF1), Color(0xFF3A1A6B)]),
 ];
 
@@ -316,6 +317,8 @@ class _MoreScreenState extends State<MoreScreen> {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const FfInfoScreen()));
     } else if (key == 'events') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const EventsPage()));
+    } else if (key == 'rewards') {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const RewardsScreen()));
     }
   }
 

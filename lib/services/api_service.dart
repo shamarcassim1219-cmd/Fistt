@@ -557,6 +557,35 @@ class ApiService {
     return (data['referralPoints'] as num?)?.toInt() ?? 0;
   }
 
+  // ---------- REWARDS & SPIN ----------
+  static Future<List<dynamic>> getRewards({String? game}) async {
+    final uri = Uri.parse('$baseUrl/rewards' + (game != null ? '?game=$game' : ''));
+    final res = await http.get(uri, headers: await _headers());
+    final data = await _handle(res);
+    return (data['rewards'] as List?) ?? [];
+  }
+
+  static Future<Map<String, dynamic>> redeemReward(int id) async {
+    final res = await http.post(Uri.parse('$baseUrl/rewards/$id/redeem'), headers: await _headers());
+    return await _handle(res);
+  }
+
+  static Future<List<dynamic>> getMyCoupons() async {
+    final res = await http.get(Uri.parse('$baseUrl/rewards/my-coupons'), headers: await _headers());
+    final data = await _handle(res);
+    return (data['coupons'] as List?) ?? [];
+  }
+
+  static Future<Map<String, dynamic>> getSpinConfig() async {
+    final res = await http.get(Uri.parse('$baseUrl/spin/config'), headers: await _headers());
+    return await _handle(res);
+  }
+
+  static Future<Map<String, dynamic>> spinWheel() async {
+    final res = await http.post(Uri.parse('$baseUrl/spin'), headers: await _headers());
+    return await _handle(res);
+  }
+
   static Future<List<dynamic>> getMyPurchases() async {
     final res = await http.get(Uri.parse('$baseUrl/orders/my-purchases'), headers: await _headers());
     final data = await _handle(res);
