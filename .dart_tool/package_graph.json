@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "mygame_app",
-      "version": "1.1.82+184",
+      "version": "1.1.96+198",
       "dependencies": [
         "android_intent_plus",
         "background_downloader",
@@ -16,6 +16,7 @@
         "dio",
         "file_picker",
         "firebase_core",
+        "firebase_crashlytics",
         "firebase_messaging",
         "flutter",
         "flutter_local_notifications",
@@ -1452,6 +1453,29 @@
         "collection",
         "meta",
         "pub_semver"
+      ]
+    },
+    {
+      "name": "firebase_crashlytics",
+      "version": "4.3.10",
+      "dependencies": [
+        "firebase_core",
+        "firebase_core_platform_interface",
+        "firebase_crashlytics_platform_interface",
+        "flutter",
+        "stack_trace"
+      ]
+    },
+    {
+      "name": "firebase_crashlytics_platform_interface",
+      "version": "3.8.10",
+      "dependencies": [
+        "_flutterfire_internals",
+        "collection",
+        "firebase_core",
+        "flutter",
+        "meta",
+        "plugin_platform_interface"
       ]
     }
   ],

@@ -48,6 +48,18 @@ const AndroidNotificationChannel _channel = AndroidNotificationChannel(
   importance: Importance.high,
 );
 
+// Saves crash details on-device so they can be shown on the next launch,
+// even if Firebase/Crashlytics can't be reached or its dashboard is out of
+// date. Kept deliberately simple -- no dependency on Firebase at all.
+const String _lastCrashKey = 'last_crash_log';
+Future<void> _logCrashLocally(String message, String stack) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final trimmedStack = stack.length > 3000 ? stack.substring(0, 3000) : stack;
+    await prefs.setString(_lastCrashKey, '${DateTime.now()}\n\n$message\n\n$trimmedStack');
+  } catch (_) {}
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Tapping the "Update downloaded" notification opens the APK installer,
@@ -88,8 +100,12 @@ void main() async {
   if (!kIsWeb) {
     try {
       await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+      FlutterError.onError = (details) {
+        _logCrashLocally(details.exceptionAsString(), details.stack.toString());
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      };
       PlatformDispatcher.instance.onError = (error, stack) {
+        _logCrashLocally(error.toString(), stack.toString());
         FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
         return true;
       };
@@ -128,6 +144,7 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _checkLastCrash();
     if (!kIsWeb) {
       _setupFcm();
       _loadBiometricSetting();
@@ -135,6 +152,36 @@ class _MyGameAppState extends State<MyGameApp> with WidgetsBindingObserver {
     } else {
       _versionCheckDone = true;
     }
+  }
+
+  // Shows the previous session's crash (if any) as a selectable dialog so
+  // it can be screenshotted or copied, then clears it. Runs once per crash.
+  Future<void> _checkLastCrash() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final log = prefs.getString(_lastCrashKey);
+      if (log == null || log.isEmpty) return;
+      await prefs.remove(_lastCrashKey);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = navigatorKey.currentContext;
+        if (ctx == null || !ctx.mounted) return;
+        showDialog(
+          context: ctx,
+          builder: (dialogCtx) => AlertDialog(
+            title: const Text('App closed unexpectedly last time'),
+            content: SingleChildScrollView(
+              child: SelectableText(log, style: const TextStyle(fontSize: 12)),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      });
+    } catch (_) {}
   }
 
   @override
