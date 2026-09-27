@@ -227,7 +227,6 @@ const List<_MoreItem> _moreItems = [
   _MoreItem('ff_dpi_sensi', '🎯', [Color(0xFFA3245F), Color(0xFF2A1240)]),
   _MoreItem('game_tools', '🛠️', [Color(0xFF2A3F9E), Color(0xFF101A45)], soon: true),
   _MoreItem('ff_info', '🪪', [Color(0xFF0F8F86), Color(0xFF08262E)]),
-  _MoreItem('pubg_info', '🎯', [Color(0xFF3B8FD6), Color(0xFF08262E)]),
   _MoreItem('top_up', '👛', [Color(0xFF9A5A1A), Color(0xFF2B1A12)], soon: true),
   _MoreItem('rewards', '🎁', [Color(0xFF8A2BB0), Color(0xFF22103A)]),
   _MoreItem('events', '📣', [Color(0xFF6C4CF1), Color(0xFF3A1A6B)]),
@@ -241,7 +240,6 @@ const Map<String, Map<String, List<String>>> _moreText = {
     'ff_dpi_sensi': ['Free Fire DPI & Sensitivity', 'Best settings for better gameplay'],
     'game_tools': ['Game Tools', 'Useful tools for all games'],
     'ff_info': ['UID Checker', 'Check player info instantly'],
-    'pubg_info': ['PUBG PC Checker', 'Check Steam player info'],
     'top_up': ['Top Up', 'Fast & secure top ups'],
     'rewards': ['Rewards', 'Claim your daily rewards'],
     'events': ['Events', 'Promotions and offers'],
@@ -253,7 +251,6 @@ const Map<String, Map<String, List<String>>> _moreText = {
     'ff_dpi_sensi': ['Free Fire DPI සහ සංවේදීතාව', 'වඩා හොඳ ගේම් එකකට හොඳම සැකසුම්'],
     'game_tools': ['ගේම් මෙවලම්', 'සියලු ගේම් සඳහා ප්‍රයෝජනවත් මෙවලම්'],
     'ff_info': ['UID පරීක්ෂකය', 'ක්‍රීඩක තොරතුරු ක්ෂණිකව බලන්න'],
-    'pubg_info': ['PUBG PC පරීක්ෂකය', 'Steam ක්‍රීඩක තොරතුරු බලන්න'],
     'top_up': ['ටොප් අප්', 'වේගවත් සහ සුරක්ෂිත ටොප් අප්'],
     'rewards': ['ත්‍යාග', 'ඔබේ දෛනික ත්‍යාග ලබාගන්න'],
     'events': ['සිදුවීම්', 'ප්‍රවර්ධන සහ දීමනා'],
@@ -265,7 +262,6 @@ const Map<String, Map<String, List<String>>> _moreText = {
     'ff_dpi_sensi': ['Free Fire DPI & உணர்திறன்', 'சிறந்த விளையாட்டுக்கான அமைப்புகள்'],
     'game_tools': ['கேம் கருவிகள்', 'அனைத்து கேம்களுக்கும் பயனுள்ள கருவிகள்'],
     'ff_info': ['UID சரிபார்ப்பு', 'வீரர் தகவலை உடனே பாருங்கள்'],
-    'pubg_info': ['PUBG PC சரிபார்ப்பு', 'ஸ்டீம் வீரர் தகவலைப் பாருங்கள்'],
     'top_up': ['டாப் அப்', 'வேகமான, பாதுகாப்பான டாப் அப்'],
     'rewards': ['வெகுமதிகள்', 'தினசரி வெகுமதிகளைப் பெறுங்கள்'],
     'events': ['நிகழ்வுகள்', 'விளம்பரங்கள் & சலுகைகள்'],
@@ -319,8 +315,6 @@ class _MoreScreenState extends State<MoreScreen> {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const TournamentsScreen()));
     } else if (key == 'ff_info') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const FfInfoScreen()));
-    } else if (key == 'pubg_info') {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const PubgInfoScreen()));
     } else if (key == 'events') {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const EventsPage()));
     } else if (key == 'rewards') {
@@ -473,19 +467,28 @@ class FfInfoScreen extends StatefulWidget {
 
 class _FfInfoScreenState extends State<FfInfoScreen> {
   static const _regions = ['sg', 'ind', 'bd', 'pk', 'id', 'th', 'vn', 'br', 'me', 'na', 'sac', 'tw', 'cis'];
+  static const _platforms = ['steam', 'kakao', 'psn', 'xbox'];
+
+  String _game = 'ff';
 
   final _uidCtrl = TextEditingController();
-  final _cardKey = GlobalKey();
   String _region = 'sg';
+
+  final _nameCtrl = TextEditingController();
+  String _platform = 'steam';
+
+  final _cardKey = GlobalKey();
   bool _loading = false;
   bool _saving = false;
   String? _error;
   Map? _info;
+  Map? _pubgPlayer;
   int? _remaining;
 
   @override
   void dispose() {
     _uidCtrl.dispose();
+    _nameCtrl.dispose();
     super.dispose();
   }
 
@@ -512,6 +515,14 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
       await _askLogin();
       return;
     }
+    if (_game == 'ff') {
+      await _checkFf();
+    } else {
+      await _checkPubg();
+    }
+  }
+
+  Future<void> _checkFf() async {
     final uid = _uidCtrl.text.trim();
     if (!RegExp(r'^\d{5,15}$').hasMatch(uid)) {
       setState(() => _error = 'Enter a valid Free Fire UID (numbers only)');
@@ -521,6 +532,7 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _pubgPlayer = null;
     });
     try {
       final data = await ApiService.ffInfoCheck(uid, _region);
@@ -533,6 +545,41 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
       if (!mounted) return;
       setState(() {
         _info = null;
+        _error = e.toString().replaceFirst('Exception: ', '');
+      });
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _checkPubg() async {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Enter a valid PUBG PC player name');
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _loading = true;
+      _error = null;
+      _info = null;
+    });
+    try {
+      final data = await ApiService.pubgInfoCheck(name, _platform);
+      if (!mounted) return;
+      final list = (data['data'] as List?) ?? [];
+      if (list.isEmpty) {
+        setState(() {
+          _pubgPlayer = null;
+          _error = 'Player not found';
+        });
+      } else {
+        setState(() => _pubgPlayer = Map<String, dynamic>.from(list.first as Map));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _pubgPlayer = null;
         _error = e.toString().replaceFirst('Exception: ', '');
       });
     } finally {
@@ -815,274 +862,8 @@ class _FfInfoScreenState extends State<FfInfoScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Free Fire Info Check')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: AspectRatio(aspectRatio: 2, child: _photoOverlay('Free Fire Info Check', 'Get your information')),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _uidCtrl,
-            keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: 'Free Fire UID', border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: _region,
-            decoration: const InputDecoration(labelText: 'Region', border: OutlineInputBorder()),
-            items: _regions.map((r) => DropdownMenuItem(value: r, child: Text(r.toUpperCase()))).toList(),
-            onChanged: (v) => setState(() => _region = v ?? 'sg'),
-          ),
-          const SizedBox(height: 14),
-          FilledButton.icon(
-            onPressed: _loading ? null : _check,
-            icon: _loading
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.search),
-            label: Text(_loading ? 'Checking...' : 'Check'),
-          ),
-          if (_remaining != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text('Checks left today: $_remaining', textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
-            ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(_error!, style: const TextStyle(color: Colors.redAccent)),
-            ),
-          if (_info != null) ...[
-            const SizedBox(height: 18),
-            _card(),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: _saving ? null : _download,
-              icon: const Icon(Icons.download),
-              label: Text(_saving ? 'Saving...' : 'Download'),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _CornerMark extends StatelessWidget {
-  final double angle;
-  const _CornerMark({required this.angle});
-  @override
-  Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: angle,
-      child: const SizedBox(width: 22, height: 22, child: CustomPaint(painter: _CornerPainter())),
-    );
-  }
-}
-
-class _CornerPainter extends CustomPainter {
-  const _CornerPainter();
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFC9A24B)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-    canvas.drawLine(const Offset(0, 6), const Offset(0, 0), paint);
-    canvas.drawLine(const Offset(0, 0), const Offset(14, 0), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// ======================= EVENTS (moved from the bottom bar) =======================
-
-Widget _eventsBox(VoidCallback onTap) {
-  return InkWell(
-    borderRadius: BorderRadius.circular(16),
-    onTap: onTap,
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Stack(
-        fit: StackFit.expand,
-        children: const [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF6C4CF1), Color(0xFFF107A3)],
-              ),
-            ),
-          ),
-          Center(child: Icon(Icons.campaign, size: 64, color: Colors.white24)),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Color(0xCC000000)],
-              ),
-            ),
-          ),
-          Positioned(
-            left: 12,
-            right: 12,
-            bottom: 12,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('Events', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
-                SizedBox(height: 2),
-                Text('Promotions and offers', style: TextStyle(color: Colors.white70, fontSize: 12)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class EventsPage extends StatelessWidget {
-  const EventsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(), body: const PromotionsTab());
-  }
-}
-
-class PubgInfoScreen extends StatefulWidget {
-  const PubgInfoScreen({super.key});
-
-  @override
-  State<PubgInfoScreen> createState() => _PubgInfoScreenState();
-}
-
-class _PubgInfoScreenState extends State<PubgInfoScreen> {
-  static const _platforms = ['steam', 'kakao', 'psn', 'xbox'];
-
-  final _nameCtrl = TextEditingController();
-  final _cardKey = GlobalKey();
-  String _platform = 'steam';
-  bool _loading = false;
-  bool _saving = false;
-  String? _error;
-  Map? _player;
-
-  @override
-  void dispose() {
-    _nameCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _askLogin() async {
-    final go = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Login required'),
-        content: const Text('Please login to use this tool.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Login')),
-        ],
-      ),
-    );
-    if (go == true && mounted) {
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-    }
-  }
-
-  Future<void> _check() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!(prefs.getBool('is_logged_in') ?? false)) {
-      await _askLogin();
-      return;
-    }
-    final name = _nameCtrl.text.trim();
-    if (name.isEmpty) {
-      setState(() => _error = 'Enter a valid PUBG PC player name');
-      return;
-    }
-    FocusScope.of(context).unfocus();
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final data = await ApiService.pubgInfoCheck(name, _platform);
-      if (!mounted) return;
-      final list = (data['data'] as List?) ?? [];
-      if (list.isEmpty) {
-        setState(() {
-          _player = null;
-          _error = 'Player not found';
-        });
-      } else {
-        setState(() => _player = Map<String, dynamic>.from(list.first as Map));
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _player = null;
-        _error = e.toString().replaceFirst('Exception: ', '');
-      });
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _download() async {
-    if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Download is available in the mobile app')),
-      );
-      return;
-    }
-    setState(() => _saving = true);
-    try {
-      final boundary = _cardKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      final image = await boundary.toImage(pixelRatio: 3);
-      final bd = await image.toByteData(format: ui.ImageByteFormat.png);
-      await Gal.putImageBytes(bd!.buffer.asUint8List());
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Saved to gallery')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not save: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  Widget _chip(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.6)),
-      ),
-      child: Text(text, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
-    );
-  }
-
-  Widget _card() {
-    final p = _player!;
+  Widget _pubgCard() {
+    final p = _pubgPlayer!;
     final attrs = (p['attributes'] as Map?) ?? {};
     final name = '${attrs['name'] ?? 'Unknown'}';
     final id = '${p['id'] ?? '-'}';
@@ -1196,25 +977,84 @@ class _PubgInfoScreenState extends State<PubgInfoScreen> {
     );
   }
 
+  Widget _gameTab(String key, String label) {
+    final selected = _game == key;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _game = key;
+            _error = null;
+            _info = null;
+            _pubgPlayer = null;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFC9A24B) : const Color(0xFF1A1730),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.black : Colors.white70,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('PUBG PC Info Check')),
+      appBar: const AppBar(title: Text('UID Checker')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const SizedBox(height: 4),
-          TextField(
-            controller: _nameCtrl,
-            decoration: const InputDecoration(labelText: 'PUBG Player Name (Steam)', border: OutlineInputBorder()),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: AspectRatio(aspectRatio: 2, child: _photoOverlay('UID Checker', 'Get your information')),
           ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            value: _platform,
-            decoration: const InputDecoration(labelText: 'Platform', border: OutlineInputBorder()),
-            items: _platforms.map((p) => DropdownMenuItem(value: p, child: Text(p.toUpperCase()))).toList(),
-            onChanged: (v) => setState(() => _platform = v ?? 'steam'),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              _gameTab('ff', 'Free Fire'),
+              const SizedBox(width: 10),
+              _gameTab('pubg', 'PUBG PC'),
+            ],
           ),
+          const SizedBox(height: 16),
+          if (_game == 'ff') ...[
+            TextField(
+              controller: _uidCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Free Fire UID', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _region,
+              decoration: const InputDecoration(labelText: 'Region', border: OutlineInputBorder()),
+              items: _regions.map((r) => DropdownMenuItem(value: r, child: Text(r.toUpperCase()))).toList(),
+              onChanged: (v) => setState(() => _region = v ?? 'sg'),
+            ),
+          ] else ...[
+            TextField(
+              controller: _nameCtrl,
+              decoration: const InputDecoration(labelText: 'PUBG Player Name (Steam)', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _platform,
+              decoration: const InputDecoration(labelText: 'Platform', border: OutlineInputBorder()),
+              items: _platforms.map((p) => DropdownMenuItem(value: p, child: Text(p.toUpperCase()))).toList(),
+              onChanged: (v) => setState(() => _platform = v ?? 'steam'),
+            ),
+          ],
           const SizedBox(height: 14),
           FilledButton.icon(
             onPressed: _loading ? null : _check,
@@ -1223,14 +1063,29 @@ class _PubgInfoScreenState extends State<PubgInfoScreen> {
                 : const Icon(Icons.search),
             label: Text(_loading ? 'Checking...' : 'Check'),
           ),
+          if (_game == 'ff' && _remaining != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text('Checks left today: $_remaining', textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+            ),
           if (_error != null)
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(_error!, style: const TextStyle(color: Colors.redAccent)),
             ),
-          if (_player != null) ...[
+          if (_game == 'ff' && _info != null) ...[
             const SizedBox(height: 18),
             _card(),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _saving ? null : _download,
+              icon: const Icon(Icons.download),
+              label: Text(_saving ? 'Saving...' : 'Download'),
+            ),
+          ],
+          if (_game == 'pubg' && _pubgPlayer != null) ...[
+            const SizedBox(height: 18),
+            _pubgCard(),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: _saving ? null : _download,
@@ -1243,3 +1098,91 @@ class _PubgInfoScreenState extends State<PubgInfoScreen> {
     );
   }
 }
+
+class _CornerMark extends StatelessWidget {
+  final double angle;
+  const _CornerMark({required this.angle});
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: angle,
+      child: const SizedBox(width: 22, height: 22, child: CustomPaint(painter: _CornerPainter())),
+    );
+  }
+}
+
+class _CornerPainter extends CustomPainter {
+  const _CornerPainter();
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFC9A24B)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(const Offset(0, 6), const Offset(0, 0), paint);
+    canvas.drawLine(const Offset(0, 0), const Offset(14, 0), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ======================= EVENTS (moved from the bottom bar) =======================
+
+Widget _eventsBox(VoidCallback onTap) {
+  return InkWell(
+    borderRadius: BorderRadius.circular(16),
+    onTap: onTap,
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        fit: StackFit.expand,
+        children: const [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF6C4CF1), Color(0xFFF107A3)],
+              ),
+            ),
+          ),
+          Center(child: Icon(Icons.campaign, size: 64, color: Colors.white24)),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Color(0xCC000000)],
+              ),
+            ),
+          ),
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 12,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Events', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                SizedBox(height: 2),
+                Text('Promotions and offers', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class EventsPage extends StatelessWidget {
+  const EventsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(appBar: AppBar(), body: const PromotionsTab());
+  }
+}
+
