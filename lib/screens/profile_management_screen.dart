@@ -5,6 +5,7 @@ import 'dart:io';
 import '../main.dart';
 import '../services/api_service.dart';
 import '../services/app_localizations.dart';
+import '../services/cooldown_guard.dart';
 import 'verification_screen.dart';
 import 'my_listings_screen.dart';
 import 'my_purchases_screen.dart';
@@ -275,7 +276,9 @@ class _ProfileManagementScreenState extends State<ProfileManagementScreen> {
                       }),
 
                       _sectionHeader('Payments & Security'),
-                      _tile(Icons.account_balance_outlined, AppLocalizations.t('wallet_bank_details'), null, () {
+                      _tile(Icons.account_balance_outlined, AppLocalizations.t('wallet_bank_details'), null, () async {
+                        if (!await passCooldown(context, bank: true)) return;
+                        if (!context.mounted) return;
                         Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletBankDetailsScreen()));
                       }),
                       _tile(Icons.shield_outlined, 'Security', 'Email, password, two-step verification', () {

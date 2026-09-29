@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/app_localizations.dart';
+import '../services/cooldown_guard.dart';
 import 'change_email_screen.dart';
 import 'change_password_screen.dart';
 import 'totp_screens.dart';
@@ -28,7 +29,9 @@ class SecurityScreen extends StatelessWidget {
           _tile(context, Icons.email_outlined, AppLocalizations.t('change_email'), null, () {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangeEmailScreen()));
           }),
-          _tile(context, Icons.lock_reset, AppLocalizations.t('change_password'), null, () {
+          _tile(context, Icons.lock_reset, AppLocalizations.t('change_password'), null, () async {
+            if (!await passCooldown(context, bank: false)) return;
+            if (!context.mounted) return;
             Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen()));
           }),
           _tile(context, Icons.security, 'Two-step verification', 'Google Authenticator', () {

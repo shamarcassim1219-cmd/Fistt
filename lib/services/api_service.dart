@@ -882,6 +882,16 @@ class ApiService {
   }
 
   // ---------- VERIFICATION ----------
+  static Future<Map<String, dynamic>> getBankDetailsCooldown() async {
+    final res = await http.get(Uri.parse('$baseUrl/user/bank-details/cooldown-status'), headers: await _headers());
+    return await _handle(res);
+  }
+
+  static Future<Map<String, dynamic>> getPasswordCooldown() async {
+    final res = await http.get(Uri.parse('$baseUrl/user/password/cooldown-status'), headers: await _headers());
+    return await _handle(res);
+  }
+
   static Future<Map<String, dynamic>> getVerificationStatusFull() async {
     final res = await http.get(Uri.parse('$baseUrl/verification/status'), headers: await _headers());
     return await _handle(res);

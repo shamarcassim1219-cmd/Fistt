@@ -21,6 +21,13 @@ class AppLocalizations {
   }
 
   static final Map<String, Map<String, String>> _translations = {
+    'cooldown_title': {'English': 'Please wait', 'Sinhala': 'ටිකක් රැඳී සිටින්න', 'Tamil': 'சற்று காத்திருக்கவும்'},
+    'cooldown_remaining': {'English': 'Time remaining', 'Sinhala': 'ඉතිරි කාලය', 'Tamil': 'மீதமுள்ள நேரம்'},
+    'cooldown_bank_message': {'English': 'For your security, bank details can only be changed once every 2 days.', 'Sinhala': 'ඔබගේ ආරක්ෂාව සඳහා, බැංකු විස්තර වෙනස් කළ හැක්කේ දින 2කට වරක් පමණි.', 'Tamil': 'உங்கள் பாதுகாப்பிற்காக, வங்கி விவரங்களை 2 நாட்களுக்கு ஒருமுறை மட்டுமே மாற்ற முடியும்.'},
+    'cooldown_password_message': {'English': 'For your security, your password can only be changed once every 2 days.', 'Sinhala': 'ඔබගේ ආරක්ෂාව සඳහා, මුරපදය වෙනස් කළ හැක්කේ දින 2කට වරක් පමණි.', 'Tamil': 'உங்கள் பாதுகாப்பிற்காக, கடவுச்சொல்லை 2 நாட்களுக்கு ஒருமுறை மட்டுமே மாற்ற முடியும்.'},
+    'cooldown_time_days_hours': {'English': '{d} day(s) {h} hour(s)', 'Sinhala': 'දින {d} පැය {h}', 'Tamil': '{d} நாள் {h} மணிநேரம்'},
+    'cooldown_time_days': {'English': '{d} day(s)', 'Sinhala': 'දින {d}', 'Tamil': '{d} நாள்'},
+    'cooldown_time_hours': {'English': '{h} hour(s)', 'Sinhala': 'පැය {h}', 'Tamil': '{h} மணிநேரம்'},
     'rent_only_ff_pubg_notice': {'English': 'Rent option is only available for Free Fire and PUBG accounts.', 'Sinhala': 'කුලියට දීමේ විකල්පය ලබා ගත හැක්කේ Free Fire සහ PUBG ගිණුම් සඳහා පමණි.', 'Tamil': 'வாடகை விருப்பம் Free Fire மற்றும் PUBG கணக்குகளுக்கு மட்டுமே கிடைக்கும்.'},
     'app_name': {'English': 'MYGame Marketplace', 'Sinhala': 'MYGame වෙළඳපොළ', 'Tamil': 'MYGame சந்தை'},
     'login': {'English': 'Login', 'Sinhala': 'පිවිසෙන්න', 'Tamil': 'உள்நுழைய'},
