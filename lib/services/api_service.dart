@@ -679,6 +679,19 @@ class ApiService {
   }
 
   // ---------- TOP-UP STORE ----------
+  static Future<Map<String, dynamic>> verifyTopupPlayer({
+    required int gameId,
+    required String playerId,
+    String? zoneId,
+  }) async {
+    final res = await http.post(
+      Uri.parse('$baseUrl/topup/verify'),
+      headers: await _headers(),
+      body: jsonEncode({'gameId': gameId, 'playerId': playerId, 'zoneId': zoneId}),
+    );
+    return await _handle(res);
+  }
+
   static Future<List<dynamic>> getTopupGames() async {
     final res = await http.get(Uri.parse('$baseUrl/topup/games'), headers: await _headers());
     final data = await _handle(res);
